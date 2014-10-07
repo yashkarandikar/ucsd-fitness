@@ -5,6 +5,42 @@ import os.path
 import json
 import re
 
+from HTMLParser import HTMLParser
+
+class InfoBoxHTMLParser(HTMLParser):
+    
+    def __init__(self):
+        #super(InfoBoxHTMLParser, self).__init__()
+        HTMLParser.__init__(self)
+        self.info = {}
+        self.waiting_for_label = False
+        self.waiting_for_value = False
+    
+    def handle_starttag(self, tag, attrs):
+        if (tag == "span"):
+            if (('class', '\\"label\\"') in attrs):
+                self.waiting_for_label = True
+            elif (('class', '\\"value\\"') in attrs):
+                self.waiting_for_value = True
+    
+    def handle_endtag(self, tag):
+        #print "Encountered an end tag :", tag
+        pass
+    
+    def handle_data(self, data):
+        #print "Encountered some data  :", data
+        if (self.waiting_for_label):
+            self.label = data
+            self.waiting_for_label = False
+        elif (self.waiting_for_value):
+            self.info[self.label] = data
+            self.waiting_for_value = False
+            #print "added key value pair: " + self.label + " = " + self.info[self.label]
+    
+    def get_info(self):
+        return self.info
+
+
 def parse_json(json_data):
     j = json.loads(json_data)
     j2 = {}
@@ -39,12 +75,16 @@ def parse_user_event(html, outfile):
     # extract info box - hydration, wind etc.
     # look for the string "<div class="tab-panel">" and then find the end tag
     start = html.find("<div class=\\\"tab-panel\\\">")
-    print "found tab panel at index " + str(start)
+    #print "found tab panel at index " + str(start)
     start = html.find("<ul class=\\\"summary clearfix\\\">", start + 1)
-    print "found ul element at " + str(start)
+    #print "found ul element at " + str(start)
     end = html.find("</ul>", start + 1)
     info_box_string = html[start : end+5]
     info_box_string = re.sub(r'\\n',r'', info_box_string)
+    info_parser = InfoBoxHTMLParser()
+    info_parser.feed(info_box_string)
+    info_box = info_parser.get_info() # dictionary of all information in info box
+    print info_box
     #f = open("info_box.txt",'w')
     #f.write(info_box_string)
     #f.close()
