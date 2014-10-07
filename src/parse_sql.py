@@ -40,13 +40,36 @@ class InfoBoxHTMLParser(HTMLParser):
     def get_info(self):
         return self.info
 
-
+"""
 def parse_json(json_data):
     j = json.loads(json_data)
     j2 = {}
     j2['999999'] = j['data']
     json.dump(j2, open("json_dump.txt","w"))
+"""
 
+def add_workout_to_user(user_id, workout_json, info_dict):
+    # creates a file for the user (if not already exists) and adds a workout in JSON format
+    filepath = os.path.join("../","data",str(user_id) + ".json")
+    print filepath
+    workout_dict = info_dict
+    workout_dict['data'] = workout_json['data']
+    if (os.path.isfile(filepath)):
+        f = open(filepath)
+        j = json.load(f)
+        f.close()
+        print type(j['workouts'])
+        print type(j['workouts'][0])
+        j['workouts'].append(workout_dict)  # add a dict to the list of dicts
+    else:
+        # create new file
+        j = {}
+        j['id'] = str(user_id)
+        j['workouts'] = [workout_dict]
+    
+    f = open(filepath, "w")
+    json.dump(j, f)
+    f.close()
 
 def parse_user_event(html, outfile):
     # html string contains ONE user id, all trace data and info box data
@@ -67,6 +90,7 @@ def parse_user_event(html, outfile):
     json_string = "{" + html[start : end + 1] + "}"
     json_string = re.sub(r'\\n',r'',json_string)
     json_string = re.sub(r'\\"',r'"',json_string)
+    json_data = json.loads(json_string)
     #f = open("json_data.txt","w")
     #f.write(json_data)
     #f.close()
@@ -83,12 +107,13 @@ def parse_user_event(html, outfile):
     info_box_string = re.sub(r'\\n',r'', info_box_string)
     info_parser = InfoBoxHTMLParser()
     info_parser.feed(info_box_string)
-    info_box = info_parser.get_info() # dictionary of all information in info box
-    print info_box
+    info_data = info_parser.get_info() # dictionary of all information in info box
+    print info_data
     #f = open("info_box.txt",'w')
     #f.write(info_box_string)
     #f.close()
         
+    add_workout_to_user(user_id, json_data, info_data)
 
 def parse_html(workout_id, html):
     # Eventually this should extract relevant data
@@ -149,3 +174,4 @@ if __name__ == "__main__":
         exit(0)
     infile = sys.argv[1]
     parse_sql_file(infile)
+    #add_workout_to_user(sys.argv[1], "")
