@@ -2,13 +2,80 @@
 
 import sys
 import os.path
+import json
+import re
+
+def parse_json(json_data):
+    j = json.loads(json_data)
+    j2 = {}
+    j2['999999'] = j['data']
+    json.dump(j2, open("json_dump.txt","w"))
+
+
+def parse_user_event(html, outfile):
+    # html string contains ONE user id, all trace data and info box data
+    # this data is extracted and appended to outfile
+
+    # extract user id
+    start = html.find("/workouts/user/")
+    if (start == -1):
+        raise Exception("illegal input to this parse_user_event()..")
+    start = start + len("/workouts/user/")
+    end = html.find("\\\"", start)
+    user_id = int(html[start:end])
+    print "user id = " + str(user_id)
+
+    # extract info from 'data'
+    start = html.find("\"data\\\"")
+    end = html.find("]", start)
+    json_string = "{" + html[start : end + 1] + "}"
+    json_string = re.sub(r'\\n',r'',json_string)
+    json_string = re.sub(r'\\"',r'"',json_string)
+    #f = open("json_data.txt","w")
+    #f.write(json_data)
+    #f.close()
+    #parse_json(json_data)
+
+    # extract info box - hydration, wind etc.
+    # look for the string "<div class="tab-panel">" and then find the end tag
+    start = html.find("<div class=\\\"tab-panel\\\">")
+    print "found tab panel at index " + str(start)
+    start = html.find("<ul class=\\\"summary clearfix\\\">", start + 1)
+    print "found ul element at " + str(start)
+    end = html.find("</ul>", start + 1)
+    info_box_string = html[start : end+5]
+    info_box_string = re.sub(r'\\n',r'', info_box_string)
+    #f = open("info_box.txt",'w')
+    #f.write(info_box_string)
+    #f.close()
+        
 
 def parse_html(workout_id, html):
     # Eventually this should extract relevant data
-    # f = open(workout_id + ".html", 'w')
-    # f.write(html)
-    # f.close()
-    pass
+
+    user_start = html.find("/workouts/user")
+    if (user_start == -1):
+        raise Exception("No user found..")
+    while(user_start < len(html)):
+        user_end = html.find("/workouts/user", user_start + 1)
+        if (user_end == -1):
+            user_end = len(html)
+        user_string = html[user_start:user_end]
+        user_start = user_end
+        parse_user_event(user_string, "dummy.txt")
+        #f = open("user_data.txt",'w')
+        #f.write(user_string)
+        #f.close()
+        break   # added for now, to restrict to one user
+
+    #while (True):
+    #index = html.find("/workouts/user", start)
+    #if (index == -1):
+        #break
+    #users.append(index)
+    #print "found user at index " + str(index)
+    #start = index + 1
+    #start = index + 1
 
 
 def parse_sql_file(infile):
@@ -32,7 +99,7 @@ def parse_sql_file(infile):
                 parse_html(workout_id, html)    # this will extract relevant data
 
                 n_records = n_records + 1
-                if (n_records == 11):       # stop after 10 records for testing
+                if (n_records == 1):       # stop after 10 records for testing
                     break;
 
 
