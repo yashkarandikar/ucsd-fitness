@@ -40,40 +40,36 @@ class InfoBoxHTMLParser(HTMLParser):
     def get_info(self):
         return self.info
 
-"""
-def parse_json(json_data):
-    j = json.loads(json_data)
-    j2 = {}
-    j2['999999'] = j['data']
-    json.dump(j2, open("json_dump.txt","w"))
-"""
-
-def add_workout_to_user(user_id, workout_json, info_dict):
+def add_workout_to_user(user_id, data_dict, info_dict, outfolder):
     # creates a file for the user (if not already exists) and adds a workout in JSON format
-    filepath = os.path.join("../","data",str(user_id) + ".json")
-    print filepath
-    workout_dict = info_dict
-    workout_dict['data'] = workout_json['data']
-    if (os.path.isfile(filepath)):
+    filepath = os.path.join(outfolder, str(user_id) + ".json")
+    
+    # Create ONE dictionary of all information and data of ONE workout done by one user
+    workout_dict = info_dict    
+    if (data_dict.has_key('data')):
+        workout_dict['data'] = data_dict['data']
+
+    # add it to that user's file
+    if (os.path.isfile(filepath)):  # if user's file already exists, read the full thin and add the new workout
         f = open(filepath)
         j = json.load(f)
         f.close()
-        print type(j['workouts'])
-        print type(j['workouts'][0])
+        #print type(j['workouts'])
+        #print type(j['workouts'][0])
         j['workouts'].append(workout_dict)  # add a dict to the list of dicts
-    else:
-        # create new file
+    else:           # else just create a new workout
         j = {}
         j['id'] = str(user_id)
         j['workouts'] = [workout_dict]
     
-    f = open(filepath, "w")
+    # write back everything to the file
+    print "Writing to " + filepath
+    f = open(filepath, "w") # not a very efficient way of adding something to a file, but okay for now
     json.dump(j, f)
     f.close()
 
-def parse_user_event(html, outfile):
+def parse_user_event(html, outfolder):
     # html string contains ONE user id, all trace data and info box data
-    # this data is extracted and appended to outfile
 
     # extract user id
     start = html.find("/workouts/user/")
@@ -82,42 +78,37 @@ def parse_user_event(html, outfile):
     start = start + len("/workouts/user/")
     end = html.find("\\\"", start)
     user_id = int(html[start:end])
-    print "user id = " + str(user_id)
+    #print "user id = " + str(user_id)
 
-    # extract info from 'data'
+    # extract info from 'data' - these are the traces (gps, heart-rate, pace)
+    json_data = {}
+    json_string = ""
     start = html.find("\"data\\\"")
-    end = html.find("]", start)
-    json_string = "{" + html[start : end + 1] + "}"
-    json_string = re.sub(r'\\n',r'',json_string)
-    json_string = re.sub(r'\\"',r'"',json_string)
-    json_data = json.loads(json_string)
-    #f = open("json_data.txt","w")
-    #f.write(json_data)
-    #f.close()
-    #parse_json(json_data)
+    if (start != -1):
+        end = html.find("]", start)
+        json_string = "{" + html[start : end + 1] + "}"
+        json_string = re.sub(r'\\n',r'',json_string)
+        json_string = re.sub(r'\\"',r'"',json_string)
+        json_data = json.loads(json_string)
 
     # extract info box - hydration, wind etc.
     # look for the string "<div class="tab-panel">" and then find the end tag
+    info_data = {}
     start = html.find("<div class=\\\"tab-panel\\\">")
-    #print "found tab panel at index " + str(start)
-    start = html.find("<ul class=\\\"summary clearfix\\\">", start + 1)
-    #print "found ul element at " + str(start)
-    end = html.find("</ul>", start + 1)
-    info_box_string = html[start : end+5]
-    info_box_string = re.sub(r'\\n',r'', info_box_string)
-    info_parser = InfoBoxHTMLParser()
-    info_parser.feed(info_box_string)
-    info_data = info_parser.get_info() # dictionary of all information in info box
-    print info_data
-    #f = open("info_box.txt",'w')
-    #f.write(info_box_string)
-    #f.close()
+    if (start != -1):
+        #print "found tab panel at index " + str(start)
+        start = html.find("<ul class=\\\"summary clearfix\\\">", start + 1)
+        #print "found ul element at " + str(start)
+        end = html.find("</ul>", start + 1)
+        info_box_string = html[start : end+5]
+        info_box_string = re.sub(r'\\n',r'', info_box_string)
+        info_parser = InfoBoxHTMLParser()
+        info_parser.feed(info_box_string)
+        info_data = info_parser.get_info() # dictionary of all information in info box
         
-    add_workout_to_user(user_id, json_data, info_data)
+    add_workout_to_user(user_id, json_data, info_data, outfolder)
 
-def parse_html(workout_id, html):
-    # Eventually this should extract relevant data
-
+def parse_html(workout_id, html, outfolder):
     user_start = html.find("/workouts/user")
     if (user_start == -1):
         raise Exception("No user found..")
@@ -127,21 +118,7 @@ def parse_html(workout_id, html):
             user_end = len(html)
         user_string = html[user_start:user_end]
         user_start = user_end
-        parse_user_event(user_string, "dummy.txt")
-        #f = open("user_data.txt",'w')
-        #f.write(user_string)
-        #f.close()
-        break   # added for now, to restrict to one user
-
-    #while (True):
-    #index = html.find("/workouts/user", start)
-    #if (index == -1):
-        #break
-    #users.append(index)
-    #print "found user at index " + str(index)
-    #start = index + 1
-    #start = index + 1
-
+        parse_user_event(user_string, outfolder)
 
 def parse_sql_file(infile):
     if (not os.path.isfile(infile)):
@@ -150,6 +127,15 @@ def parse_sql_file(infile):
 
     print "Reading file " + infile
 
+    # create output folder name
+    infile_name, infile_ext = os.path.splitext(infile);
+    infile_name = os.path.basename(infile_name)
+    outfolder = os.path.join(os.path.dirname(__file__),"..","data",infile_name)
+    if (not os.path.isdir(outfolder)):
+        os.mkdir(outfolder)
+        print "Created folder " + outfolder
+
+    # now read input file
     with open(infile) as f:
         workout_id = ""
         html = ""
@@ -159,13 +145,11 @@ def parse_sql_file(infile):
                 record = line.split("INSERT INTO `EndoMondoWorkouts` VALUES ")[1].strip()
                 comma_index = record.find(',')  # separate workout_id and html string
                 workout_id = record[1:comma_index]
+                print "workout_id = " + workout_id
                 html = record[comma_index + 1:]
-                print workout_id
-                parse_html(workout_id, html)    # this will extract relevant data
+                parse_html(workout_id, html, outfolder)    # this will extract relevant data
 
                 n_records = n_records + 1
-                if (n_records == 1):       # stop after 10 records for testing
-                    break;
 
 
 if __name__ == "__main__":
