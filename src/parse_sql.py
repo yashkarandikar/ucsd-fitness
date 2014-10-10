@@ -6,8 +6,10 @@ import json
 import re
 import shutil
 from HTMLParser import HTMLParser
+import collections
 
 class InfoBoxHTMLParser(HTMLParser):
+    # this class will take a html string corresponding to the info box (hydration, max altitude etc.) and return a dictionary after extracting the data
     
     def __init__(self):
         #super(InfoBoxHTMLParser, self).__init__()
@@ -44,20 +46,29 @@ def add_workout_to_user(user_id, data_dict, info_dict, outfolder):
     workout_dict = info_dict    
     if (data_dict.has_key('data')):
         workout_dict['data'] = data_dict['data']
-
-    # add it to that user's file
+    
+    # add to user's file
+    duplicate = False
     if (os.path.isfile(filepath)):  # if user's file already exists, read the full thin and add the new workout
+        # read all workouts from user's file
         f = open(filepath)
         j = json.load(f)
         f.close()
-        #print type(j['workouts'])
-        #print type(j['workouts'][0])
+        
+        # check if this workout is duplicate
+        workouts = j['workouts']
+        for w in workouts:
+            if (str(workout_dict) == str(w)):
+                duplicate = True
+                print "Detected duplicate !"
+                return
+        
         j['workouts'].append(workout_dict)  # add a dict to the list of dicts
     else:           # else just create a new workout
         j = {}
         j['id'] = str(user_id)
         j['workouts'] = [workout_dict]
-    
+   
     # write back everything to the file
     print "Writing to " + filepath
     f = open(filepath, "w") # not a very efficient way of adding something to a file, but okay for now
@@ -96,7 +107,7 @@ def parse_user_event(html, outfolder):
         start = html.find("<ul class=\\\"summary clearfix\\\">", start + 1)
         #print "found ul element at " + str(start)
         end = html.find("</ul>", start + 1)
-        info_box_string = html[start : end+5]
+        info_box_string = html[start : end + len("</ul>")]
         info_box_string = re.sub(r'\\n',r'', info_box_string)
         info_parser = InfoBoxHTMLParser()
         info_parser.feed(info_box_string)
