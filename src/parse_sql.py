@@ -75,9 +75,7 @@ def add_workout_to_user(user_id, data_dict, info_dict, outfolder):
     json.dump(j, f)
     f.close()
 
-def parse_user_event(html, outfolder):
-    # html string contains ONE user id, all trace data and info box data
-
+def extract_user_id(html):
     # extract user id
     start = html.find("/workouts/user/")
     if (start == -1):
@@ -85,8 +83,11 @@ def parse_user_event(html, outfolder):
     start = start + len("/workouts/user/")
     end = html.find("\\\"", start)
     user_id = int(html[start:end])
+    return user_id
     #print "user id = " + str(user_id)
 
+
+def extract_trace_data(html):
     # extract info from 'data' - these are the traces (gps, heart-rate, pace)
     json_data = {}
     json_string = ""
@@ -97,7 +98,9 @@ def parse_user_event(html, outfolder):
         json_string = re.sub(r'\\n',r'',json_string)
         json_string = re.sub(r'\\"',r'"',json_string)
         json_data = json.loads(json_string)
+    return json_data
 
+def extract_info_box(html):
     # extract info box - hydration, wind etc.
     # look for the string "<div class="tab-panel">" and then find the end tag
     info_data = {}
@@ -112,16 +115,38 @@ def parse_user_event(html, outfolder):
         info_parser = InfoBoxHTMLParser()
         info_parser.feed(info_box_string)
         info_data = info_parser.get_info() # dictionary of all information in info box
+    return info_data
 
+
+def extract_date_time(html):
     # extract date and time
     start = html.find("<div class=\\\"date-time\\\">")
+    date_time_string = None
     if (start != -1):
         #print "Found date-time.."
         end = html.find("</div>", start + 1)
         date_time_string = html[start + len("<div class=\\\"date-time\\\">") : end]
+    return date_time_string
+
+def parse_user_event(html, outfolder):
+    # html string contains ONE user id, all trace data and info box data
+    
+    # extract user id
+    user_id = extract_user_id(html)
+    
+    # extract info from 'data' - these are the traces (gps, heart-rate, pace)
+    trace_data = extract_trace_data(html)
+    
+    # extract info box - hydration, wind etc.
+    info_data = extract_info_box(html)
+    
+    # extract date and time string
+    date_time_string = extract_date_time(html)
+    if (date_time_string is not None):
         info_data['date-time'] = date_time_string
-        
-    add_workout_to_user(user_id, json_data, info_data, outfolder)
+            
+    # add to user's file
+    add_workout_to_user(user_id, trace_data, info_data, outfolder)
 
 def parse_html(workout_id, html, outfolder):
     user_start = html.find("/workouts/user")
@@ -167,9 +192,13 @@ def parse_sql_file(infile):
                 html = record[comma_index + 1:]
                 parse_html(workout_id, html, outfolder)    # this will extract relevant data
 
+                #f2 = open("test_html.html",'w')
+                #f2.write(html)
+                #f2.close()
+
                 n_records = n_records + 1
-                #if (n_records == 1):
-                    #break
+                if (n_records == 1):
+                    break
 
 
 if __name__ == "__main__":
