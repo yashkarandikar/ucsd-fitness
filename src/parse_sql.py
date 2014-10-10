@@ -4,7 +4,7 @@ import sys
 import os.path
 import json
 import re
-
+import shutil
 from HTMLParser import HTMLParser
 
 class InfoBoxHTMLParser(HTMLParser):
@@ -22,10 +22,6 @@ class InfoBoxHTMLParser(HTMLParser):
                 self.waiting_for_label = True
             elif (('class', '\\"value\\"') in attrs):
                 self.waiting_for_value = True
-    
-    def handle_endtag(self, tag):
-        #print "Encountered an end tag :", tag
-        pass
     
     def handle_data(self, data):
         #print "Encountered some data  :", data
@@ -105,6 +101,14 @@ def parse_user_event(html, outfolder):
         info_parser = InfoBoxHTMLParser()
         info_parser.feed(info_box_string)
         info_data = info_parser.get_info() # dictionary of all information in info box
+
+    # extract date and time
+    start = html.find("<div class=\\\"date-time\\\">")
+    if (start != -1):
+        #print "Found date-time.."
+        end = html.find("</div>", start + 1)
+        date_time_string = html[start + len("<div class=\\\"date-time\\\">") : end]
+        info_data['date-time'] = date_time_string
         
     add_workout_to_user(user_id, json_data, info_data, outfolder)
 
@@ -119,6 +123,7 @@ def parse_html(workout_id, html, outfolder):
         user_string = html[user_start:user_end]
         user_start = user_end
         parse_user_event(user_string, outfolder)
+        #break   # for testing, restrict one user
 
 def parse_sql_file(infile):
     if (not os.path.isfile(infile)):
@@ -131,9 +136,11 @@ def parse_sql_file(infile):
     infile_name, infile_ext = os.path.splitext(infile);
     infile_name = os.path.basename(infile_name)
     outfolder = os.path.join(os.path.dirname(__file__),"..","data",infile_name)
-    if (not os.path.isdir(outfolder)):
-        os.mkdir(outfolder)
-        print "Created folder " + outfolder
+    if (os.path.isdir(outfolder)):
+        shutil.rmtree(outfolder)
+        print "Removed existing folder " + outfolder
+    os.mkdir(outfolder)
+    print "Created folder " + outfolder
 
     # now read input file
     with open(infile) as f:
@@ -150,6 +157,8 @@ def parse_sql_file(infile):
                 parse_html(workout_id, html, outfolder)    # this will extract relevant data
 
                 n_records = n_records + 1
+                #if (n_records == 1):
+                    #break
 
 
 if __name__ == "__main__":
@@ -158,4 +167,3 @@ if __name__ == "__main__":
         exit(0)
     infile = sys.argv[1]
     parse_sql_file(infile)
-    #add_workout_to_user(sys.argv[1], "")
