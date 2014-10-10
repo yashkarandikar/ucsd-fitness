@@ -39,9 +39,9 @@ class InfoBoxHTMLParser(HTMLParser):
         return self.info
 
 
-class SqlToJsonData(object):
+class SqlToJsonParser(object):
 
-    def __init__(self, sqlfile, max_users = -1, max_workouts = -1):
+    def __init__(self, sqlfile = "", max_users = -1, max_workouts = -1):
         self.sqlfile = sqlfile
         self.workouts_without_user = 0
         self.duplicate_workouts = 0
@@ -208,6 +208,8 @@ class SqlToJsonData(object):
 
     def run(self):
         infile = self.sqlfile
+        if (self.sqlfile == ""):
+            raise Exception("Input file not supplied")
         if (not os.path.isfile(infile)):
             print "File not found.."
             exit(0)
@@ -255,5 +257,5 @@ if __name__ == "__main__":
         print "Usage: parse_csv.py <file>"
         exit(0)
     infile = sys.argv[1]
-    s = SqlToJsonData(infile, max_users=100, max_workouts=100)
+    s = SqlToJsonParser(infile, max_users=100, max_workouts=100)
     s.run()
