@@ -54,7 +54,7 @@ class SqlToJsonParser(object):
         self.max_workouts = max_workouts
 
     def add_workout_to_user(self, user_id, data_dict, info_dict, outfolder):
-        # creates a file for the user (if not already exists) and adds a workout in JSON format
+        # creates a file for the user (if does not already exist) and adds a workout in JSON format
         filepath = os.path.join(outfolder, str(user_id) + ".json")
         
         # Create ONE dictionary of all information and data of ONE workout done by one user

@@ -5,6 +5,7 @@ import sys, os
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath,'..'))
 from sql_to_json_parser import SqlToJsonParser
+import shutil
 
 def test_extract():
     # read test data file
@@ -35,5 +36,53 @@ def test_extract():
     assert(p.extract_date_time(html) == "Apr 21, 2014 10:13 AM")
 
 
+def json_to_dict(infile):
+    f = open(infile)
+    d = json.load(f)
+    f.close()
+    return d
+
+def test_add_workout_to_user():
+    outfolder = "/tmp/fitness"
+    if (os.path.isdir(outfolder)):
+        shutil.rmtree(outfolder)
+    os.mkdir(outfolder)
+    cwd = os.path.dirname(os.path.abspath(__file__))
+    j = json_to_dict(os.path.join(cwd, "./data/2_expected_1.json"))
+    user_id = "15549606"
+    info_dict = j['workouts'][0]
+    data_dict = {}
+    data_dict['data'] = info_dict['data']
+    del info_dict['data']
+    
+    # test writing first workout
+    p = SqlToJsonParser()
+    p.add_workout_to_user(user_id, data_dict, info_dict, outfolder)
+    assert(os.path.isfile("/tmp/fitness/15549606.json"))
+    assert(json_to_dict("/tmp/fitness/15549606.json") == json_to_dict(os.path.join(cwd, "./data/2_expected_1.json")))
+
+    # test writing 2nd workout
+    p.add_workout_to_user(user_id, data_dict, info_dict, outfolder)
+    assert(os.path.isfile("/tmp/fitness/15549606.json"))
+    assert(json_to_dict("/tmp/fitness/15549606.json") == json_to_dict(os.path.join(cwd, "./data/2_expected_2.json")))
+
+
+def test_parse_html():
+    outfolder = "/tmp/fitness"
+    if (os.path.isdir(outfolder)):
+        shutil.rmtree(outfolder)
+    os.mkdir(outfolder)
+    cwd = os.path.dirname(os.path.abspath(__file__))
+    f = open(os.path.join(cwd, "data","1.html"))
+    html = f.read()
+    f.close()
+    p = SqlToJsonParser()
+    p.parse_html("12345", html, outfolder)
+    assert(os.path.isfile("/tmp/fitness/15549606.json"))
+    assert(json_to_dict("/tmp/fitness/15549606.json") == json_to_dict(os.path.join(cwd, "./data/2_expected_1.json")))
+
+
 if __name__ == "__main__":
     test_extract()
+    test_add_workout_to_user()
+    test_parse_html()
