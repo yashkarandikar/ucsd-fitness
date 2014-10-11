@@ -6,7 +6,8 @@ import json
 import re
 import shutil
 from HTMLParser import HTMLParser
-import collections
+import time
+import argparse
 
 class InfoBoxHTMLParser(HTMLParser):
     # this class will take a html string corresponding to the info box (hydration, max altitude etc.) and return a dictionary after extracting the data
@@ -26,14 +27,12 @@ class InfoBoxHTMLParser(HTMLParser):
                 self.waiting_for_value = True
     
     def handle_data(self, data):
-        #print "Encountered some data  :", data
         if (self.waiting_for_label):
             self.label = data
             self.waiting_for_label = False
         elif (self.waiting_for_value):
             self.info[self.label] = data
             self.waiting_for_value = False
-            #print "added key value pair: " + self.label + " = " + self.info[self.label]
     
     def get_info(self):
         return self.info
@@ -41,7 +40,7 @@ class InfoBoxHTMLParser(HTMLParser):
 
 class SqlToJsonParser(object):
 
-    def __init__(self, sqlfile = "", max_users = -1, max_workouts = -1):
+    def __init__(self, sqlfile = "", max_users = -1, max_workouts = -1, verbose=False):
         self.sqlfile = sqlfile
         self.workouts_without_user = 0
         self.duplicate_workouts = 0
@@ -52,6 +51,7 @@ class SqlToJsonParser(object):
         self.workouts_without_info = 0
         self.max_users = max_users
         self.max_workouts = max_workouts
+        self.verbose = verbose
 
     def add_workout_to_user(self, user_id, data_dict, info_dict, outfolder):
         # creates a file for the user (if does not already exist) and adds a workout in JSON format
@@ -79,7 +79,8 @@ class SqlToJsonParser(object):
                     return
             
             j['workouts'].append(workout_dict)  # add a dict to the list of dicts
-            print "User "+ str(user_id) + " has more than 1 workout.."
+            #if (self.verbose):
+            #    print "User "+ str(user_id) + " has more than 1 workout.."
         else:           # else just create a new workout
             self.users += 1
             j = {}
@@ -89,7 +90,8 @@ class SqlToJsonParser(object):
         self.workouts += 1
 
         # write back everything to the file
-        print "Writing to " + filepath
+        #if (self.verbose):
+            #print "Writing to " + filepath
         f = open(filepath, "w") # not a very efficient way of adding something to a file, but okay for now
         json.dump(j, f)
         f.close()
@@ -131,9 +133,7 @@ class SqlToJsonParser(object):
         info_data = {}
         start = html.find("<div class=\\\"tab-panel\\\">")
         if (start != -1):
-            #print "found tab panel at index " + str(start)
             start = html.find("<ul class=\\\"summary clearfix\\\">", start + 1)
-            #print "found ul element at " + str(start)
             end = html.find("</ul>", start + 1)
             info_box_string = html[start : end + len("</ul>")]
             info_box_string = re.sub(r'\\n',r'', info_box_string)
@@ -180,10 +180,12 @@ class SqlToJsonParser(object):
         self.add_workout_to_user(user_id, trace_data, info_data, outfolder)
 
     def parse_html(self, workout_id, html, outfolder):
-        print "Processing workout " + workout_id
+        #if (self.verbose):
+            #print "Processing workout " + workout_id
         start = html.find("/workouts/user")
         if (start == -1):
-            print "\tNo user found..."
+            #if (self.verbose):
+                #print "\tNo user found..."
             self.workouts_without_user += 1
             return
         if (html.find("/workouts/user", start + 1) != -1):
@@ -207,6 +209,8 @@ class SqlToJsonParser(object):
         return False
 
     def run(self):
+        start_time = time.time()
+
         infile = self.sqlfile
         if (self.sqlfile == ""):
             raise Exception("Input file not supplied")
@@ -251,11 +255,17 @@ class SqlToJsonParser(object):
         
         self.print_stats()
 
+        end_time = time.time()
+        print "Total time taken = ", end_time - start_time
+
 
 if __name__ == "__main__":
-    if (len(sys.argv) != 2):
-        print "Usage: parse_csv.py <file>"
-        exit(0)
-    infile = sys.argv[1]
-    s = SqlToJsonParser(infile, max_users=100, max_workouts=100)
-    s.run()
+    parser = argparse.ArgumentParser(description='Reads SQL file and dumps the required data into JSON format')
+    parser.add_argument('--infile', type=str, help='.SQL file', dest='infile')
+    parser.add_argument('--verbose', action='store_true', help='verbose output (default: False)', default=False, dest='verbose')
+    args = parser.parse_args()
+    if (args.infile is not None):
+        s = SqlToJsonParser(args.infile)
+        s.run()
+    else:
+        parser.print_usage()
