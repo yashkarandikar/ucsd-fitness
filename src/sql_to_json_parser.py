@@ -2,7 +2,7 @@
 
 import sys
 import os.path
-import json
+import ujson
 import re
 import shutil
 from HTMLParser import HTMLParser
@@ -67,7 +67,7 @@ class SqlToJsonParser(object):
         if (os.path.isfile(filepath)):  # if user's file already exists, read the full thin and add the new workout
             # read all workouts from user's file
             f = open(filepath)
-            j = json.load(f)
+            j = ujson.load(f, precise_float=True)
             f.close()
             
             # check if this workout is duplicate
@@ -93,7 +93,7 @@ class SqlToJsonParser(object):
         #if (self.verbose):
             #print "Writing to " + filepath
         f = open(filepath, "w") # not a very efficient way of adding something to a file, but okay for now
-        json.dump(j, f)
+        ujson.dump(j, f, double_precision=15)
         f.close()
 
     def extract_user_id(self, html):
@@ -120,7 +120,7 @@ class SqlToJsonParser(object):
             json_string = "{" + html[start : end + 1] + "}"
             json_string = re.sub(r'\\n',r'',json_string)
             json_string = re.sub(r'\\"',r'"',json_string)
-            json_data = json.loads(json_string)
+            json_data = ujson.loads(json_string, precise_float=True)
         else:
             self.workouts_without_data += 1
         if (html.find("\"data\\\"", start + 1) != -1):
