@@ -8,6 +8,8 @@ import shutil
 from HTMLParser import HTMLParser
 import time
 import argparse
+import multiprocessing as mp
+import cProfile, pstats, StringIO
 
 class InfoBoxHTMLParser(HTMLParser):
     # this class will take a html string corresponding to the info box (hydration, max altitude etc.) and return a dictionary after extracting the data
@@ -37,23 +39,13 @@ class InfoBoxHTMLParser(HTMLParser):
     def get_info(self):
         return self.info
 
+def print_numbers(parser, my_id):
+    #parser.print_numbers(my_id)
+    for i in range(4):
+        print "Id : " + str(my_id) + ", number = " + str(i)
+        time.sleep(1)
 
-class SqlToJsonParser(object):
-
-    def __init__(self, sqlfile = "", max_users = -1, max_workouts = -1, verbose=False):
-        self.sqlfile = sqlfile
-        self.workouts_without_user = 0
-        self.duplicate_workouts = 0
-        self.lines_parsed = 0
-        self.users = 0
-        self.workouts = 0
-        self.workouts_without_data = 0
-        self.workouts_without_info = 0
-        self.max_users = max_users
-        self.max_workouts = max_workouts
-        self.verbose = verbose
-
-    def add_workout_to_user(self, user_id, data_dict, info_dict, outfolder):
+def add_workout_to_user(user_id, data_dict, info_dict, outfolder):
         # creates a file for the user (if does not already exist) and adds a workout in JSON format
         filepath = os.path.join(outfolder, str(user_id) + ".json")
         
@@ -75,27 +67,54 @@ class SqlToJsonParser(object):
             for w in workouts:
                 if (str(workout_dict) == str(w)):
                     duplicate = True
-                    self.duplicate_workouts += 1
+                    #self.duplicate_workouts += 1
                     return
             
             j['workouts'].append(workout_dict)  # add a dict to the list of dicts
             #if (self.verbose):
             #    print "User "+ str(user_id) + " has more than 1 workout.."
         else:           # else just create a new workout
-            self.users += 1
+            #self.users += 1
             j = {}
             j['id'] = str(user_id)
             j['workouts'] = [workout_dict]
-       
-        self.workouts += 1
+            #j = {'id' : str(user_id), 'workouts' : [workout_dict]}
 
-        # write back everything to the file
-        #if (self.verbose):
-            #print "Writing to " + filepath
         f = open(filepath, "w") # not a very efficient way of adding something to a file, but okay for now
         json.dump(j, f)
         f.close()
 
+
+
+class SqlToJsonParser(object):
+
+    def __init__(self, sqlfile = "", max_users = -1, max_workouts = -1, verbose=False, background_io=False):
+        self.sqlfile = sqlfile
+        self.workouts_without_user = 0
+        #self.duplicate_workouts = 0
+        self.lines_parsed = 0
+        self.users = []
+        self.workouts = 0
+        self.workouts_without_data = 0
+        self.workouts_without_info = 0
+        #self.max_users = max_users
+        self.max_workouts = max_workouts
+        self.verbose = verbose
+        self.background_io = background_io
+        self.pool = None
+        if (self.background_io):
+            print "Running with background io.."
+            self.pool = mp.Pool(processes=1)
+            #for j in range(4):
+            #    pool.apply_async(print_numbers, args=(None, j, ))
+            #    print "assigned print_numbers(" + str(j) + ") on worker"
+            #    time.sleep(1)
+
+    def write_to_disk(self, filepath, json_dict):
+        f = open(filepath, "w") # not a very efficient way of adding something to a file, but okay for now
+        json.dump(json_dict, f)
+        f.close()
+    
     def extract_user_id(self, html):
         # extract user id
         start = html.find("/workouts/user/")
@@ -164,6 +183,8 @@ class SqlToJsonParser(object):
         
         # extract user id
         user_id = self.extract_user_id(html)
+        if (int(user_id) not in self.users):
+            self.users.append(int(user_id))
         
         # extract info from 'data' - these are the traces (gps, heart-rate, pace)
         trace_data = self.extract_trace_data(html)
@@ -177,7 +198,11 @@ class SqlToJsonParser(object):
             info_data['date-time'] = date_time_string
                 
         # add to user's file
-        self.add_workout_to_user(user_id, trace_data, info_data, outfolder)
+        if (self.background_io):
+            self.pool.apply_async(add_workout_to_user, args=(user_id, trace_data, info_data, outfolder))
+        else:
+            add_workout_to_user(user_id, trace_data, info_data, outfolder)
+        self.workouts += 1
 
     def parse_html(self, workout_id, html, outfolder):
         #if (self.verbose):
@@ -194,16 +219,16 @@ class SqlToJsonParser(object):
 
     def print_stats(self):
         print "# lines parsed = ", self.lines_parsed
-        print "# duplicate workouts = ", self.duplicate_workouts
+        #print "# duplicate workouts = ", self.duplicate_workouts
         print "# workouts_without_user = ", self.workouts_without_user
         print "# workouts successfully extracted = ", self.workouts
-        print "# users = ", self.users
+        print "# users = ", len(self.users)
         print "# workouts without trace data = ", self.workouts_without_data
         print "# workouts without info box = ", self.workouts_without_info
 
     def done(self):
-        if (self.max_users > 0 and self.users >= self.max_users):
-            return True
+        #if (self.max_users > 0 and self.users >= self.max_users):
+            #return True
         if (self.max_workouts > 0 and self.workouts >= self.max_workouts):
             return True
         return False
@@ -254,18 +279,38 @@ class SqlToJsonParser(object):
                             #f2.close()
         
         self.print_stats()
+        if (self.background_io):
+            print "Waiting for background io thread to finish.."
+            print self.pool._pool
+            self.pool.close()
+            self.pool.join()
 
         end_time = time.time()
         print "Total time taken = ", end_time - start_time
-
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Reads SQL file and dumps the required data into JSON format')
     parser.add_argument('--infile', type=str, help='.SQL file', dest='infile')
     parser.add_argument('--verbose', action='store_true', help='verbose output (default: False)', default=False, dest='verbose')
+    parser.add_argument('--profile', action='store_true', help='profile output (default: False)', default=False, dest='profile')
+    parser.add_argument('--background-io', action='store_true', help='profile output (default: False)', default=False, dest='background_io')
     args = parser.parse_args()
     if (args.infile is not None):
-        s = SqlToJsonParser(args.infile)
-        s.run()
+        s = SqlToJsonParser(args.infile, background_io=args.background_io, max_workouts=1000)
+        if (args.profile):
+            import profile
+            print "Running in profiling mode.."
+            pr = cProfile.Profile()
+            pr.enable()
+            s.run()
+            pr.disable()
+            s = StringIO.StringIO()
+            sortby = 'cumulative'
+            ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            ps.print_stats()
+            print s.getvalue()
+        else:
+            s.run()
     else:
         parser.print_usage()
