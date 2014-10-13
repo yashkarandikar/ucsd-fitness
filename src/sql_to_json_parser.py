@@ -8,6 +8,8 @@ import shutil
 from HTMLParser import HTMLParser
 import time
 import argparse
+import profile
+import tarfile
 
 class InfoBoxHTMLParser(HTMLParser):
     # this class will take a html string corresponding to the info box (hydration, max altitude etc.) and return a dictionary after extracting the data
@@ -252,10 +254,14 @@ class SqlToJsonParser(object):
                             #f2 = open("test_html.html",'w')
                             #f2.write(html)
                             #f2.close()
-        
-        self.print_stats()
 
+        # tar the folder
+        with tarfile.open(outfolder + ".tar.gz", "w:gz") as tar:
+            tar.add(outfolder, arcname = os.path.basename(outfolder))
+
+        
         end_time = time.time()
+        self.print_stats()
         print "Total time taken = ", end_time - start_time
 
 
@@ -263,9 +269,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Reads SQL file and dumps the required data into JSON format')
     parser.add_argument('--infile', type=str, help='.SQL file', dest='infile')
     parser.add_argument('--verbose', action='store_true', help='verbose output (default: False)', default=False, dest='verbose')
+    parser.add_argument('--profile', action='store_true', help='profile output (default: False)', default=False, dest='profile')
+    parser.add_argument('--short', action='store_true', help='profile output (default: False)', default=False, dest='short')
     args = parser.parse_args()
     if (args.infile is not None):
-        s = SqlToJsonParser(args.infile)
-        s.run()
+        max_workouts = -1
+        if (args.short):
+            max_workouts = 1000
+        s = SqlToJsonParser(args.infile, max_workouts=max_workouts)
+        if (args.profile):
+            print "Running in profiling mode.."
+            pr = cProfile.Profile()
+            pr.enable()
+            s.run()
+            pr.disable()
+            s = StringIO.StringIO()
+            sortby = 'cumulative'
+            ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            ps.print_stats()
+            print s.getvalue()
+        else:
+            s.run()
     else:
         parser.print_usage()
