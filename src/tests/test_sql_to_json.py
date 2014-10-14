@@ -5,6 +5,7 @@ import ujson
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath,'..'))
 from sql_to_json_parser import SqlToJsonParser
+from utils import json_to_dicts
 import shutil
 
 def test_extract():
@@ -35,36 +36,33 @@ def test_extract():
     # check date-time
     assert(p.extract_date_time(html) == "Apr 21, 2014 10:13 AM")
 
-
-def json_to_dict(infile):
-    f = open(infile)
-    d = ujson.load(f, precise_float=True)
-    f.close()
-    return d
-
 def test_add_workout_to_user():
     outfolder = "/tmp/fitness"
     if (os.path.isdir(outfolder)):
         shutil.rmtree(outfolder)
     os.mkdir(outfolder)
     cwd = os.path.dirname(os.path.abspath(__file__))
-    j = json_to_dict(os.path.join(cwd, "./data/2_expected_1.json"))
+    dicts = json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))
     user_id = "15549606"
-    info_dict = j['workouts'][0]
+    info_dict = dicts[0]
     data_dict = {}
     data_dict['data'] = info_dict['data']
     del info_dict['data']
     
     # test writing first workout
     p = SqlToJsonParser()
-    p.add_workout_to_user(user_id, data_dict, info_dict, outfolder)
-    assert(os.path.isfile("/tmp/fitness/15549606.json"))
-    assert(json_to_dict("/tmp/fitness/15549606.json") == json_to_dict(os.path.join(cwd, "./data/2_expected_1.json")))
+    assert(p.add_workout_to_user(user_id, data_dict, info_dict, outfolder))
+    assert(os.path.isfile("/tmp/fitness/15549606.txt"))
+    assert(json_to_dicts("/tmp/fitness/15549606.txt") == json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt")))
 
-    # test writing 2nd workout
-    p.add_workout_to_user(user_id, data_dict, info_dict, outfolder)
-    assert(os.path.isfile("/tmp/fitness/15549606.json"))
-    assert(json_to_dict("/tmp/fitness/15549606.json") == json_to_dict(os.path.join(cwd, "./data/2_expected_2.json")))
+    # test writing 2nd workout (duplicate)
+    assert (p.add_workout_to_user(user_id, data_dict, info_dict, outfolder) == False)   # False coz we are adding duplicate
+    
+    # now write a 2nd different workout
+    info_dict['Weather'] = "Raining"    # to generate a different workout
+    assert (p.add_workout_to_user(user_id, data_dict, info_dict, outfolder))
+    assert(os.path.isfile("/tmp/fitness/15549606.txt"))
+    assert(json_to_dicts("/tmp/fitness/15549606.txt") == json_to_dicts(os.path.join(cwd, "./data/2_expected_2.txt")))
 
 
 def test_parse_html():
@@ -77,9 +75,9 @@ def test_parse_html():
     html = f.read()
     f.close()
     p = SqlToJsonParser()
-    p.parse_html("12345", html, outfolder)
-    assert(os.path.isfile("/tmp/fitness/15549606.json"))
-    assert(json_to_dict("/tmp/fitness/15549606.json") == json_to_dict(os.path.join(cwd, "./data/2_expected_1.json")))
+    p.parse_html("15549606", html, outfolder)
+    assert(os.path.isfile("/tmp/fitness/15549606.txt"))
+    assert(json_to_dicts("/tmp/fitness/15549606.txt") == json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt")))
 
 
 if __name__ == "__main__":
