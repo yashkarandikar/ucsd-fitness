@@ -242,9 +242,13 @@ class SqlToJsonParser(object):
                             #f2.close()
 
         # tar the folder
-        with tarfile.open(outfolder + ".tar.gz", "w:gz") as tar:
-            tar.add(outfolder, arcname = os.path.basename(outfolder))
-
+        #print "Compressing to tar.gz"
+        #gz_path = outfolder + ".tar.gz"
+        #if (os.path.isfile(gz_path)):
+        #    print "Deleting existing tar.gz file.."
+        #    os.remove(gz_path)
+        #with tarfile.open(gz_path, "w:gz") as tar:
+        #    tar.add(outfolder, arcname = os.path.basename(outfolder))
         
         end_time = time.time()
         self.print_stats()
