@@ -10,6 +10,7 @@ import time
 import argparse
 import profile
 import tarfile
+import hashlib
 
 class InfoBoxHTMLParser(HTMLParser):
     # this class will take a html string corresponding to the info box (hydration, max altitude etc.) and return a dictionary after extracting the data
@@ -54,52 +55,39 @@ class SqlToJsonParser(object):
         self.max_users = max_users
         self.max_workouts = max_workouts
         self.verbose = verbose
+        self.workout_hashes = {}
 
     def add_workout_to_user(self, user_id, data_dict, info_dict, outfolder):
         # creates a file for the user (if does not already exist) and adds a workout in JSON format
-        filepath = os.path.join(outfolder, str(user_id) + ".json")
+        filepath = os.path.join(outfolder, str(user_id) + ".txt")
         
-        # Create ONE dictionary of all information and data of ONE workout done by one user
+        # Create ONE dictionary of all information and data of ONE workout done by one user and convert it to a string
         workout_dict = info_dict    
         if (data_dict.has_key('data')):
             workout_dict['data'] = data_dict['data']
+        workout_str = ujson.dumps(workout_dict, double_precision=15)  # convert to string using ujson library
         
-        # add to user's file
-        duplicate = False
-        if (os.path.isfile(filepath)):  # if user's file already exists, read the full thin and add the new workout
-            # read all workouts from user's file
-            f = open(filepath)
-            j = ujson.load(f, precise_float=True)
-            f.close()
-            
-            # check if this workout is duplicate
-            workouts = j['workouts']
-            for w in workouts:
-                if (str(workout_dict) == str(w)):
-                    duplicate = True
-                    self.duplicate_workouts += 1
-                    return
-            
-            j['workouts'].append(workout_dict)  # add a dict to the list of dicts
-            #if (self.verbose):
-            #    print "User "+ str(user_id) + " has more than 1 workout.."
-        else:           # else just create a new workout
+        # compute hash, check if its duplicate and add to the dictionary in memory for future comparisons
+        uid = int(user_id)
+        workout_md5 = hashlib.md5(workout_str).hexdigest()
+        if (not os.path.isfile(filepath)):
             self.users += 1
-            j = {}
-            j['id'] = str(user_id)
-            j['workouts'] = [workout_dict]
-       
-        self.workouts += 1
+            self.workout_hashes[uid] = [workout_md5]
+        else:
+            # check for duplicates
+            if (workout_md5 in self.workout_hashes[uid]):
+                self.duplicate_workouts += 1
+                return False
+            self.workout_hashes[uid].append(workout_md5)
 
-        # write back everything to the file
-        #if (self.verbose):
-            #print "Writing to " + filepath
-        f = open(filepath, "w") # not a very efficient way of adding something to a file, but okay for now
-        ujson.dump(j, f, double_precision=15)
-        f.close()
+        # add to user's file
+        with open(filepath, 'a') as f:
+            f.write(workout_str + "\n")
+        self.workouts += 1
+        return True
 
     def extract_user_id(self, html):
-        # extract user id
+        # exitract user id
         start = html.find("/workouts/user/")
         if (start == -1):
             raise Exception("illegal input to this parse_user_event()..")
@@ -109,8 +97,6 @@ class SqlToJsonParser(object):
         if (html.find("/workouts/user/", start) != -1):
             raise Exception("Multiple user ids in one html doc")
         return user_id
-        #print "user id = " + str(user_id)
-
 
     def extract_trace_data(self, html):
         # extract info from 'data' - these are the traces (gps, heart-rate, pace)
