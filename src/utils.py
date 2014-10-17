@@ -1,4 +1,4 @@
-import ujson
+import simplejson as json
 import os
 
 def json_to_dicts(infile):
@@ -7,7 +7,8 @@ def json_to_dicts(infile):
     f = open(infile)
     with open(infile) as f:
         for line in f:
-            dicts.append(ujson.loads(line, precise_float=True))
+            #dicts.append(ujson.loads(line, precise_float=True))
+            dicts.append(json.loads(line))
     return dicts
 
 

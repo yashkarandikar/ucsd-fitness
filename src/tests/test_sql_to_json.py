@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import sys, os
-import ujson
+import simplejson as json
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath,'..'))
 from sql_to_json_parser import SqlToJsonParser
@@ -29,7 +29,8 @@ def test_extract():
     # check trace data
     dict_obtained = p.extract_trace_data(html)
     f = open(os.path.join(cwd, "./data","1_trace.json"))
-    dict_expected = ujson.load(f, precise_float=True)
+    #dict_expected = ujson.load(f, precise_float=True)
+    dict_expected = json.load(f)
     f.close()
     assert(dict_obtained == dict_expected)
 

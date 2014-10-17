@@ -2,7 +2,8 @@
 
 import sys
 import os.path
-import ujson
+#import ujson
+import simplejson as json
 import re
 import shutil
 from HTMLParser import HTMLParser
@@ -11,6 +12,7 @@ import argparse
 import profile
 import tarfile
 import hashlib
+import gzip
 
 class InfoBoxHTMLParser(HTMLParser):
     # this class will take a html string corresponding to the info box (hydration, max altitude etc.) and return a dictionary after extracting the data
@@ -65,7 +67,8 @@ class SqlToJsonParser(object):
         workout_dict = info_dict    
         if (data_dict.has_key('data')):
             workout_dict['data'] = data_dict['data']
-        workout_str = ujson.dumps(workout_dict, double_precision=15)  # convert to string using ujson library
+        #workout_str = ujson.dumps(workout_dict, double_precision=15)  # convert to string using ujson library
+        workout_str = json.dumps(workout_dict)  # convert to string using json library
         
         # compute hash, check if its duplicate and add to the dictionary in memory for future comparisons
         uid = int(user_id)
@@ -108,7 +111,8 @@ class SqlToJsonParser(object):
             json_string = "{" + html[start : end + 1] + "}"
             json_string = re.sub(r'\\n',r'',json_string)
             json_string = re.sub(r'\\"',r'"',json_string)
-            json_data = ujson.loads(json_string, precise_float=True)
+            #json_data = ujson.loads(json_string, precise_float=True)
+            json_data = json.loads(json_string)
         else:
             self.workouts_without_data += 1
         if (html.find("\"data\\\"", start + 1) != -1):
@@ -211,7 +215,10 @@ class SqlToJsonParser(object):
         # create output folder name
         infile_name, infile_ext = os.path.splitext(infile);
         infile_name = os.path.basename(infile_name)
-        outfolder = os.path.join(os.path.dirname(__file__),"..","data",infile_name)
+        outfolder_base = infile_name.split(".")[0]
+        if (outfolder_base == ""):
+            outfolder_base = "temp"
+        outfolder = os.path.join(os.path.dirname(__file__),"..","data",outfolder_base)
         if (os.path.isdir(outfolder)):
             shutil.rmtree(outfolder)
             print "Removed existing folder " + outfolder
@@ -219,7 +226,7 @@ class SqlToJsonParser(object):
         print "Created folder " + outfolder
 
         # now read input file
-        with open(infile) as f:
+        with gzip.open(infile) as f:
             workout_id = ""
             html = ""
             n_records = 0
