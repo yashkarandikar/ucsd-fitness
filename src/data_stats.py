@@ -7,6 +7,35 @@ class User(object):
         self.uid = uid
         self.n_workouts = n_workouts
 
+class Workout(object):
+    attr = {'UID' : 8, 'Distance' : 9, 'Max. Speed : ' : 11, 'Avg. Speed' : 11, 'Calories' : 9, 'Max. Heart Rate' : 16, 
+            'Weather' : 15, 'Total Ascent' : 14, 'Total Descent' : 14, 'Duration' : 9, 'Avg. Heart Rate' : 16, 
+            'Cadence' : 8, 'date-time' : 15}
+
+    def __init__(self, uid, workout_dict):
+        self.uid = uid
+        self.workout_dict = workout_dict
+        self.workout_dict['UID'] = str(uid)
+    
+    @staticmethod
+    def attribute_str():
+        s = ""
+        for a in Workout.attr.keys():
+            tmp = "{s:<" + str(Workout.attr[a]) + "s}"
+            s = s + tmp.format(s=a)
+        return s
+
+    def __str__(self):
+        values = ""
+        for a in Workout.attr:
+            curr = "{v:<" + str(Workout.attr[a]) + "s}"
+            if (self.workout_dict.has_key(a)):
+                curr = curr.format(v=self.workout_dict[a])
+            else:
+                curr = curr.format(v="none")
+            values = values + curr
+        return values
+
 def get_data():
     cwd = os.path.dirname(os.path.abspath(__file__))
     folder = os.path.join(cwd, "..","data","endoMondo5000")
@@ -38,11 +67,20 @@ def get_user_stats():
     # get user with max workouts
     uid = users[0].uid
     print "\nUser with highest number of workouts = " + str(uid)
-    workouts = get_data_for_user(uid)
+    workout_dicts = get_data_for_user(uid)
+    workouts = []
+    for w in workout_dicts:
+        workouts.append(Workout(uid, w))
+        print w
+    workouts.sort(key=lambda x: x.workout_dict['date-time'])
+    print Workout.attribute_str()
+    for w in workouts:
+        print w 
 
 
 if __name__ == "__main__":
     t1 = time.time()
     get_user_stats()
     t2 = time.time()
+    #print Workout.attribute_str()
     print "Time taken = " + str(t2 - t1)
