@@ -59,7 +59,7 @@ class SqlToJsonParser(object):
         self.verbose = verbose
         self.workout_hashes = {}
 
-    def add_workout_to_user(self, user_id, workout_id, trace_dict, info_dict, outfolder):
+    def add_workout_to_user(self, user_id, workout_id, sport_type, trace_dict, info_dict, outfolder):
         # creates a file for the user (if does not already exist) and adds a workout in JSON format
         folder = os.path.join(outfolder, str(user_id)[:3])
         if (not os.path.isdir(folder)):
@@ -73,6 +73,7 @@ class SqlToJsonParser(object):
         #if (data_dict.has_key('data')):
             #workout_dict['data'] = data_dict['data']
         workout_dict.update(trace_dict)
+        workout_dict["sport"] = sport_type
         #workout_str = ujson.dumps(workout_dict, double_precision=15)  # convert to string using ujson library
         workout_md5 = hashlib.md5(json.dumps(workout_dict)).hexdigest()  # exclude workout_id when calculating md5, otherwise duplicates will not get detected
         workout_dict["workout_id"] = workout_id
@@ -196,11 +197,24 @@ class SqlToJsonParser(object):
             raise Exception("Multiple date-time elements in one html")
         return date_time_string
 
+    def extract_sport_type(self, html):
+        start  = html.find("<div class=\\\"sport-name\\\">")
+        if (start != -1):
+            end = html.find("</div>", start + 1)
+            type_string = html[start + len("<div class=\\\"sport-name\\\">") : end]
+        if (html.find("<div class=\\\"sport-name\\\">", start + 1) != -1):
+            raise Exception("Multiple sport-name elements in one html")
+        return type_string
+
+
     def parse_user_event(self, workout_id, html, outfolder):
         # html string contains ONE user id, all trace data and info box data
         
         # extract user id
         user_id = self.extract_user_id(html)
+
+        # extract sport type - cycling, walking etc
+        sport_type = self.extract_sport_type(html)
         
         # extract info from 'data' - these are the traces (gps, heart-rate, pace)
         trace_data = self.extract_trace_data(html)
@@ -214,7 +228,7 @@ class SqlToJsonParser(object):
             info_data['date-time'] = date_time_string
                 
         # add to user's file
-        self.add_workout_to_user(user_id, workout_id, trace_data, info_data, outfolder)
+        self.add_workout_to_user(user_id, workout_id, sport_type, trace_data, info_data, outfolder)
 
     def parse_html(self, workout_id, html, outfolder):
         #if (self.verbose):
