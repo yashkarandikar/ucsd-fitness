@@ -1,0 +1,18 @@
+separate file for each user, 1 json line per workout - Note that the file as a whole is NOT json compliant since the lines  are not part of any dictionary, but each line is valid JSON text
+
+NEW FORMAT
+# all lists - lng, lat, dist, speed, alt etc must be of the same length
+
+{"workout":12344, "date-time":"Apr 21, 2014 10:13 AM", "hydration":"32L",..., "lng":[1,2,3,4], "lat":[1,2,3,4], "dist":[1,2,3,4],"speed":[1,2,3,4],"alt":[1,2,3,4]},
+{"workout":12345, "date-time":"Apr 21, 2014 10:13 AM", "hydration":"32L",..., "lng":[1,2,3,4], "lat":[1,2,3,4], "dist":[1,2,3,4],"speed":[1,2,3,4],"alt":[1,2,3,4], "duration":[]},
+
+===================================== 
+OLD FORMAT:
+example:
+32432.json
+{
+        {"type":"cycling", "date-time":"Apr 21, 2014 10:13 AM", "hydration":"32L",..., "data":[<same data extracted from html>]},
+        {"type":"running", "hydration":"32L",..., "data":[<same data extracted from html>]},
+}
+
+

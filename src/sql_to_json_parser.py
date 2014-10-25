@@ -59,20 +59,24 @@ class SqlToJsonParser(object):
         self.verbose = verbose
         self.workout_hashes = {}
 
-    def add_workout_to_user(self, user_id, data_dict, info_dict, outfolder):
+    def add_workout_to_user(self, user_id, workout_id, trace_dict, info_dict, outfolder):
         # creates a file for the user (if does not already exist) and adds a workout in JSON format
-        filepath = os.path.join(outfolder, str(user_id) + ".txt")
+        folder = os.path.join(outfolder, str(user_id)[:3])
+        if (not os.path.isdir(folder)):
+            os.mkdir(folder)
+        filepath = os.path.join(folder, str(user_id) + ".txt")
         
         # Create ONE dictionary of all information and data of ONE workout done by one user and convert it to a string
-        workout_dict = info_dict    
-        if (data_dict.has_key('data')):
-            workout_dict['data'] = data_dict['data']
-        #workout_str = ujson.dumps(workout_dict, double_precision=15)  # convert to string using ujson library
-        workout_str = json.dumps(workout_dict)  # convert to string using json library
-        
         # compute hash, check if its duplicate and add to the dictionary in memory for future comparisons
         uid = int(user_id)
-        workout_md5 = hashlib.md5(workout_str).hexdigest()
+        workout_dict = info_dict    
+        #if (data_dict.has_key('data')):
+            #workout_dict['data'] = data_dict['data']
+        workout_dict.update(trace_dict)
+        #workout_str = ujson.dumps(workout_dict, double_precision=15)  # convert to string using ujson library
+        workout_md5 = hashlib.md5(json.dumps(workout_dict)).hexdigest()  # exclude workout_id when calculating md5, otherwise duplicates will not get detected
+        workout_dict["workout_id"] = workout_id
+        workout_str = json.dumps(workout_dict)  # convert to string using json library
         if (not os.path.isfile(filepath)):
             self.users += 1
             self.workout_hashes[uid] = [workout_md5]
@@ -101,9 +105,49 @@ class SqlToJsonParser(object):
             raise Exception("Multiple user ids in one html doc")
         return user_id
 
+    def reformat_trace_data(self, ori_data):
+        """
+        ori_data is  trace data for ONE user
+        """
+        records = ori_data['data']
+        new_data = {"lng":[], "lat":[], "alt":[], "duration":[], "distance":[], "speed" : [], "pace" : [], "hr" : [], "cad":[]}
+        for r in records:
+            # r itself is a dict of the form {"lat": 50.223, "lng": 19.247, "values": {"duration": 19352, "distance": 0.0, "alt": 1040, "speed": 0.8}}
+            # remove the nested dictionary and make it flat
+            if (r.has_key("values")):
+                values = r['values']
+                del r['values']
+                r.update(values)
+            
+            # initialize a counts dictionary, which keeps a count of non-N entries, to allow fast deletion of lists which are just N's
+            counts = {}
+            for k in new_data:
+                counts[k] = 0
+
+            for k in new_data:
+                if (r.has_key(k)):
+                    new_data[k].append(round(r[k], 6))
+                    counts[k] += 1
+                else:
+                    new_data[k].append("N")
+
+            for k in r:
+                if (k not in new_data.keys()):
+                    raise Exception("Unknown key %s found in trace data" %(k))
+
+        # check if all lists are of same length and remove any keys with all N's
+        l = len(new_data["lng"])
+        for k in counts:
+            assert(l == len(new_data[k]))
+            if (counts[k] == 0):
+                #print "key %s entirely absent.. so removing it.." %(k)
+                del new_data[k]
+
+        return new_data
+
     def extract_trace_data(self, html):
         # extract info from 'data' - these are the traces (gps, heart-rate, pace)
-        json_data = {}
+        trace_data = {}
         json_string = ""
         start = html.find("\"data\\\"")
         if (start != -1):
@@ -111,13 +155,14 @@ class SqlToJsonParser(object):
             json_string = "{" + html[start : end + 1] + "}"
             json_string = re.sub(r'\\n',r'',json_string)
             json_string = re.sub(r'\\"',r'"',json_string)
-            #json_data = ujson.loads(json_string, precise_float=True)
-            json_data = json.loads(json_string)
+            #trace_data = ujson.loads(json_string, precise_float=True)
+            trace_data = json.loads(json_string)
+            trace_data = self.reformat_trace_data(trace_data)
         else:
             self.workouts_without_data += 1
         if (html.find("\"data\\\"", start + 1) != -1):
             raise Exception("Multiple 'data' elements in one html doc")
-        return json_data
+        return trace_data 
 
     def extract_info_box(self, html):
         # extract info box - hydration, wind etc.
@@ -151,7 +196,7 @@ class SqlToJsonParser(object):
             raise Exception("Multiple date-time elements in one html")
         return date_time_string
 
-    def parse_user_event(self, html, outfolder):
+    def parse_user_event(self, workout_id, html, outfolder):
         # html string contains ONE user id, all trace data and info box data
         
         # extract user id
@@ -169,7 +214,7 @@ class SqlToJsonParser(object):
             info_data['date-time'] = date_time_string
                 
         # add to user's file
-        self.add_workout_to_user(user_id, trace_data, info_data, outfolder)
+        self.add_workout_to_user(user_id, workout_id, trace_data, info_data, outfolder)
 
     def parse_html(self, workout_id, html, outfolder):
         #if (self.verbose):
@@ -182,7 +227,7 @@ class SqlToJsonParser(object):
             return
         if (html.find("/workouts/user", start + 1) != -1):
             raise Exception("Multiple users found in one html string..")
-        self.parse_user_event(html, outfolder)
+        self.parse_user_event(workout_id, html, outfolder)
 
     def print_stats(self):
         print "# lines parsed = ", self.lines_parsed
@@ -220,6 +265,7 @@ class SqlToJsonParser(object):
             outfolder_base = "temp"
         outfolder = os.path.join(os.path.dirname(__file__),"..","data",outfolder_base)
         if (os.path.isdir(outfolder)):
+            print outfolder
             shutil.rmtree(outfolder)
             print "Removed existing folder " + outfolder
         os.mkdir(outfolder)
