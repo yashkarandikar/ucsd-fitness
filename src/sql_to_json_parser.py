@@ -45,8 +45,9 @@ class InfoBoxHTMLParser(HTMLParser):
 
 class SqlToJsonParser(object):
 
-    def __init__(self, sqlfile = "", max_users = -1, max_workouts = -1, verbose=False):
-        self.sqlfile = sqlfile
+    def __init__(self, infile = "", outfile = "", max_workouts = -1, verbose=False):
+        self.infile = infile
+        self.outfile = outfile
         self.workouts_without_user = 0
         self.duplicate_workouts = 0
         self.lines_parsed = 0
@@ -54,11 +55,23 @@ class SqlToJsonParser(object):
         self.workouts = 0
         self.workouts_without_data = 0
         self.workouts_without_info = 0
-        self.max_users = max_users
         self.max_workouts = max_workouts
         self.verbose = verbose
         self.workout_hashes = {}
 
+    def create_workout_dict(self, user_id, workout_id, sport_type, trace_dict, info_dict):
+        # Create ONE dictionary of all information and data of ONE workout done by one user and convert it to a string
+        uid = int(user_id)
+        workout_dict = info_dict    
+        workout_dict.update(trace_dict)
+        workout_dict["sport"] = sport_type
+        workout_dict["user_id"] = str(user_id)
+        workout_md5 = hashlib.md5(json.dumps(workout_dict)).hexdigest()  # exclude workout_id when calculating md5, otherwise duplicates will not get detected
+        workout_dict["workout_id"] = workout_id
+        workout_str = json.dumps(workout_dict)  # convert to string using json library
+        return [workout_dict, workout_str, workout_md5]
+
+    """
     def add_workout_to_user(self, user_id, workout_id, sport_type, trace_dict, info_dict, outfolder):
         # creates a file for the user (if does not already exist) and adds a workout in JSON format
         folder = os.path.join(outfolder, str(user_id)[:3])
@@ -93,6 +106,7 @@ class SqlToJsonParser(object):
             f.write(workout_str + "\n")
         self.workouts += 1
         return True
+    """
 
     def extract_user_id(self, html):
         # exitract user id
@@ -207,7 +221,7 @@ class SqlToJsonParser(object):
         return type_string
 
 
-    def parse_user_event(self, workout_id, html, outfolder):
+    def parse_user_event(self, workout_id, html):
         # html string contains ONE user id, all trace data and info box data
         
         # extract user id
@@ -217,20 +231,23 @@ class SqlToJsonParser(object):
         sport_type = self.extract_sport_type(html)
         
         # extract info from 'data' - these are the traces (gps, heart-rate, pace)
-        trace_data = self.extract_trace_data(html)
+        trace_dict = self.extract_trace_data(html)
         
         # extract info box - hydration, wind etc.
-        info_data = self.extract_info_box(html)
+        info_dict = self.extract_info_box(html)
         
         # extract date and time string
         date_time_string = self.extract_date_time(html)
         if (date_time_string is not None):
-            info_data['date-time'] = date_time_string
-                
-        # add to user's file
-        self.add_workout_to_user(user_id, workout_id, sport_type, trace_data, info_data, outfolder)
+            info_dict['date-time'] = date_time_string
+           
+        # combine everything into one dictionary
+        return self.create_workout_dict(user_id, workout_id, sport_type, trace_dict, info_dict)
 
-    def parse_html(self, workout_id, html, outfolder):
+        # add to user's file
+        #self.add_workout_to_user(user_id, workout_id, sport_type, trace_data, info_data, outfolder)
+    
+    def parse_html(self, workout_id, html):
         #if (self.verbose):
             #print "Processing workout " + workout_id
         start = html.find("/workouts/user")
@@ -238,32 +255,51 @@ class SqlToJsonParser(object):
             #if (self.verbose):
                 #print "\tNo user found..."
             self.workouts_without_user += 1
-            return
+            return [None, None, None]
         if (html.find("/workouts/user", start + 1) != -1):
             raise Exception("Multiple users found in one html string..")
-        self.parse_user_event(workout_id, html, outfolder)
+        [w_dict, w_str, w_md5] = self.parse_user_event(workout_id, html)
+        return [w_dict, w_str, w_md5]
 
     def print_stats(self):
         print "# lines parsed = ", self.lines_parsed
         print "# duplicate workouts = ", self.duplicate_workouts
-        print "# workouts_without_user = ", self.workouts_without_user
-        print "# workouts successfully extracted = ", self.workouts
-        print "# users = ", self.users
+        print "# workouts without user = ", self.workouts_without_user
         print "# workouts without trace data = ", self.workouts_without_data
         print "# workouts without info box = ", self.workouts_without_info
+        print "# workouts successfully extracted = ", self.workouts
+        print "# users = ", self.users
 
     def done(self):
-        if (self.max_users > 0 and self.users >= self.max_users):
-            return True
+        #if (self.max_users > 0 and self.users >= self.max_users):
+            #return True
         if (self.max_workouts > 0 and self.workouts >= self.max_workouts):
             return True
         return False
+    
+    def write_workout(self, w_dict, w_str, w_md5, fd):
+        if (w_dict is not None):
+            uid = int(w_dict["user_id"])
+            if (self.workout_hashes.has_key(uid)):    # existing user
+                if (w_md5 in self.workout_hashes[uid]):     # duplicate workout for that user
+                    self.duplicate_workouts += 1
+                    return False
+                else:                                   # new workout for existing user
+                    fd.write(w_str + "\n")
+                    self.workouts += 1
+                    self.workout_hashes[uid].append(w_md5)
+            else:                                   # new user , new workout
+                fd.write(w_str + "\n")
+                self.users += 1
+                self.workouts += 1
+                self.workout_hashes[uid] = [w_md5]
+        return True
 
     def run(self):
         start_time = time.time()
 
-        infile = self.sqlfile
-        if (self.sqlfile == ""):
+        infile = self.infile
+        if (self.infile == ""):
             raise Exception("Input file not supplied")
         if (not os.path.isfile(infile)):
             print "File not found.."
@@ -272,6 +308,7 @@ class SqlToJsonParser(object):
         print "Reading file " + infile
 
         # create output folder name
+        """
         infile_name, infile_ext = os.path.splitext(infile);
         infile_name = os.path.basename(infile_name)
         outfolder_base = infile_name.split(".")[0]
@@ -284,6 +321,10 @@ class SqlToJsonParser(object):
             print "Removed existing folder " + outfolder
         os.mkdir(outfolder)
         print "Created folder " + outfolder
+        """
+
+        # open output file
+        out_fd = gzip.open(self.outfile, "w")
 
         # now read input file
         with gzip.open(infile) as f:
@@ -302,11 +343,12 @@ class SqlToJsonParser(object):
                             start = p2
                             end = line.find("</html>", start + 1)
                             html = line[start : end + len("</html>")]
-                            self.parse_html(workout_id, html, outfolder)
+                            [w_dict, w_str, w_md5] = self.parse_html(workout_id, html)
+                            self.write_workout(w_dict, w_str, w_md5, out_fd)
                             start = line.find("(", end + 1)
-                            #f2 = open("test_html.html",'w')
-                            #f2.write(html)
-                            #f2.close()
+
+        
+        out_fd.close()
 
         # tar the folder
         #print "Compressing to tar.gz"
@@ -323,29 +365,34 @@ class SqlToJsonParser(object):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Reads SQL file and dumps the required data into JSON format')
-    parser.add_argument('--infile', type=str, help='.SQL file', dest='infile')
+    parser = argparse.ArgumentParser(description='Reads SQL file and dumps the required data into JSON format, one line per workout')
+    parser.add_argument('--infile', type=str, help='.sql.gz file', dest='infile')
+    parser.add_argument('--outfile', type=str, help='.gz file', dest='outfile')
     parser.add_argument('--verbose', action='store_true', help='verbose output (default: False)', default=False, dest='verbose')
     parser.add_argument('--profile', action='store_true', help='profile output (default: False)', default=False, dest='profile')
     parser.add_argument('--short', action='store_true', help='profile output (default: False)', default=False, dest='short')
     args = parser.parse_args()
-    if (args.infile is not None):
-        max_workouts = -1
-        if (args.short):
-            max_workouts = 1000
-        s = SqlToJsonParser(args.infile, max_workouts=max_workouts)
-        if (args.profile):
-            print "Running in profiling mode.."
-            pr = cProfile.Profile()
-            pr.enable()
-            s.run()
-            pr.disable()
-            s = StringIO.StringIO()
-            sortby = 'cumulative'
-            ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-            ps.print_stats()
-            print s.getvalue()
-        else:
-            s.run()
-    else:
+
+    #check if all required options are available
+    if (args.infile is None or args.outfile is None):
         parser.print_usage()
+        sys.exit(0)
+
+    # run, considering all options
+    max_workouts = -1
+    if (args.short):
+        max_workouts = 1000
+    s = SqlToJsonParser(args.infile, args.outfile, max_workouts=max_workouts)
+    if (args.profile):
+        print "Running in profiling mode.."
+        pr = cProfile.Profile()
+        pr.enable()
+        s.run()
+        pr.disable()
+        s = StringIO.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print s.getvalue()
+    else:
+        s.run()
