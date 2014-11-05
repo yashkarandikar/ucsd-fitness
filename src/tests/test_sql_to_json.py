@@ -5,10 +5,11 @@ import simplejson as json
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath,'..'))
 from sql_to_json_parser import SqlToJsonParser
-from utils import json_to_dicts
+from utils import json_lines_to_dicts
 import shutil
 
 def test_extract():
+    create_tmp_folder()
     # read test data file
     cwd = os.path.dirname(os.path.abspath(__file__))
     infile = os.path.join(cwd, "./data","1.html")
@@ -49,6 +50,7 @@ def test_extract():
 
 
 def test_create_workout_dict():
+    create_tmp_folder()
     cwd = os.path.dirname(os.path.abspath(__file__))
     user_id = "15549606"
     workout_id = "12345"
@@ -64,7 +66,7 @@ def test_create_workout_dict():
     info_dict = { "Distance" : "2.35 mi", "Duration" : "24m:03s", "Avg. Speed" : "10:13 min/mi", "Max. Speed" : "7:01 min/mi", "Calories" : "326 kcal", "Hydration" : "0.34L", "Min. Altitude" : "456 ft", "Max. Altitude" : "577 ft", "Total Ascent" : "417 ft", "Total Descent" : "486 ft", "Weather" : "Sunny","date-time" : "Apr 21, 2014 10:13 AM", "user_id" : "15549606"}
     p = SqlToJsonParser()
     [w_dict, w_str, w_md5] = p.create_workout_dict(user_id, workout_id, sport, trace_dict, info_dict)
-    assert (json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0] == w_dict)
+    assert (json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0] == w_dict)
 
 
 def small_workout_data_1():
@@ -82,9 +84,14 @@ def small_workout_data_1():
     info_dict = { "Distance" : "2.35 mi", "Duration" : "24m:03s", "Avg. Speed" : "10:13 min/mi", "Max. Speed" : "7:01 min/mi", "Calories" : "326 kcal", "Hydration" : "0.34L", "Min. Altitude" : "456 ft", "Max. Altitude" : "577 ft", "Total Ascent" : "417 ft", "Total Descent" : "486 ft", "Weather" : "Sunny","date-time" : "Apr 21, 2014 10:13 AM", "user_id" : "15549606"}
     return [user_id, workout_id, sport, trace_dict, info_dict]
 
+def create_tmp_folder():
+    p = "/tmp/fitness"
+    if (not os.path.isdir(p)):
+        os.mkdir(p)
 
 def test_write_workout():
     cwd = os.path.dirname(os.path.abspath(__file__))
+    create_tmp_folder()
     
     p = SqlToJsonParser()
     
@@ -94,7 +101,7 @@ def test_write_workout():
     [w_dict, w_str, w_md5] = p.create_workout_dict(user_id, workout_id, sport, trace_dict, info_dict)
     assert(p.write_workout(w_dict, w_str, w_md5, fd))   # should return True
     fd.close()
-    assert(json_to_dicts("/tmp/fitness/1.txt") == json_to_dicts(os.path.join(cwd,"./data/2_expected_1.txt")))
+    assert(json_lines_to_dicts("/tmp/fitness/1.txt") == json_lines_to_dicts(os.path.join(cwd,"./data/2_expected_1.txt")))
 
     # now test 2nd write, which should get detected as a duplicate
     [user_id, workout_id, sport, trace_dict, info_dict] = small_workout_data_1()
@@ -110,7 +117,7 @@ def test_write_workout():
     fd = open("/tmp/fitness/1.txt","a")
     assert(p.write_workout(w_dict, w_str, w_md5, fd))   # should return True
     fd.close()
-    assert(json_to_dicts("/tmp/fitness/1.txt") == json_to_dicts(os.path.join(cwd, "./data/2_expected_2.txt")))
+    assert(json_lines_to_dicts("/tmp/fitness/1.txt") == json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_2.txt")))
 
 """
 def test_add_workout_to_user():
@@ -119,7 +126,7 @@ def test_add_workout_to_user():
         shutil.rmtree(outfolder)
     os.mkdir(outfolder)
     cwd = os.path.dirname(os.path.abspath(__file__))
-    #dicts = json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))
+    #dicts = json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))
     #info_dict = dicts[0]
     #trace_dict = {}
     #trace_dict['data'] = info_dict['data']
@@ -141,18 +148,18 @@ def test_add_workout_to_user():
     p = SqlToJsonParser()
     assert(p.add_workout_to_user(user_id, workout_id, sport, trace_dict, info_dict, outfolder))
     assert(os.path.isfile("/tmp/fitness/155/15549606.txt"))
-    #print json_to_dicts("/tmp/fitness/155/15549606.txt")[0]
-    #print json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]
-    for k in json_to_dicts("/tmp/fitness/155/15549606.txt")[0]:
-        if (k not in json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]):
+    #print json_lines_to_dicts("/tmp/fitness/155/15549606.txt")[0]
+    #print json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]
+    for k in json_lines_to_dicts("/tmp/fitness/155/15549606.txt")[0]:
+        if (k not in json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]):
             print k
-    assert(json_to_dicts("/tmp/fitness/155/15549606.txt")[0]["lng"] == json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["lng"])
-    assert(json_to_dicts("/tmp/fitness/155/15549606.txt")[0]["pace"] == json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["pace"])
-    assert(json_to_dicts("/tmp/fitness/155/15549606.txt")[0]["duration"] == json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["duration"])
-    assert(json_to_dicts("/tmp/fitness/155/15549606.txt")[0]["distance"] == json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["distance"])
-    assert(json_to_dicts("/tmp/fitness/155/15549606.txt")[0]["alt"] == json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["alt"])
-    assert(json_to_dicts("/tmp/fitness/155/15549606.txt")[0]["lat"] == json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["lat"])
-    assert(json_to_dicts("/tmp/fitness/155/15549606.txt")[0] == json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0])
+    assert(json_lines_to_dicts("/tmp/fitness/155/15549606.txt")[0]["lng"] == json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["lng"])
+    assert(json_lines_to_dicts("/tmp/fitness/155/15549606.txt")[0]["pace"] == json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["pace"])
+    assert(json_lines_to_dicts("/tmp/fitness/155/15549606.txt")[0]["duration"] == json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["duration"])
+    assert(json_lines_to_dicts("/tmp/fitness/155/15549606.txt")[0]["distance"] == json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["distance"])
+    assert(json_lines_to_dicts("/tmp/fitness/155/15549606.txt")[0]["alt"] == json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["alt"])
+    assert(json_lines_to_dicts("/tmp/fitness/155/15549606.txt")[0]["lat"] == json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0]["lat"])
+    assert(json_lines_to_dicts("/tmp/fitness/155/15549606.txt")[0] == json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0])
 
     # test writing 2nd workout (duplicate)
     # its better to explicitly initialize everything again since some of the dictionaries get modified internally in the add_workout_to_user function
@@ -174,7 +181,7 @@ def test_add_workout_to_user():
     info_dict['Weather'] = "Raining"    # to generate a different workout
     assert (p.add_workout_to_user(user_id, workout_id, sport, trace_dict, info_dict, outfolder))
     assert(os.path.isfile("/tmp/fitness/155/15549606.txt"))
-    assert(json_to_dicts("/tmp/fitness/155/15549606.txt") == json_to_dicts(os.path.join(cwd, "./data/2_expected_2.txt")))
+    assert(json_lines_to_dicts("/tmp/fitness/155/15549606.txt") == json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_2.txt")))
 """
 
 def test_parse_html():
@@ -190,7 +197,7 @@ def test_parse_html():
     workout_id = "12345"
     [w_dict, w_str, w_md5] = p.parse_html(workout_id, html)
     #assert(os.path.isfile("/tmp/fitness/155/15549606.txt"))
-    assert(w_dict == json_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0])
+    assert(w_dict == json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_1.txt"))[0])
 
 def test_reformat_trace_data():
     d = {"data": [{"lat": 50.223, "lng": 19.247, "values": {"duration": 0, "distance": 0.0}}, {"lat": 50.22, "lng": 19.24, "values": {"duration": 19352, "distance": 0.004, "alt": 1040.02, "speed": 0.830}}, {"lat": 50.22, "lng": 19.24, "values": {"duration": 29028, "distance": 0.0096, "alt": 1037.12, "speed": 1.5}}]}
@@ -208,7 +215,7 @@ def test_reformat_trace_data():
     except:
         pass
 
-def test_json_to_dicts():
+def test_json_lines_to_dicts():
     cwd = os.path.dirname(os.path.abspath(__file__))
     expected_dicts = []
     expected_dicts.append({"workout_id" : "12345", "user_id" : "15549606",
@@ -227,7 +234,7 @@ def test_json_to_dicts():
                     "alt":['N', 556.10236, 555.55554, 532.58966, 519.4663, 508.53018, 515.09186],
                     "pace":['N', 'N', 'N', 8.227328, 8.070909, 7.580201, 7.370488],
                     "Distance" : "2.35 mi", "Duration" : "24m:03s", "Avg. Speed" : "10:13 min/mi", "Max. Speed" : "7:01 min/mi", "Calories" : "326 kcal", "Hydration" : "0.34L", "Min. Altitude" : "456 ft", "Max. Altitude" : "577 ft", "Total Ascent" : "417 ft", "Total Descent" : "486 ft", "Weather" : "Raining","date-time" : "Apr 21, 2014 10:13 AM", "workout_id" : "12345", "sport" : "Running"})
-    assert(json_to_dicts(os.path.join(cwd, "./data/2_expected_2.txt"))  == expected_dicts)
+    assert(json_lines_to_dicts(os.path.join(cwd, "./data/2_expected_2.txt"))  == expected_dicts)
 
 
 if __name__ == "__main__":
@@ -237,4 +244,4 @@ if __name__ == "__main__":
     #test_add_workout_to_user()
     test_parse_html()
     test_reformat_trace_data()
-    test_json_to_dicts()
+    test_json_lines_to_dicts()
