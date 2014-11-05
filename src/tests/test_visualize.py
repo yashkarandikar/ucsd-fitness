@@ -4,7 +4,7 @@ import os
 import sys
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath,'..'))
-from visualize import get_avg_data
+from visualize import get_avg_data, sort_avg_data
 import utils
 
 def are_lists_equal(l1, l2):
@@ -34,6 +34,20 @@ def test_get_avg_data():
     assert(are_lists_equal(x[1],  [0.078509, 0.07995, 0.076088]))
     assert(are_lists_equal(y[0],  [7.8122315, 8.1547095, 7.8924752]))
 
+def test_sort_avg_data():
+    x = [[], []]; y = [[], []]
+    x[0] = [1.1, 2.2, 3.3]
+    y[0] = [5, 6, 7]
+    x[1] = [2.11, 3.12, 1.22]
+    y[1] = [100, 200, 300]
+    [x, y] = sort_avg_data(x, y)
+    assert(len(x) == 2)
+    assert(len(y) == 2)
+    assert(are_lists_equal(x[0], [1.1, 2.2, 3.3]))
+    assert(are_lists_equal(y[0], [5, 6, 7]))
+    assert(are_lists_equal(x[1], [1.22, 2.11, 3.12]))
+    assert(are_lists_equal(y[1], [300, 100, 200]))
 
 if __name__ == "__main__":
     test_get_avg_data()
+    test_sort_avg_data()

@@ -61,10 +61,8 @@ def get_avg_data(infile, x_params, y_params):
             if (w.has_key(xp) and w.has_key(yp)):
                 #print "workout " + str(w["workout_id"]) + " has both.. "  + xp + " and " + yp
                 [x_trace, y_trace] = utils.remove_null_values(w[xp], w[yp])
-                print x_trace
                 mx = np.mean(x_trace)
                 my = np.mean(y_trace)
-                print "mx = ", mx
                 x[i].append(mx)    # append the mean value of that param over the workout
                 y[i].append(my)
         n_lines += 1
