@@ -105,6 +105,7 @@ def test_write_workout():
 
     # now test 2nd write, which should get detected as a duplicate
     [user_id, workout_id, sport, trace_dict, info_dict] = small_workout_data_1()
+    workout_id = str(int(workout_id) + 1)   # change workout id to make sure duplicate is  detected even when workout ids are different
     [w_dict, w_str, w_md5] = p.create_workout_dict(user_id, workout_id, sport, trace_dict, info_dict)
     fd = open("/tmp/fitness/1.txt","a")
     assert(p.write_workout(w_dict, w_str, w_md5, fd) == False)
