@@ -13,6 +13,9 @@ import profile
 import tarfile
 import hashlib
 import gzip
+import cProfile
+import StringIO
+import pstats
 
 class InfoBoxHTMLParser(HTMLParser):
     # this class will take a html string corresponding to the info box (hydration, max altitude etc.) and return a dictionary after extracting the data
