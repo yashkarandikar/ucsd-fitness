@@ -327,6 +327,7 @@ class SqlToJsonParser(object):
         start_time = time.time()
         
         pool = mp.Pool(processes = self.np)
+        print "Created pool of " + str(self.np) + " processes.."
 
         infile = self.infile
         if (self.infile == ""):
@@ -408,6 +409,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Reads SQL file and dumps the required data into JSON format, one line per workout')
     parser.add_argument('--infile', type=str, help='.sql.gz file', dest='infile')
     parser.add_argument('--outfile', type=str, help='.gz file', dest='outfile')
+    parser.add_argument('--nproc', type=int, help='number of processes to spawn. Note that total number of processes will be nproc + 1', dest='np', default=2)
     parser.add_argument('--verbose', action='store_true', help='verbose output (default: False)', default=False, dest='verbose')
     parser.add_argument('--profile', action='store_true', help='profile output (default: False)', default=False, dest='profile')
     #parser.add_argument('--short', action='store_true', help='profile output (default: False)', default=False, dest='short')
@@ -422,7 +424,7 @@ if __name__ == "__main__":
     #max_workouts = -1
     #if (args.short):
         #max_workouts = 1000
-    s = SqlToJsonParser(args.infile, args.outfile, nprocesses=3)
+    s = SqlToJsonParser(args.infile, args.outfile, nprocesses=args.np)
     if (args.profile):
         print "Running in profiling mode.."
         pr = cProfile.Profile()

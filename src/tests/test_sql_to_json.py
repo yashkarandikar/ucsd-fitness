@@ -267,7 +267,7 @@ def test_parser():
     cwd = os.path.dirname(os.path.abspath(__file__))
     infile = os.path.join(cwd, "data/endoMondoSmall.sql.gz")
     outfile = "/tmp/fitness/endoMondoSmall.gz"
-    p = SqlToJsonParser(infile=infile,outfile=outfile, nprocesses=2)
+    p = SqlToJsonParser(infile=infile,outfile=outfile, nprocesses=4)
     p.run()
     s = p.get_stats()
     assert(s.workouts == 17)
@@ -275,6 +275,8 @@ def test_parser():
     assert(s.lines_parsed == 2)
     assert(s.workouts_without_data == 0)
     assert(s.workouts_without_info == 0)
+    w_dicts = utils.get_workouts(outfile)
+    assert(len(w_dicts) == 17)
 
 if __name__ == "__main__":
     test_extract()
