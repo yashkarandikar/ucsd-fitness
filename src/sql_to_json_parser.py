@@ -17,6 +17,7 @@ import cProfile
 import StringIO
 import pstats
 import multiprocessing as mp
+import utils
 
 class InfoBoxHTMLParser(HTMLParser):
     # this class will take a html string corresponding to the info box (hydration, max altitude etc.) and return a dictionary after extracting the data
@@ -46,6 +47,11 @@ class InfoBoxHTMLParser(HTMLParser):
     def get_info(self):
         return self.info
 
+class WorkoutStatus(object):
+    def __init__(self, has_info = True, has_trace = True, valid = True):
+        self.has_info = has_info
+        self.has_trace = has_trace
+        self.valid = valid
 
 def compute_md5( workout_dict):
     return hashlib.md5(str(workout_dict)).hexdigest()
@@ -67,7 +73,9 @@ def create_workout_dict( user_id, workout_id, sport_type, trace_dict, info_dict)
     workout_dict["workout_id"] = workout_id
     workout_str = json.dumps(workout_dict)  # convert to string using json library
     #print "returning from create workout dict"
-    return [workout_dict, workout_str, None]
+    has_info = (info_dict is not None)
+    has_trace = (trace_dict is not None)
+    return [workout_dict, workout_str, None, WorkoutStatus(has_info, has_trace, valid = True)]
 
 def extract_user_id( html):
     # exitract user id
@@ -221,13 +229,13 @@ def parse_html( workout_id, html):
     #print "\tIn parse_html.."
     start = html.find("/workouts/user")
     if (start == -1):
-        #self.workouts_without_user += 1
-        return [None, None, None]
+        #self.workouts_invalid += 1
+        return [None, None, None, WorkoutStatus(valid = False)]
     if (html.find("/workouts/user", start + 1) != -1):
         print "MULTIPLE USERS FOUND IN ONE HTML STRING"
         raise Exception("Multiple users found in one html string..")
-    [w_dict, w_str, w_md5] = parse_user_event(workout_id, html)
-    return [w_dict, w_str, w_md5]
+    [w_dict, w_str, w_md5, status] = parse_user_event(workout_id, html)
+    return [w_dict, w_str, w_md5, status]
 
 def write_workout( w_dict, w_str, w_md5, fd):
     """
@@ -249,25 +257,22 @@ def write_workout( w_dict, w_str, w_md5, fd):
     """
     if (w_dict is not None):
         fd.write(w_str + "\n")
-    return True
+        return True
+    else:
+        return False
+
+def gen_outfile_from_pid(pid, outfile_base):
+    fName, fExt = os.path.splitext(outfile_base)
+    return fName + "." + str(pid) + fExt
 
 def handle_html(workout_id, html, outfile_base):
-    # open output file
     pid = mp.current_process().pid
-    fName, fExt = os.path.splitext(outfile_base)
-    outfile = fName + "." + str(pid) + fExt
+    outfile = gen_outfile_from_pid(pid, outfile_base)
     out_fd = gzip.open(outfile, "a")
-    #print "Opened gzip file"
-    [w_dict, w_str, w_md5] = parse_html(workout_id, html)
-    #print "parsed html to get workout"
+    [w_dict, w_str, w_md5, status] = parse_html(workout_id, html)
     write_workout(w_dict, w_str, w_md5, out_fd)
-    #print "wrote workout"
     out_fd.close()
-    #print "closed file"
-
-def test_fn():
-    print "test_fn called.. pid = ", mp.current_process().pid
-    time.sleep(1)
+    return [pid, status]
 
 class SqlToJsonParser(object):
 
@@ -275,10 +280,10 @@ class SqlToJsonParser(object):
         self.np = nprocesses
         self.infile = infile
         self.outfile = outfile
-        self.workouts_without_user = 0
-        self.duplicate_workouts = 0
+        self.workouts_invalid = 0
+        #self.duplicate_workouts = 0
         self.lines_parsed = 0
-        self.users = 0
+        #self.users = 0
         self.workouts = 0
         self.workouts_without_data = 0
         self.workouts_without_info = 0
@@ -288,12 +293,12 @@ class SqlToJsonParser(object):
 
     def print_stats(self):
         print "# lines parsed = ", self.lines_parsed
-        print "# duplicate workouts = ", self.duplicate_workouts
-        print "# workouts without user = ", self.workouts_without_user
+        #print "# duplicate workouts = ", self.duplicate_workouts
+        print "# workouts successfully extracted = ", self.workouts
+        print "# workouts not valid = ", self.workouts_invalid
         print "# workouts without trace data = ", self.workouts_without_data
         print "# workouts without info box = ", self.workouts_without_info
-        print "# workouts successfully extracted = ", self.workouts
-        print "# users = ", self.users
+        #print "# users = ", self.users
 
     def done(self):
         #if (self.max_users > 0 and self.users >= self.max_users):
@@ -345,14 +350,39 @@ class SqlToJsonParser(object):
                         #pool.apply_async(test_fn)
                         start = line.find("(", end + 1)
 
+        pids = set()
         print "Waiting for processes to finish"
         for j in range(0, len(jobs)):
             jobs[j].wait()
             if (not jobs[j].successful()):
                 print "Job " + str(j) + " not succesful.."
             assert(jobs[j].successful())
+            [pid, status] = jobs[j].get()
+            pids.add(pid)
+            if (status.valid):
+                self.workouts += 1
+                if (not status.has_info):
+                    self.workouts_without_info += 1
+                if (not status.has_trace):
+                    self.workouts_without_data += 1
+            else:
+                self.workouts_invalid += 1
+            
         pool.close()
         pool.join()
+
+        # combine all gz files
+        print "Combining all gzipped files into one.."
+        gzfiles = []
+        for pid in pids:
+            gzfiles.append(gen_outfile_from_pid(pid, self.outfile))
+        print gzfiles
+        utils.combine_gzip_files(gzfiles, self.outfile)
+        print "Deleting all part gzipped files"
+        for gzf in gzfiles:
+            os.remove(gzf)
+
+        print "Done"
         end_time = time.time()
         self.print_stats()
         print "Total time taken = ", end_time - start_time
