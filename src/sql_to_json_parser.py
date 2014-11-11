@@ -53,6 +53,14 @@ class WorkoutStatus(object):
         self.has_trace = has_trace
         self.valid = valid
 
+class SqlToJsonParserStats(object):
+    def __init__(self, lines_parsed, workouts, workouts_invalid, workouts_without_data, workouts_without_info):
+        self.lines_parsed = lines_parsed
+        self.workouts = workouts
+        self.workouts_invalid = workouts_invalid
+        self.workouts_without_data = workouts_without_data
+        self.workouts_without_info = workouts_without_info
+
 def compute_md5( workout_dict):
     return hashlib.md5(str(workout_dict)).hexdigest()
 
@@ -229,7 +237,6 @@ def parse_html( workout_id, html):
     #print "\tIn parse_html.."
     start = html.find("/workouts/user")
     if (start == -1):
-        #self.workouts_invalid += 1
         return [None, None, None, WorkoutStatus(valid = False)]
     if (html.find("/workouts/user", start + 1) != -1):
         print "MULTIPLE USERS FOUND IN ONE HTML STRING"
@@ -276,7 +283,7 @@ def handle_html(workout_id, html, outfile_base):
 
 class SqlToJsonParser(object):
 
-    def __init__(self, infile = "", outfile = "", max_workouts = -1, verbose=False, nprocesses=1):
+    def __init__(self, infile = "", outfile = "", verbose=False, nprocesses=1):
         self.np = nprocesses
         self.infile = infile
         self.outfile = outfile
@@ -287,7 +294,7 @@ class SqlToJsonParser(object):
         self.workouts = 0
         self.workouts_without_data = 0
         self.workouts_without_info = 0
-        self.max_workouts = max_workouts
+        #self.max_workouts = max_workouts
         self.verbose = verbose
         self.workout_hashes = {}
 
@@ -300,11 +307,20 @@ class SqlToJsonParser(object):
         print "# workouts without info box = ", self.workouts_without_info
         #print "# users = ", self.users
 
+    def get_stats(self):
+        return SqlToJsonParserStats(lines_parsed = self.lines_parsed,
+                                    workouts = self.workouts,
+                                    workouts_invalid = self.workouts_invalid,
+                                    workouts_without_data = self.workouts_without_data,
+                                    workouts_without_info = self.workouts_without_info
+                                    )
+
     def done(self):
         #if (self.max_users > 0 and self.users >= self.max_users):
             #return True
-        if (self.max_workouts > 0 and self.workouts >= self.max_workouts):
-            return True
+        #if (self.max_workouts > 0 and self.workouts >= self.max_workouts):
+        #    return True
+        #return False
         return False
     
     def run(self):
@@ -394,7 +410,7 @@ if __name__ == "__main__":
     parser.add_argument('--outfile', type=str, help='.gz file', dest='outfile')
     parser.add_argument('--verbose', action='store_true', help='verbose output (default: False)', default=False, dest='verbose')
     parser.add_argument('--profile', action='store_true', help='profile output (default: False)', default=False, dest='profile')
-    parser.add_argument('--short', action='store_true', help='profile output (default: False)', default=False, dest='short')
+    #parser.add_argument('--short', action='store_true', help='profile output (default: False)', default=False, dest='short')
     args = parser.parse_args()
 
     #check if all required options are available
@@ -403,10 +419,10 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # run, considering all options
-    max_workouts = -1
-    if (args.short):
-        max_workouts = 1000
-    s = SqlToJsonParser(args.infile, args.outfile, max_workouts=max_workouts,nprocesses=3)
+    #max_workouts = -1
+    #if (args.short):
+        #max_workouts = 1000
+    s = SqlToJsonParser(args.infile, args.outfile, nprocesses=3)
     if (args.profile):
         print "Running in profiling mode.."
         pr = cProfile.Profile()

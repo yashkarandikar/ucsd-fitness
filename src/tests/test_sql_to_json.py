@@ -262,6 +262,19 @@ def test_combine_gzip_files():
     assert(w_dict1 in w_dicts)
     assert(w_dict2 in w_dicts)
 
+def test_parser():
+    create_tmp_folder()
+    cwd = os.path.dirname(os.path.abspath(__file__))
+    infile = os.path.join(cwd, "data/endoMondoSmall.sql.gz")
+    outfile = "/tmp/fitness/endoMondoSmall.gz"
+    p = SqlToJsonParser(infile=infile,outfile=outfile, nprocesses=2)
+    p.run()
+    s = p.get_stats()
+    assert(s.workouts == 17)
+    assert(s.workouts_invalid == 1)
+    assert(s.lines_parsed == 2)
+    assert(s.workouts_without_data == 0)
+    assert(s.workouts_without_info == 0)
 
 if __name__ == "__main__":
     test_extract()
@@ -272,3 +285,4 @@ if __name__ == "__main__":
     test_reformat_trace_data()
     test_get_workouts()
     test_combine_gzip_files()
+    test_parser()
