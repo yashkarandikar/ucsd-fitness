@@ -61,6 +61,11 @@ class SqlToJsonParserStats(object):
         self.workouts_without_data = workouts_without_data
         self.workouts_without_info = workouts_without_info
 
+class Workout(object):
+    def __init__(self, w_str, status):
+        self.w_str = w_str
+        self.status = status
+
 def compute_md5( workout_dict):
     return hashlib.md5(str(workout_dict)).hexdigest()
 
@@ -262,7 +267,7 @@ def write_workout( w_dict, w_str, w_md5, fd):
             self.workouts += 1
             self.workout_hashes[uid] = [w_md5]
     """
-    if (w_dict is not None):
+    if (w_str is not None):
         fd.write(w_str + "\n")
         return True
     else:
@@ -272,14 +277,24 @@ def gen_outfile_from_pid(pid, outfile_base):
     fName, fExt = os.path.splitext(outfile_base)
     return fName + "." + str(pid) + fExt
 
-def handle_html(workout_id, html, outfile_base):
-    pid = mp.current_process().pid
-    outfile = gen_outfile_from_pid(pid, outfile_base)
-    out_fd = gzip.open(outfile, "a")
-    [w_dict, w_str, w_md5, status] = parse_html(workout_id, html)
-    write_workout(w_dict, w_str, w_md5, out_fd)
-    out_fd.close()
-    return [pid, status]
+def handle_html(workout_id, html, outfile_base, workouts_queue):
+    try:
+        [w_dict, w_str, w_md5, status] = parse_html(workout_id, html)
+        workouts_queue.put(Workout(w_str, status))
+        return status
+    except Exception as e:
+        pid = mp.current_process().pid
+        print "Error on process " + str(pid) + ":" + e.message
+        return None
+
+def handle_workout_writes(workouts_queue, outfile):
+    fd = gzip.open(outfile, "w")
+    while True:
+        w = workouts_queue.get()
+        if (w == "done"):
+            break
+        write_workout(None, w.w_str, None, fd)
+    fd.close()
 
 class SqlToJsonParser(object):
 
@@ -307,6 +322,17 @@ class SqlToJsonParser(object):
         print "# workouts without info box = ", self.workouts_without_info
         #print "# users = ", self.users
 
+    def update_stats(self, status):
+        if (status.valid):
+            self.workouts += 1
+            if (not status.has_info):
+                self.workouts_without_info += 1
+            if (not status.has_trace):
+                self.workouts_without_data += 1
+        else:
+            self.workouts_invalid += 1
+
+
     def get_stats(self):
         return SqlToJsonParserStats(lines_parsed = self.lines_parsed,
                                     workouts = self.workouts,
@@ -314,21 +340,11 @@ class SqlToJsonParser(object):
                                     workouts_without_data = self.workouts_without_data,
                                     workouts_without_info = self.workouts_without_info
                                     )
-
-    def done(self):
-        #if (self.max_users > 0 and self.users >= self.max_users):
-            #return True
-        #if (self.max_workouts > 0 and self.workouts >= self.max_workouts):
-        #    return True
-        #return False
-        return False
-    
+        
     def run(self):
         start_time = time.time()
         
-        pool = mp.Pool(processes = self.np)
-        print "Created pool of " + str(self.np) + " processes.."
-
+        # check if input file exists
         infile = self.infile
         if (self.infile == ""):
             raise Exception("Input file not supplied")
@@ -336,70 +352,54 @@ class SqlToJsonParser(object):
             print "File not found.."
             exit(0)
 
-        print "Reading file " + infile
-        
+        # create workers
+        pool = mp.Pool(processes = self.np - 1) # 1 will be the writer queue
+        workouts_queue = mp.Manager().Queue()
+        writer = mp.Process(target = handle_workout_writes, args=(workouts_queue, self.outfile,))
+        writer.start()
         jobs = []
+        print "Created pool of " + str(self.np) + " processes.."
 
+        w_count = 0
+
+        print "Reading file " + infile
         # now read input file
         with gzip.open(infile) as f:
             workout_id = ""
             html = ""
-            n_records = 0
             for line in f:
-                if (self.done()):
-                    break
                 if ("INSERT INTO `EndoMondoWorkouts` VALUES" in line):  # ignore all other lines
                     self.lines_parsed += 1
                     start = line.find("(")
-                    while(start != -1 and (not self.done())):
+                    while(start != -1):
                         p2 = line.find("<!DOCTYPE html", start + 1)
                         workout_id = line[start + 1 : p2 - 2]
                         start = p2
                         end = line.find("</html>", start + 1)
                         html = line[start : end + len("</html>")]
-                        #if (len(jobs) == 28):
-                        #    print "This job is going to fail : "
-                        #    print "Workout ID = " + str(workout_id)
-                        #    jobs.append(pool.apply_async(handle_html, args = (workout_id[:], html[:], self.outfile)))
-                        #    jobs[28].wait()
-                        #    assert(jobs[28].successful())
-                        jobs.append(pool.apply_async(handle_html, args = (workout_id[:], html[:], self.outfile)))
-                        #pool.apply_async(test_fn)
+                        jobs.append(pool.apply_async(handle_html, args = (workout_id[:], html[:], self.outfile, workouts_queue)))
                         start = line.find("(", end + 1)
-
-        pids = set()
-        print "Waiting for processes to finish"
-        for j in range(0, len(jobs)):
-            jobs[j].wait()
-            if (not jobs[j].successful()):
-                print "Job " + str(j) + " not succesful.."
-            assert(jobs[j].successful())
-            [pid, status] = jobs[j].get()
-            pids.add(pid)
-            if (status.valid):
-                self.workouts += 1
-                if (not status.has_info):
-                    self.workouts_without_info += 1
-                if (not status.has_trace):
-                    self.workouts_without_data += 1
-            else:
-                self.workouts_invalid += 1
-            
+        
+        print "Assigned jobs to threads.. "
+        
+        # Update stats
+        print "Updating stats"
+        for j in jobs:
+            j.wait()
+            assert(j.successful())
+            status = j.get()
+            self.update_stats(status)
+    
+        workouts_queue.put("done")  # to signal the writer process
+        
+        print "Closing pool.."
         pool.close()
         pool.join()
 
-        # combine all gz files
-        print "Combining all gzipped files into one.."
-        gzfiles = []
-        for pid in pids:
-            gzfiles.append(gen_outfile_from_pid(pid, self.outfile))
-        print gzfiles
-        utils.combine_gzip_files(gzfiles, self.outfile)
-        print "Deleting all part gzipped files"
-        for gzf in gzfiles:
-            os.remove(gzf)
+        print "Waiting for writer process to end.."
+        writer.join()
 
-        print "Done"
+        print "Done.."
         end_time = time.time()
         self.print_stats()
         print "Total time taken = ", end_time - start_time
