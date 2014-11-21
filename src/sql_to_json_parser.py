@@ -289,16 +289,20 @@ def handle_html(workout_id, html, outfile_base, workouts_queue):
 
 def handle_workout_writes(workouts_queue, outfile):
     fd = gzip.open(outfile, "w")
+    n = 0
     while True:
         w = workouts_queue.get()
         if (w == "done"):
             break
         write_workout(None, w.w_str, None, fd)
+        n = n + 1
+        if (n % 1000 == 0):
+            print "Writer: Done writing %d workouts to disk.. Current approximate queue size = %d" % (n, workouts_queue.qsize())
     fd.close()
 
 class SqlToJsonParser(object):
 
-    def __init__(self, infile = "", outfile = "", verbose=False, nprocesses=1):
+    def __init__(self, infile = "", outfile = "", verbose=False, nprocesses=1, maxPendingWritesQ = 10000, maxPendingResultsQ = 10000):
         self.np = nprocesses
         self.infile = infile
         self.outfile = outfile
@@ -311,15 +315,17 @@ class SqlToJsonParser(object):
         self.workouts_without_info = 0
         #self.max_workouts = max_workouts
         self.verbose = verbose
-        self.workout_hashes = {}
+        #self.workout_hashes = {}
+        self.maxPendingWritesQ = maxPendingWritesQ
+        self.maxPendingResultsQ = maxPendingResultsQ
 
     def print_stats(self):
-        print "# lines parsed = ", self.lines_parsed
+        print "Main: # lines parsed = ", self.lines_parsed
         #print "# duplicate workouts = ", self.duplicate_workouts
-        print "# workouts successfully extracted = ", self.workouts
-        print "# workouts not valid = ", self.workouts_invalid
-        print "# workouts without trace data = ", self.workouts_without_data
-        print "# workouts without info box = ", self.workouts_without_info
+        print "Main: # workouts successfully extracted = ", self.workouts
+        print "Main: # workouts not valid = ", self.workouts_invalid
+        print "Main: # workouts without trace data = ", self.workouts_without_data
+        print "Main: # workouts without info box = ", self.workouts_without_info
         #print "# users = ", self.users
 
     def update_stats(self, status):
@@ -340,9 +346,19 @@ class SqlToJsonParser(object):
                                     workouts_without_data = self.workouts_without_data,
                                     workouts_without_info = self.workouts_without_info
                                     )
+
+    def clear_pending_results(self, jobs):
+        for j in jobs:
+            j.wait()
+            assert(j.successful())
+            status = j.get()
+            self.update_stats(status)
         
     def run(self):
         start_time = time.time()
+
+        print "Main: Max pending writes queue size = ", self.maxPendingWritesQ
+        print "Main: Max pending results queue size = ", self.maxPendingResultsQ
         
         # check if input file exists
         infile = self.infile
@@ -354,15 +370,15 @@ class SqlToJsonParser(object):
 
         # create workers
         pool = mp.Pool(processes = self.np - 1) # 1 will be the writer queue
-        workouts_queue = mp.Manager().Queue()
+        workouts_queue = mp.Manager().Queue(maxsize = self.maxPendingWritesQ)
         writer = mp.Process(target = handle_workout_writes, args=(workouts_queue, self.outfile,))
         writer.start()
         jobs = []
-        print "Created pool of " + str(self.np) + " processes.."
+        print "Main: Created pool of " + str(self.np) + " processes.."
 
         w_count = 0
 
-        print "Reading file " + infile
+        print "Main: Reading file " + infile
         # now read input file
         with gzip.open(infile) as f:
             workout_id = ""
@@ -379,30 +395,31 @@ class SqlToJsonParser(object):
                         html = line[start : end + len("</html>")]
                         jobs.append(pool.apply_async(handle_html, args = (workout_id[:], html[:], self.outfile, workouts_queue)))
                         start = line.find("(", end + 1)
+                        if (len(jobs) > self.maxPendingResultsQ):
+                            print "Main: Processing stats of finished jobs.."
+                            self.clear_pending_results(jobs)
+                            del jobs
+                            jobs = []
+                            print "Main: Cleared pending job results.. "
         
-        print "Assigned jobs to threads.. "
+        print "Main: Assigned jobs to threads.. "
         
         # Update stats
-        print "Updating stats"
-        for j in jobs:
-            j.wait()
-            assert(j.successful())
-            status = j.get()
-            self.update_stats(status)
-    
+        self.clear_pending_results(jobs)
+            
         workouts_queue.put("done")  # to signal the writer process
         
-        print "Closing pool.."
+        print "Main: Closing pool.."
         pool.close()
         pool.join()
 
-        print "Waiting for writer process to end.."
+        print "Main: Waiting for writer process to end.."
         writer.join()
 
-        print "Done.."
+        print "Main: Done.."
         end_time = time.time()
         self.print_stats()
-        print "Total time taken = ", end_time - start_time
+        print "Main: Total time taken = ", end_time - start_time
 
 
 if __name__ == "__main__":
@@ -410,6 +427,8 @@ if __name__ == "__main__":
     parser.add_argument('--infile', type=str, help='.sql.gz file', dest='infile')
     parser.add_argument('--outfile', type=str, help='.gz file', dest='outfile')
     parser.add_argument('--nproc', type=int, help='number of processes to spawn. Note that total number of processes will be nproc + 1', dest='np', default=2)
+    parser.add_argument('--maxPendingWritesQ', type=int, help='Maximum size of queue of workouts to be written to disk. If this size is crossed, any put() operation on the queue will be blocked (default : 10000)', dest='maxPendingWritesQ', default=10000)
+    parser.add_argument('--maxPendingResultsQ', type=int, help='Maximum number of jobs which are completed but whose results are not processed by the main process.  If this size is crossed, the main process will first process these results and then continue adding more jobs to the pool(default : 10000)', dest='maxPendingResultsQ', default=10000)
     parser.add_argument('--verbose', action='store_true', help='verbose output (default: False)', default=False, dest='verbose')
     parser.add_argument('--profile', action='store_true', help='profile output (default: False)', default=False, dest='profile')
     #parser.add_argument('--short', action='store_true', help='profile output (default: False)', default=False, dest='short')
@@ -424,7 +443,7 @@ if __name__ == "__main__":
     #max_workouts = -1
     #if (args.short):
         #max_workouts = 1000
-    s = SqlToJsonParser(args.infile, args.outfile, nprocesses=args.np)
+    s = SqlToJsonParser(args.infile, args.outfile, nprocesses=args.np, maxPendingWritesQ = args.maxPendingWritesQ, maxPendingResultsQ = args.maxPendingResultsQ)
     if (args.profile):
         print "Running in profiling mode.."
         pr = cProfile.Profile()
