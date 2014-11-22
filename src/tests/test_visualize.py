@@ -23,16 +23,20 @@ def test_get_avg_data():
     # positive test
     x_params = ["duration", "distance"]
     y_params = ["pace", "pace"]
-    [x, y] = get_avg_data(infile, x_params, y_params)
-    assert(len(x) == 2)
-    assert(len(y) == 2)
+    sports = ["Running", "Running"]
+    objs = get_avg_data(infile, x_params, y_params, sports)
+    assert(len(objs) == 2)
     for i in range(0, len(x_params)):
-        assert(len(x[i]) == 3)
-        assert(len(y[i]) == 3)
-    assert(y[0] == y[1])
-    assert(are_lists_equal(x[0], [107041.5, 105120.25,105237.2]))
-    assert(are_lists_equal(x[1],  [0.078509, 0.07995, 0.076088]))
-    assert(are_lists_equal(y[0],  [7.8122315, 8.1547095, 7.8924752]))
+        assert(len(objs[i].xvals) == 3)
+        assert(len(objs[i].yvals) == 3)
+    #assert(y[0] == y[1])
+    #assert(are_lists_equal(x[0], [107041.5, 105120.25,105237.2]))
+    #assert(are_lists_equal(x[1],  [0.078509, 0.07995, 0.076088]))
+    #assert(are_lists_equal(y[0],  [7.8122315, 8.1547095, 7.8924752]))
+    assert(objs[0].yvals == objs[1].yvals)
+    assert(are_lists_equal(objs[0].xvals, [107041.5, 105120.25,105237.2]))
+    assert(are_lists_equal(objs[1].xvals,  [0.078509, 0.07995, 0.076088]))
+    assert(are_lists_equal(objs[0].yvals,  [7.8122315, 8.1547095, 7.8924752]))
 
 def test_sort_avg_data():
     x = [[], []]; y = [[], []]

@@ -37,3 +37,16 @@ def get_user_id_from_filename(infile):
     if (len(parts) != 2):
         raise Exception("Filename is not in recognized format")
     return int(parts[0])
+
+class Unit(object):
+    params = {"alt":"ft",
+                "distance" : "mi",
+                "hr" : "bpm",
+                "speed" : "mph",
+                "pace" : "min/mi"}
+    @staticmethod
+    def get(param):
+        if (Unit.params.has_key(param)):
+            return Unit.params[param]
+        else:
+            return "UNK"
