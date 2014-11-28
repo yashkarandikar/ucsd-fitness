@@ -6,6 +6,7 @@ import numpy as np
 import utils
 import matplotlib.pyplot as plt
 import os 
+import barplot
 
 class Data(object):
 
@@ -17,6 +18,8 @@ class Data(object):
         self.sport = sport
         self.xvals = []
         self.yvals = []
+        self.xlabel = self.xparam + " (%s)"%(utils.Unit.get(self.xparam))
+        self.ylabel = self.yparam + " (%s)"%(utils.Unit.get(self.yparam))
 
     def add_point(self, x, y):
         self.xvals.append(x)
@@ -39,9 +42,16 @@ class Data(object):
             plt.xlim(xlims)
         if (ylims is not None):
             plt.ylim(ylims)
-        plt.xlabel(self.xparam + " (%s)"%(utils.Unit.get(self.xparam)))
-        plt.ylabel(self.yparam + " (%s)"%(utils.Unit.get(self.yparam)))
-        plt.title("Sport: %s"%(self.sport))
+        #plt.xlabel(self.xparam + " (%s)"%(utils.Unit.get(self.xparam)))
+        #plt.ylabel(self.yparam + " (%s)"%(utils.Unit.get(self.yparam)))
+        plt.xlabel(self.xlabel)
+        plt.ylabel(self.ylabel)
+        pll.title("Sport: %s"%(self.sport))
+
+    def plot_bar(self):
+        assert(len(self.xvals) == len(self.yvals))
+        self.sort()
+        barplot.barplot(self.xvals, self.yvals, nbins=10, xparam=self.xlabel, yparam=self.ylabel, title="Sport: %s"%(self.sport))
 
     def empty(self):
         return (len(self.xvals) == 0)
@@ -154,7 +164,8 @@ def visualize_all(infile):
     for i in range(0, len(x_params)):
         d = objs[i]
         if (not d.empty()):
-            d.plot()
+            #d.plot()
+            d.plot_bar()
         print d.summary()
     plt.show()
     
