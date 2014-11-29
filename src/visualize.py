@@ -7,6 +7,7 @@ import utils
 import matplotlib.pyplot as plt
 import os 
 import barplot
+import time
 
 class Data(object):
 
@@ -46,12 +47,39 @@ class Data(object):
         #plt.ylabel(self.yparam + " (%s)"%(utils.Unit.get(self.yparam)))
         plt.xlabel(self.xlabel)
         plt.ylabel(self.ylabel)
-        pll.title("Sport: %s"%(self.sport))
+        plt.title("Sport: %s"%(self.sport))
 
     def plot_bar(self):
         assert(len(self.xvals) == len(self.yvals))
         self.sort()
         barplot.barplot(self.xvals, self.yvals, nbins=10, xparam=self.xlabel, yparam=self.ylabel, title="Sport: %s"%(self.sport))
+
+    def plot_sliding(self, windowSize):
+        assert(len(self.xvals) == len(self.yvals))
+        n = len(self.xvals)
+        assert(n > windowSize)
+        self.sort()
+        plt.figure()
+        x = [0] * (n - windowSize + 1)
+        y = [0] * (n - windowSize + 1)
+        w = float(windowSize)
+        sum_x = float(sum(self.xvals[0:windowSize]))
+        sum_y = float(sum(self.yvals[0:windowSize]))
+        avg_x = sum_x / w
+        avg_y = sum_y / w
+        x[0] = avg_x
+        y[0] = avg_y
+        for i in range(1, n - windowSize + 1):
+            sum_x = sum_x - self.xvals[i-1] + self.xvals[i + windowSize - 1]
+            sum_y = sum_y - self.yvals[i-1] + self.yvals[i + windowSize - 1]
+            avg_x = sum_x / w
+            avg_y = sum_y / w
+            x[i] = avg_x
+            y[i] = avg_y
+        plt.plot(x, y)
+        plt.xlabel(self.xlabel + "(averaged over window)")
+        plt.ylabel(self.ylabel + "(averaged over window)")
+        plt.title("Sport: %s"%(self.sport) + "(averaged over window)")
 
     def empty(self):
         return (len(self.xvals) == 0)
@@ -155,6 +183,7 @@ def print_summary(data_objs):
     pass
 
 def visualize_all(infile):
+    t1 = time.time()
     x_params = ["alt", "hr", "duration", "distance"] * 2
     y_params = ["pace"] * 4 + ["speed"] * 4
     #y_params = ["speed", "speed", "speed", "speed"]
@@ -165,8 +194,11 @@ def visualize_all(infile):
         d = objs[i]
         if (not d.empty()):
             #d.plot()
-            d.plot_bar()
+            #d.plot_bar()
+            d.plot_sliding(windowSize=100)
         print d.summary()
+    t2 = time.time()
+    print "Time taken = " + str(t2 - t1)
     plt.show()
     
 if __name__ == "__main__":
