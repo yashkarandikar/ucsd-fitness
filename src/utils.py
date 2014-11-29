@@ -15,7 +15,11 @@ def json_to_dict(s):
     # s is a json formatted string
     return json.loads(s)
 
-def remove_null_values(l):
+def dict_to_json(d):
+    # d is a dictionary
+    return json.dumps(d)
+
+def remove_null_values_single(l):
     # given list of values, removes those marked 'N'
     return [x for x in l if x != 'N']
 
