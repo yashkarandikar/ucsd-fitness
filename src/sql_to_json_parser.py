@@ -242,6 +242,7 @@ def parse_html( workout_id, html):
     #print "\tIn parse_html.."
     start = html.find("/workouts/user")
     if (start == -1):
+        #print "Workout " + str(workout_id) + " invalid.."
         return [None, None, None, WorkoutStatus(valid = False)]
     if (html.find("/workouts/user", start + 1) != -1):
         print "MULTIPLE USERS FOUND IN ONE HTML STRING"
@@ -383,16 +384,23 @@ class SqlToJsonParser(object):
         with gzip.open(infile) as f:
             workout_id = ""
             html = ""
+            n_lines = 0
             for line in f:
+                n_lines += 1
                 if ("INSERT INTO `EndoMondoWorkouts` VALUES" in line):  # ignore all other lines
                     self.lines_parsed += 1
                     start = line.find("(")
+                    n_html = 0
                     while(start != -1):
-                        p2 = line.find("<!DOCTYPE html", start + 1)
-                        workout_id = line[start + 1 : p2 - 2]
-                        start = p2
+                        #p2 = line.find("<!DOCTYPE html", start + 1)    # Fix to important bug which caused it to loop around
+                        #workout_id = line[start + 1 : p2 - 2]
+                        #start = p2
+                        p2 = line.find(",", start + 1)
+                        workout_id = line[start + 1 : p2]
+                        start = p2 + 2
                         end = line.find("</html>", start + 1)
                         html = line[start : end + len("</html>")]
+                        n_html += 1
                         jobs.append(pool.apply_async(handle_html, args = (workout_id[:], html[:], self.outfile, workouts_queue)))
                         start = line.find("(", end + 1)
                         if (len(jobs) > self.maxPendingResultsQ):
@@ -401,6 +409,7 @@ class SqlToJsonParser(object):
                             del jobs
                             jobs = []
                             print "Main: Cleared pending job results.. "
+                        #print "%d,%d" % (n_lines, n_html)
         
         print "Main: Assigned jobs to threads.. "
         
