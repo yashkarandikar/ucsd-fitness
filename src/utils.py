@@ -54,3 +54,10 @@ def combine_gzip_files(files, outfile):
         command = command + " " + f
     command = command + " > " + outfile
     os.system(command)
+
+def append_to_base_filename(infile, s):
+    """
+    if infile is of the form name.ext, then this function will return (name+s).ext
+    """
+    fName, fExt = os.path.splitext(infile)
+    return fName + s + fExt
