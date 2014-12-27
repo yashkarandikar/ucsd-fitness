@@ -159,11 +159,14 @@ def get_data(infile, x_params, y_params, sport_types):
                 continue
             xp = x_params[i]; yp = y_params[i]      # x and y axis parameters
             if (w.has_key(xp) and w.has_key(yp)):
-                #[x_trace, y_trace] = utils.remove_null_values(w[xp], w[yp])
-                #mx = np.mean(x_trace)
-                #my = np.mean(y_trace)
                 mx = w[xp]
                 my = w[yp]
+                if (isinstance(mx, list) and isinstance(my, list)):
+                    [x_trace, y_trace] = utils.remove_null_values(mx, my)
+                    mx = np.mean(x_trace)
+                    my = np.mean(y_trace)
+                elif (isinstance(mx, list) or isinstance(my, list)):
+                    raise Exception("Incompatible x and y params..")
                 objs[i].add_point(mx, my)
         nw += 1
         if (nw % 10000 == 0):

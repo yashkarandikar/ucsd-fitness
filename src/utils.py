@@ -1,14 +1,23 @@
 import simplejson as json
 import os
+import gzip
 
-def json_lines_to_dicts(infile):
+def get_workouts(infile):
     # assumes each line of the input file is a json structure
     dicts = []
-    f = open(infile)
-    with open(infile) as f:
-        for line in f:
-            #dicts.append(ujson.loads(line, precise_float=True))
-            dicts.append(json.loads(line))
+    fName, fExt = os.path.splitext(infile) 
+    f = 0
+    if (fExt == ".gz"):
+        f = gzip.open(infile)
+    elif (fExt == ".txt"):
+        f = open(infile)
+    else:
+        print fExt
+        raise Exception("Invalid file format")
+    
+    for line in f:
+        dicts.append(json.loads(line))
+    f.close()
     return dicts
 
 def json_to_dict(s):
@@ -54,3 +63,18 @@ class Unit(object):
             return Unit.params[param]
         else:
             return "UNK"
+
+def combine_gzip_files(files, outfile):
+    # combines multiple gzip files into one single gzipped file
+    command = "cat"
+    for f in files:
+        command = command + " " + f
+    command = command + " > " + outfile
+    os.system(command)
+
+def append_to_base_filename(infile, s):
+    """
+    if infile is of the form name.ext, then this function will return (name+s).ext
+    """
+    fName, fExt = os.path.splitext(infile)
+    return fName + s + fExt

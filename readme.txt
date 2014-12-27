@@ -1,0 +1,6 @@
+Dependencies
+-----------
+
+simplejson
+numpy
+matplotlib
