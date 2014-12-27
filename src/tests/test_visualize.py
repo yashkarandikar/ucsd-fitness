@@ -4,7 +4,7 @@ import os
 import sys
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath,'..'))
-from visualize import get_avg_data, sort_avg_data
+from visualize import get_data, sort_avg_data
 import utils
 
 def are_lists_equal(l1, l2):
@@ -16,7 +16,7 @@ def are_lists_equal(l1, l2):
             return False
     return True
 
-def test_get_avg_data():
+def test_get_data():
     cwd = os.path.dirname(os.path.abspath(__file__))
     infile = os.path.join(cwd, "./data","alldump1.txt")
 
@@ -24,7 +24,7 @@ def test_get_avg_data():
     x_params = ["duration", "distance"]
     y_params = ["pace", "pace"]
     sports = ["Running", "Running"]
-    objs = get_avg_data(infile, x_params, y_params, sports)
+    objs = get_data(infile, x_params, y_params, sports)
     assert(len(objs) == 2)
     for i in range(0, len(x_params)):
         assert(len(objs[i].xvals) == 3)
@@ -53,5 +53,5 @@ def test_sort_avg_data():
     assert(are_lists_equal(y[1], [300, 100, 200]))
 
 if __name__ == "__main__":
-    test_get_avg_data()
+    test_get_data()
     test_sort_avg_data()

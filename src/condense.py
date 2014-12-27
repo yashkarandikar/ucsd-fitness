@@ -2,6 +2,7 @@ import os
 import gzip
 import utils
 import numpy
+import argparse
 
 def condense(infile, outfile):
     """
@@ -16,10 +17,8 @@ def condense(infile, outfile):
         w = utils.json_to_dict(line.strip())
         for k, v in w.items():
             if (isinstance(v, list)):
-                m = numpy.mean(utils.remove_null_values_single(v))
-                d[k] = m
-            else:
-                d[k] = v
+                v = numpy.mean(utils.remove_null_values_single(v))
+            d[k] = v
         w_str = utils.dict_to_json(d)
         fo.write(w_str + "\n")
         n += 1
@@ -29,4 +28,12 @@ def condense(infile, outfile):
     fo.close()
 
 if __name__ == "__main__":
-    condense("./endoMondo5000.gz","endoMondo5000.condensed.gz")
+    parser = argparse.ArgumentParser(description='Reads .gz file written by sql_to_json_parser.py and condenses all traces to average values')
+    parser.add_argument('--infile', type=str, help='.gz file', dest='infile')
+    parser.add_argument('--outfile', type=str, help='.gz file', dest='outfile')
+    args = parser.parse_args()
+    if (args.infile is None or args.outfile is None):
+        parser.print_usage()
+    else:
+        condense(args.infile,args.outfile)
+

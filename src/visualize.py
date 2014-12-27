@@ -116,7 +116,7 @@ def sort_avg_data(x, y):
     return [x, y]
 
 
-def get_avg_data(infile, x_params, y_params, sport_types):
+def get_data(infile, x_params, y_params, sport_types):
     """
     returns data averaged over each workout for each sport type. For each i, returns y_params[i] and x_params[i] averaged over each workout. Thus each point in the plot corresponds to one workout
     x_params  list of parameters, must be present in the data
@@ -149,7 +149,7 @@ def get_avg_data(infile, x_params, y_params, sport_types):
     else:
         raise Exception("File format not recognized")
 
-    n_lines = 0
+    nw = 0
     for line in f:
         # each line is a workout
         w = utils.json_to_dict(line.strip())
@@ -159,11 +159,15 @@ def get_avg_data(infile, x_params, y_params, sport_types):
                 continue
             xp = x_params[i]; yp = y_params[i]      # x and y axis parameters
             if (w.has_key(xp) and w.has_key(yp)):
-                [x_trace, y_trace] = utils.remove_null_values(w[xp], w[yp])
-                mx = np.mean(x_trace)
-                my = np.mean(y_trace)
+                #[x_trace, y_trace] = utils.remove_null_values(w[xp], w[yp])
+                #mx = np.mean(x_trace)
+                #my = np.mean(y_trace)
+                mx = w[xp]
+                my = w[yp]
                 objs[i].add_point(mx, my)
-        n_lines += 1
+        nw += 1
+        if (nw % 10000 == 0):
+            print "Done processing %s workouts" % (nw)
 
     f.close()
     
@@ -184,11 +188,13 @@ def print_summary(data_objs):
 
 def visualize_all(infile):
     t1 = time.time()
-    x_params = ["alt", "hr", "duration", "distance"] * 2
-    y_params = ["pace"] * 4 + ["speed"] * 4
+    #x_params = ["alt", "hr", "duration", "distance"] * 2
+    #y_params = ["pace"] * 4 + ["speed"] * 4
     #y_params = ["speed", "speed", "speed", "speed"]
-    sports = ["Running"] * 4 + ["Cycling, sport"] * 4
-    objs = get_avg_data(infile, x_params, y_params, sports)
+    #sports = ["Running"] * 4 + ["Cycling, sport"] * 4
+    x_params = []
+    y_params = ["Duration"]
+    objs = get_data(infile, x_params, y_params, sports)
     print Data.summary_format()
     for i in range(0, len(x_params)):
         d = objs[i]
