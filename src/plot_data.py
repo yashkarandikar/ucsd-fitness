@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import os 
 import barplot
 import time
+from unit import Unit
 
 class Data(object):
 
@@ -19,8 +20,8 @@ class Data(object):
         self.sport = sport
         self.xvals = []
         self.yvals = []
-        self.xlabel = self.xparam + " (%s)"%(utils.Unit.get(self.xparam))
-        self.ylabel = self.yparam + " (%s)"%(utils.Unit.get(self.yparam))
+        self.xlabel = self.xparam + " (%s)"%(Unit.get(self.xparam))
+        self.ylabel = self.yparam + " (%s)"%(Unit.get(self.yparam))
 
     def add_point(self, x, y):
         self.xvals.append(x)
@@ -43,8 +44,6 @@ class Data(object):
             plt.xlim(xlims)
         if (ylims is not None):
             plt.ylim(ylims)
-        #plt.xlabel(self.xparam + " (%s)"%(utils.Unit.get(self.xparam)))
-        #plt.ylabel(self.yparam + " (%s)"%(utils.Unit.get(self.yparam)))
         plt.xlabel(self.xlabel)
         plt.ylabel(self.ylabel)
         plt.title("Sport: %s"%(self.sport))
@@ -165,8 +164,12 @@ def get_data(infile, x_params, y_params, sport_types):
                     [x_trace, y_trace] = utils.remove_null_values(mx, my)
                     mx = np.mean(x_trace)
                     my = np.mean(y_trace)
-                elif (isinstance(mx, list) or isinstance(my, list)):
-                    raise Exception("Incompatible x and y params..")
+                elif (isinstance(mx, list)):
+                    x_trace = utils.remove_null_values_single(mx)
+                    mx = np.mean(x_trace)
+                elif (isinstance(my, list)):
+                    y_trace = utils.remove_null_values_single(my)
+                    my = np.mean(y_trace)
                 objs[i].add_point(mx, my)
         nw += 1
         if (nw % 10000 == 0):
@@ -189,14 +192,15 @@ def plot_avg_data(x, y, x_params, y_params):
 def print_summary(data_objs):
     pass
 
-def visualize_all(infile):
+def plot_all(infile):
     t1 = time.time()
     #x_params = ["alt", "hr", "duration", "distance"] * 2
     #y_params = ["pace"] * 4 + ["speed"] * 4
     #y_params = ["speed", "speed", "speed", "speed"]
     #sports = ["Running"] * 4 + ["Cycling, sport"] * 4
-    x_params = []
-    y_params = ["Duration"]
+    x_params = ["pace", "alt", "hr", "Distance"]
+    y_params = ["Duration"] * 4
+    sports = ["Running"] * 4
     objs = get_data(infile, x_params, y_params, sports)
     print Data.summary_format()
     for i in range(0, len(x_params)):
@@ -204,7 +208,8 @@ def visualize_all(infile):
         if (not d.empty()):
             #d.plot()
             #d.plot_bar()
-            d.plot_sliding(windowSize=100)
+            print d
+            #d.plot_sliding(windowSize=100)
         print d.summary()
     t2 = time.time()
     print "Time taken = " + str(t2 - t1)
@@ -217,5 +222,5 @@ if __name__ == "__main__":
     if (args.infile is None):
         parser.print_usage()
         exit(0)
-    visualize_all(args.infile)
+    plot_all(args.infile)
 

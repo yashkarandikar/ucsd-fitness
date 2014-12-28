@@ -4,7 +4,7 @@ import os
 import sys
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath,'..'))
-from visualize import get_data, sort_avg_data
+from plot_data import get_data, sort_avg_data
 import utils
 
 def are_lists_equal(l1, l2):
