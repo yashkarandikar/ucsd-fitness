@@ -6,6 +6,9 @@ class Unit(object):
     params = {"alt":"ft",
                 "distance" : "mi",
                 "hr" : "bpm",
+                "Avg. Heart Rate" : "bpm",
+                "Max. Heart Rate" : "bpm",
+                "HR After Test" : "bpm",
                 "speed" : "mph",
                 "pace" : "min/mi",
                 "Distance" : "mi",
@@ -19,6 +22,13 @@ class Unit(object):
                 "Min. Altitude" : "ft",
                 "Calories" : "kcal",
                 "Cadence" : "rpm",
+                "Temperature" : "F",
+                "Humidity" : "%",
+                "Wind" : "mph",
+                "Avg. Steps/Min" : "steps",
+                "Steps" : "steps",
+                "Fitness Score" : None,
+                "Fitness Level" : None,
                 "date-time" : None,
                 "user_id" : None,
                 "workout_id" : None,
@@ -26,10 +36,12 @@ class Unit(object):
                 "sport" : None}
     @staticmethod
     def get(param):
+        if ("(avg)" in param):
+            param = param.replace("(avg)","")
         if (Unit.params.has_key(param)):
             return Unit.params[param]
         else:
-            return "UNK"
+            return "UNKNOWN"
 
     @staticmethod
     def is_defined(param):

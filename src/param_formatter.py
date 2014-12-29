@@ -1,33 +1,45 @@
 from unit import Unit
-from exception import InvalidValueException
+from exception import InvalidValueException, InvalidParamException
 
 """
 converts parameters to and from their raw form (such as "11m:15s") to "675s" or just 675
 """
 class ParamFormatter(object):
 
-    def __init__(self):
+    def __init__(self, precision = 6):
+        self.precision = precision  # number of digits after decimal point
         self.param_formatters = {"Duration" : self.duration_to_number,
-                            "Distance" : self.default_to_number,
+                            "Distance" : self.value_space_unit_to_number,
                             "Max. Speed" : self.minmi_to_number,
                             "Avg. Speed" : self.minmi_to_number,
-                            "user_id" : self.string_to_int,
-                            "workout_id" : self.string_to_int,
+                            "user_id" : self.null_converter,
+                            "workout_id" : self.null_converter,
                             "Weather" : self.null_converter,
                             "sport" : self.null_converter,
-                            "Hydration" : self.hydration_to_number,
-                            "Calories" : self.default_to_number,
-                            "Min. Altitude" : self.default_to_number,
-                            "Max. Altitude" : self.default_to_number,
-                            "Total Ascent" : self.default_to_number,
-                            "Total Descent" : self.default_to_number,
+                            "Hydration" : self.value_unit_to_number,
+                            "Calories" : self.value_space_unit_to_number,
+                            "Min. Altitude" : self.value_space_unit_to_number,
+                            "Max. Altitude" : self.value_space_unit_to_number,
+                            "Total Ascent" : self.value_space_unit_to_number,
+                            "Total Descent" : self.value_space_unit_to_number,
+                            "Avg. Heart Rate" : self.value_to_number,
+                            "Max. Heart Rate" : self.value_to_number,
+                            "HR After Test" : self.value_to_number,
+                            "Temperature" : self.value_to_number,
                             "date-time" : self.null_converter,
-                            "Cadence" : self.default_to_number}
+                            "Humidity" : self.value_unit_to_number,
+                            "Cadence" : self.value_space_unit_to_number,
+                            "Wind" : self.value_space_unit_to_number,
+                            "Steps" : self.value_space_unit_to_number,
+                            "Fitness Score" : self.value_to_number,
+                            "Fitness Level" : self.null_converter,
+                            "Avg. Steps/Min" : self.value_space_unit_to_number}
 
     def to_number(self, param, value, with_unit = False):
         # convert "11m:15s" to "675s" (if with_unit = True) or 675 if with_unit = False)
         if (not Unit.is_defined(param)):
-            raise Exception("Unit for the given parameter %s has not been defined" % (param))
+            #raise Exception("Unit for the given parameter %s has not been defined" % (param))
+            raise InvalidParamException(param)
 
         if (self.param_formatters.has_key(param)):
             f = self.param_formatters[param]
@@ -53,8 +65,10 @@ class ParamFormatter(object):
                 v += p_value * 60
             elif(p_unit == "h"):
                 v += p_value * 3600
+            elif(p_unit == "d"):
+                v += p_value * 86400
             else:
-                raise Exception("Invalid time unit %s" % (p_unit))
+                raise Exception("Invalid time unit.. param = %s, value = %s" % (param, value))
         return v
 
     def minmi_to_number(self, param, value):
@@ -70,27 +84,27 @@ class ParamFormatter(object):
             v = float(parts[0])
         if (Unit.get(param) != unit):
             v = Unit.convert(unit, Unit.get(param), v)  # convert units
+        v = round(v, self.precision)
         return v
 
-    def hydration_to_number(self, param, value):
+    def value_unit_to_number(self, param, value):
         # string is of the form "32.3L"
         unit = value[-1]
-        assert(unit == "L")
-        assert(Unit.get("Hydration") == unit)
-        return float(value[:-1])
+        assert(Unit.get(param) == unit)
+        return round(float(value[:-1]), self.precision)
 
-    def default_to_number(self, param, value):
+    def value_space_unit_to_number(self, param, value):
         # default format is "<value> <unit>"
         if (value == "-"):
             raise InvalidValueException(param, value)
         parts = value.split()
-        return float(parts[0])
+        return round(float(parts[0]), self.precision)
 
     def null_converter(self, param, value):
         return value
 
-    def string_to_int(self, param, value):
-        return int(value)
+    def value_to_number(self, param, value):
+        return round(float(value), self.precision)
 
 if __name__ == "__main__":
     p = ParamFormatter()

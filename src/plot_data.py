@@ -48,6 +48,9 @@ class Data(object):
         plt.ylabel(self.ylabel)
         plt.title("Sport: %s"%(self.sport))
 
+    def describe(self):
+        return self.sport + " : " + self.yparam + " vs " + self.xparam
+
     def plot_bar(self):
         assert(len(self.xvals) == len(self.yvals))
         self.sort()
@@ -76,9 +79,9 @@ class Data(object):
             x[i] = avg_x
             y[i] = avg_y
         plt.plot(x, y)
-        plt.xlabel(self.xlabel + "(averaged over window)")
-        plt.ylabel(self.ylabel + "(averaged over window)")
-        plt.title("Sport: %s"%(self.sport) + "(averaged over window)")
+        plt.xlabel(self.xlabel + "(averaged over window size %d)" % (windowSize))
+        plt.ylabel(self.ylabel + "(averaged over window size %d)" % (windowSize))
+        plt.title(self.describe() + "(averaged over window size %d)" % (windowSize))
 
     def empty(self):
         return (len(self.xvals) == 0)
@@ -198,7 +201,7 @@ def plot_all(infile):
     #y_params = ["pace"] * 4 + ["speed"] * 4
     #y_params = ["speed", "speed", "speed", "speed"]
     #sports = ["Running"] * 4 + ["Cycling, sport"] * 4
-    x_params = ["pace", "alt", "hr", "Distance"]
+    x_params = ["pace(avg)", "alt(avg)", "hr(avg)", "Distance"]
     y_params = ["Duration"] * 4
     sports = ["Running"] * 4
     objs = get_data(infile, x_params, y_params, sports)
@@ -208,8 +211,10 @@ def plot_all(infile):
         if (not d.empty()):
             #d.plot()
             #d.plot_bar()
-            print d
-            #d.plot_sliding(windowSize=100)
+            #print d
+            d.plot_sliding(windowSize=100)
+        else:
+            print d.describe() + " is empty.."
         print d.summary()
     t2 = time.time()
     print "Time taken = " + str(t2 - t1)

@@ -5,7 +5,7 @@ import numpy
 import argparse
 import time
 from param_formatter import ParamFormatter
-from exception import InvalidValueException
+from exception import InvalidValueException, InvalidParamException
 
 def condense(infile, outfile):
     """
@@ -17,24 +17,33 @@ def condense(infile, outfile):
     t1 = time.time()
     fo = gzip.open(outfile, "w")
     fi = gzip.open(infile)
-    param_formatter = ParamFormatter()
+    precision = 6   # 6 digits after decimal
+    param_formatter = ParamFormatter(precision = precision)
     n = 0
+    n_params_ignored = 0
     n_values_ignored = 0
+    ignored_params = set()
+    ignored_values = set()
     for line in fi:
         d = {}
         w = utils.json_to_dict(line.strip())
         for k, v in w.items():
             if (isinstance(v, list)):
                 # replace trace data by averages
-                v = numpy.mean(utils.remove_null_values_single(v))
+                v = round(numpy.mean(utils.remove_null_values_single(v)), precision)
+                k = k + "(avg)"
                 d[k] = v
             else:
                 # convert and replace units - for example, convert '2.35 mi' to 2.35
                 try:
                     v = param_formatter.to_number(k, v)
-                except InvalidValueException:
+                    d[k] = v
+                except InvalidValueException as e:
                     n_values_ignored += 1
-                    pass        # if invalid, ignore so as not to include it in the output
+                    ignored_values.add(e.value)
+                except InvalidParamException as e:
+                    n_params_ignored += 1
+                    ignored_params.add(e.param)
         w_str = utils.dict_to_json(d)
         fo.write(w_str + "\n")
         n += 1
@@ -44,7 +53,11 @@ def condense(infile, outfile):
     fo.close()
     t2 = time.time()
     print "Time taken = " + str(t2 - t1) + " seconds"
-    print "%d values ignored since they were invalid.." % (n_values_ignored)
+    print "%d params ignored" % (n_params_ignored)
+    print "List of ignored parameters : " + str(ignored_params)
+    print "%d values ignored" % (n_values_ignored)
+    print "List of ignored values : " + str(ignored_values)
+    print "Total %d workouts written" % (n)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Reads .gz file written by sql_to_json_parser.py and condenses all traces to average values, performs unit conversions etc.')
