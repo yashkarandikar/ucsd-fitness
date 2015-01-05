@@ -35,8 +35,8 @@ class ParamFormatter(object):
                             "Fitness Level" : self.null_converter,
                             "Avg. Steps/Min" : self.value_space_unit_to_number}
 
-    def to_number(self, param, value, with_unit = False):
-        # convert "11m:15s" to "675s" (if with_unit = True) or 675 if with_unit = False)
+    def to_number(self, param, value):
+        # convert "11m:15s" to 675
         if (not Unit.is_defined(param)):
             #raise Exception("Unit for the given parameter %s has not been defined" % (param))
             raise InvalidParamException(param)
@@ -47,10 +47,7 @@ class ParamFormatter(object):
         else:
             raise Exception("Unknown parameter %s in ParamFormatter" % (param))
 
-        if (with_unit):
-            return str(v) + Unit.get(param)
-        else:
-            return v
+        return v
     
     def duration_to_number(self, param, value):
         # the value is of the form 16m:31s
@@ -59,7 +56,8 @@ class ParamFormatter(object):
         assert(param == "Duration")
         assert(Unit.get("Duration") == "s")  # following code assumes the unit is seconds
         for p in parts:
-            p_value = int(p[0:len(p) - 1])
+            #p_value = int(p[0:len(p) - 1])
+            p_value = self.str_to_float(p[0:len(p) - 1])
             p_unit = p[len(p) - 1]
             if (p_unit == "s"):
                 v += p_value
@@ -99,9 +97,11 @@ class ParamFormatter(object):
         unit = parts[1]
         if (unit == "min/mi" and (":" in parts[0])):
             v_parts = parts[0].split(":")
-            v = float(v_parts[0]) + float(v_parts[1])/60.0  # convert to float minutes value
+            #v = float(v_parts[0]) + float(v_parts[1])/60.0  # convert to float minutes value
+            v = self.str_to_float(v_parts[0]) + self.str_to_float(v_parts[1])/60.0  # convert to float minutes value
         else:
-            v = float(parts[0])
+            #v = float(parts[0])
+            v = self.str_to_float(parts[0])
         if (Unit.get(param) != unit):
             v = Unit.convert(unit, Unit.get(param), v)
         return round(v, self.precision)
@@ -109,7 +109,8 @@ class ParamFormatter(object):
     def value_unit_to_number(self, param, value):
         # string is of the form "32.3L"
         unit = value[-1]
-        v = float(value[:-1])
+        #v = float(value[:-1])
+        v = self.str_to_float(value[:-1])
         if (Unit.get(param) != unit):
             v = Unit.convert(unit, Unit.get(param), v)
         return round(v, self.precision)
@@ -118,7 +119,11 @@ class ParamFormatter(object):
         return value
 
     def value_to_number(self, param, value):
-        return round(float(value), self.precision)
+        #return round(float(value), self.precision)
+        return round(self.str_to_float(value), self.precision)
+
+    def str_to_float(self, s):
+        return float(s.replace(",",""))
 
 if __name__ == "__main__":
     p = ParamFormatter()
