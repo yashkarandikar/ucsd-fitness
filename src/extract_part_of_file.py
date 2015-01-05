@@ -54,8 +54,8 @@ def extract_part_of_file(infile, start_line = None, end_line = None, outfile = N
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Extracts part of .gz file')
-    parser.add_argument('--infile', type=str, help='.sql.gz file', dest='infile')
-    parser.add_argument('--outfile', type=str, help='.sql.gz file', dest='outfile')
+    parser.add_argument('--infile', type=str, help='.gz file', dest='infile')
+    parser.add_argument('--outfile', type=str, help='.gz file', dest='outfile')
     parser.add_argument('--start', type=int, help='start line number', dest='start_line')
     parser.add_argument('--end', type=int, help='end line number', dest='end_line')
     args = parser.parse_args()

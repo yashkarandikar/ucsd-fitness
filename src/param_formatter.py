@@ -57,7 +57,7 @@ class ParamFormatter(object):
         assert(Unit.get("Duration") == "s")  # following code assumes the unit is seconds
         for p in parts:
             #p_value = int(p[0:len(p) - 1])
-            p_value = self.str_to_float(p[0:len(p) - 1])
+            p_value = self.str_to_float(param, p[0:len(p) - 1])
             p_unit = p[len(p) - 1]
             if (p_unit == "s"):
                 v += p_value
@@ -98,10 +98,10 @@ class ParamFormatter(object):
         if (unit == "min/mi" and (":" in parts[0])):
             v_parts = parts[0].split(":")
             #v = float(v_parts[0]) + float(v_parts[1])/60.0  # convert to float minutes value
-            v = self.str_to_float(v_parts[0]) + self.str_to_float(v_parts[1])/60.0  # convert to float minutes value
+            v = self.str_to_float(param, v_parts[0]) + self.str_to_float(param, v_parts[1])/60.0  # convert to float minutes value
         else:
             #v = float(parts[0])
-            v = self.str_to_float(parts[0])
+            v = self.str_to_float(param, parts[0])
         if (Unit.get(param) != unit):
             v = Unit.convert(unit, Unit.get(param), v)
         return round(v, self.precision)
@@ -110,7 +110,7 @@ class ParamFormatter(object):
         # string is of the form "32.3L"
         unit = value[-1]
         #v = float(value[:-1])
-        v = self.str_to_float(value[:-1])
+        v = self.str_to_float(param, value[:-1])
         if (Unit.get(param) != unit):
             v = Unit.convert(unit, Unit.get(param), v)
         return round(v, self.precision)
@@ -120,10 +120,13 @@ class ParamFormatter(object):
 
     def value_to_number(self, param, value):
         #return round(float(value), self.precision)
-        return round(self.str_to_float(value), self.precision)
+        return round(self.str_to_float(param, value), self.precision)
 
-    def str_to_float(self, s):
-        return float(s.replace(",",""))
+    def str_to_float(self, param, value):
+        try:
+            return float(value.replace(",",""))
+        except ValueError:
+            raise InvalidValueException(param, value)
 
 if __name__ == "__main__":
     p = ParamFormatter()
