@@ -10,8 +10,8 @@ class ParamFormatter(object):
         self.precision = precision  # number of digits after decimal point
         self.param_formatters = {"Duration" : self.duration_to_number,
                             "Distance" : self.value_space_unit_to_number,
-                            "Max. Speed" : self.minmi_to_number,
-                            "Avg. Speed" : self.minmi_to_number,
+                            "Max. Speed" : self.value_space_unit_to_number,
+                            "Avg. Speed" : self.value_space_unit_to_number,
                             "user_id" : self.null_converter,
                             "workout_id" : self.null_converter,
                             "Weather" : self.null_converter,
@@ -53,8 +53,10 @@ class ParamFormatter(object):
             return v
     
     def duration_to_number(self, param, value):
+        # the value is of the form 16m:31s
         parts = value.split(":")
         v = 0
+        assert(param == "Duration")
         assert(Unit.get("Duration") == "s")  # following code assumes the unit is seconds
         for p in parts:
             p_value = int(p[0:len(p) - 1])
@@ -71,6 +73,7 @@ class ParamFormatter(object):
                 raise Exception("Invalid time unit.. param = %s, value = %s" % (param, value))
         return v
 
+    """
     def minmi_to_number(self, param, value):
         # string is of the form "12:03 min/mi" or "12.3 mph"
         if (value == "-"):
@@ -86,20 +89,31 @@ class ParamFormatter(object):
             v = Unit.convert(unit, Unit.get(param), v)  # convert units
         v = round(v, self.precision)
         return v
-
-    def value_unit_to_number(self, param, value):
-        # string is of the form "32.3L"
-        unit = value[-1]
-        assert(Unit.get(param) == unit)
-        return round(float(value[:-1]), self.precision)
+    """
 
     def value_space_unit_to_number(self, param, value):
         # default format is "<value> <unit>"
         if (value == "-"):
             raise InvalidValueException(param, value)
         parts = value.split()
-        return round(float(parts[0]), self.precision)
+        unit = parts[1]
+        if (unit == "min/mi" and (":" in parts[0])):
+            v_parts = parts[0].split(":")
+            v = float(v_parts[0]) + float(v_parts[1])/60.0  # convert to float minutes value
+        else:
+            v = float(parts[0])
+        if (Unit.get(param) != unit):
+            v = Unit.convert(unit, Unit.get(param), v)
+        return round(v, self.precision)
 
+    def value_unit_to_number(self, param, value):
+        # string is of the form "32.3L"
+        unit = value[-1]
+        v = float(value[:-1])
+        if (Unit.get(param) != unit):
+            v = Unit.convert(unit, Unit.get(param), v)
+        return round(v, self.precision)
+    
     def null_converter(self, param, value):
         return value
 
