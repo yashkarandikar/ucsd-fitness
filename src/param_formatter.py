@@ -126,6 +126,7 @@ class ParamFormatter(object):
         try:
             return float(value.replace(",",""))
         except ValueError:
+            #print "param = %s, value = %s" % (param, value)
             raise InvalidValueException(param, value)
 
 if __name__ == "__main__":

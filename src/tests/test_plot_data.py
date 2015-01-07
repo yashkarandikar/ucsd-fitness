@@ -4,7 +4,7 @@ import os
 import sys
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath,'..'))
-from plot_data import get_data, sort_avg_data
+from plot_data import get_data
 import utils
 
 def are_lists_equal(l1, l2):
@@ -18,26 +18,33 @@ def are_lists_equal(l1, l2):
 
 def test_get_data():
     cwd = os.path.dirname(os.path.abspath(__file__))
-    infile = os.path.join(cwd, "./data","alldump1.txt")
+    infile = os.path.join(cwd, "./data","workouts_condensed.gz")
 
     # positive test
-    x_params = ["duration", "distance"]
-    y_params = ["pace", "pace"]
+    x_params = ["duration(avg)", "Distance"]
+    y_params = ["pace(avg)", "pace(avg)"]
     sports = ["Running", "Running"]
     objs = get_data(infile, x_params, y_params, sports)
     assert(len(objs) == 2)
     for i in range(0, len(x_params)):
         assert(len(objs[i].xvals) == 3)
         assert(len(objs[i].yvals) == 3)
-    #assert(y[0] == y[1])
-    #assert(are_lists_equal(x[0], [107041.5, 105120.25,105237.2]))
-    #assert(are_lists_equal(x[1],  [0.078509, 0.07995, 0.076088]))
-    #assert(are_lists_equal(y[0],  [7.8122315, 8.1547095, 7.8924752]))
     assert(objs[0].yvals == objs[1].yvals)
-    assert(are_lists_equal(objs[0].xvals, [107041.5, 105120.25,105237.2]))
-    assert(are_lists_equal(objs[1].xvals,  [0.078509, 0.07995, 0.076088]))
-    assert(are_lists_equal(objs[0].yvals,  [7.8122315, 8.1547095, 7.8924752]))
+    assert(are_lists_equal(objs[0].xvals, [103077.0, 103127.8, 105237.2]))
+    assert(are_lists_equal(objs[1].xvals,  [2.35, 3.35, 4.35]))
+    assert(are_lists_equal(objs[0].yvals,  [7.812231, 8.15471, 7.892475]))
+    assert(not objs[0].empty())
+    assert(not objs[1].empty())
 
+    # negative test
+    x_params = ["Distance"]
+    y_params = ["No such param"]
+    sports = ["Running"]
+    objs = get_data(infile, x_params, y_params, sports)
+    assert(len(objs) == 1)
+    assert(objs[0].empty())
+
+'''
 def test_sort_avg_data():
     x = [[], []]; y = [[], []]
     x[0] = [1.1, 2.2, 3.3]
@@ -51,7 +58,7 @@ def test_sort_avg_data():
     assert(are_lists_equal(y[0], [5, 6, 7]))
     assert(are_lists_equal(x[1], [1.22, 2.11, 3.12]))
     assert(are_lists_equal(y[1], [300, 100, 200]))
+'''
 
 if __name__ == "__main__":
     test_get_data()
-    test_sort_avg_data()
