@@ -10,6 +10,7 @@ import barplot
 import time
 import pickle
 from unit import Unit
+import math
 
 class Data(object):
 
@@ -32,24 +33,18 @@ class Data(object):
         self.xvals = [a for a, b in xy]
         self.yvals = [b for a, b in xy]
 
-    """
-    def plot(self):
+    def plot_simple(self, x_range = None, y_range = None):
         assert(len(self.xvals) == len(self.yvals))
         self.sort()
         plt.figure()
-        plt.plot(self.xvals, self.yvals)
-        xlims = Data.param_range(self.xparam)
-        ylims = Data.param_range(self.yparam)
-        if (xlims is not None):
-            print "Using range " + xlims + " for " + self.xparam
-            plt.xlim(xlims)
-        if (ylims is not None):
-            print "Using range " + ylims + " for " + self.yparam
-            plt.ylim(ylims)
+        plt.plot(self.xvals, self.yvals, 'o')
+        if (x_range is not None):
+            plt.xlim(x_range)
+        if (y_range is not None):
+            plt.ylim(y_range)
         plt.xlabel(self.xlabel)
         plt.ylabel(self.ylabel)
-        plt.title("Sport: %s"%(self.sport))
-    """
+        plt.title(self.describe())
 
     def describe(self):
         return self.sport + " : " + self.yparam + " vs " + self.xparam
@@ -59,7 +54,7 @@ class Data(object):
         self.sort()
         barplot.barplot(self.xvals, self.yvals, nbins=10, xparam=self.xlabel, yparam=self.ylabel, title="Sport: %s"%(self.sport))
 
-    def plot_sliding(self, windowSize, param_ranges = None):
+    def plot_sliding(self, windowSize, x_range = None, y_range = None):
         assert(len(self.xvals) == len(self.yvals))
         n = len(self.xvals)
         assert(n > windowSize)
@@ -81,17 +76,58 @@ class Data(object):
             avg_y = sum_y / w
             x[i] = avg_x
             y[i] = avg_y
-        plt.plot(x, y)
-        xlims = self.get_range(param_ranges, self.xparam)
-        ylims = self.get_range(param_ranges, self.yparam)
-        if (xlims is not None and max(x) > max(xlims)):
-            plt.xlim(xlims)
-        if (ylims is not None and max(y) > max(ylims)):
-            plt.ylim(ylims)
+        plt.plot(x, y, 'o')
+        #xlims = self.get_range(param_ranges, self.xparam)
+        #ylims = self.get_range(param_ranges, self.yparam)
+        #if (xlims is not None and max(x) > max(xlims)):
+            #plt.xlim(xlims)
+        #if (ylims is not None and max(y) > max(ylims)):
+            #plt.ylim(ylims)
+        if (x_range is not None):
+            plt.xlim(x_range)
+        if (y_range is not None):
+            plt.ylim(y_range)
 
         plt.xlabel(self.xlabel + "(averaged over window size %d)" % (windowSize))
         plt.ylabel(self.ylabel + "(averaged over window size %d)" % (windowSize))
         plt.title(self.describe() + "(averaged over window size %d)" % (windowSize))
+
+    def plot_sliding_Y(self, windowSize, x_range = None, y_range = None):
+        assert(len(self.xvals) == len(self.yvals))
+        n = len(self.xvals)
+        assert(n > windowSize)
+        self.sort()
+        plt.figure()
+        x = [0] * (n - windowSize + 1)
+        y = [0] * (n - windowSize + 1)
+        w = float(windowSize)
+        sum_y = float(sum(self.yvals[0:windowSize]))
+        avg_y = sum_y / w
+        w_mid = int(math.floor(windowSize / 2.0))
+        x[0] = self.xvals[w_mid]
+        y[0] = avg_y
+        j = 1
+        for i in range(1 + w_mid, n - w_mid):
+            x[j] = self.xvals[i]
+            sum_y = sum_y - self.yvals[j-1] + self.yvals[j + windowSize - 1]
+            y[j] = sum_y / w
+            j += 1
+        plt.plot(x, y, 'o')
+        #xlims = self.get_range(param_ranges, self.xparam)
+        #ylims = self.get_range(param_ranges, self.yparam)
+        #if (xlims is not None and max(x) > max(xlims)):
+            #plt.xlim(xlims)
+        #if (ylims is not None and max(y) > max(ylims)):
+            #plt.ylim(ylims)
+        if (x_range is not None):
+            plt.xlim(x_range)
+        if (y_range is not None):
+            plt.ylim(y_range)
+
+        plt.xlabel(self.xlabel)
+        plt.ylabel(self.ylabel + "(averaged over window size %d)" % (windowSize))
+        plt.title(self.describe())
+
 
     def empty(self):
         return (len(self.xvals) == 0)
@@ -114,7 +150,7 @@ class Data(object):
 
 def get_data(infile, x_params, y_params, sport_types):
     """
-    returns data averaged over each workout for each sport type. For each i, returns y_params[i] and x_params[i] averaged over each workout. Thus each point in the plot corresponds to one workout
+    For each i, returns y_params[i] and x_params[i] where sport = sport_types[i]. Thus each point in the plot corresponds to one workout
     x_params  list of parameters, must be present in the data
     y_params  list of parameters, must be present in the data
     Must be true : len(x_params) == len(y_params)
@@ -157,16 +193,6 @@ def get_data(infile, x_params, y_params, sport_types):
             if (w.has_key(xp) and w.has_key(yp)):
                 mx = w[xp]
                 my = w[yp]
-                #if (isinstance(mx, list) and isinstance(my, list)):
-                #    [x_trace, y_trace] = utils.remove_null_values(mx, my)
-                #    mx = np.mean(x_trace)
-                #    my = np.mean(y_trace)
-                #elif (isinstance(mx, list)):
-                #    x_trace = utils.remove_null_values_single(mx)
-                #    mx = np.mean(x_trace)
-                #elif (isinstance(my, list)):
-                #    y_trace = utils.remove_null_values_single(my)
-                #    my = np.mean(y_trace)
                 objs[i].add_point(mx, my)
         nw += 1
         if (nw % 10000 == 0):
@@ -179,14 +205,12 @@ def get_data(infile, x_params, y_params, sport_types):
 
 def plot_all(infile, use_saved = False):
     t1 = time.time()
-    #x_params = ["alt", "hr", "duration", "distance"] * 2
-    #y_params = ["pace"] * 4 + ["speed"] * 4
-    #y_params = ["speed", "speed", "speed", "speed"]
-    #sports = ["Running"] * 4 + ["Cycling, sport"] * 4
     x_params = ["pace(avg)", "alt(avg)", "hr(avg)", "Distance"]
     y_params = ["Duration"] * 4
     sports = ["Running"] * 4
-    param_ranges = {"Duration" : [0, 50000], "Distance" : [0, 40], "pace(avg)" : [0, 40], "hr(avg)":[0, 300], "alt(avg)" : [0,10000]}
+    #param_ranges = {"Duration" : [0, 50000], "Distance" : [0, 40], "pace(avg)" : [0, 40], "hr(avg)":[0, 300], "alt(avg)" : [0,10000]}
+    x_ranges = [[0, 25], [0, 10000], [0, 225], [0, 50]]
+    y_ranges = [[0, 30000], [0, 30000], [0, 10000], [0, 80000]]
     fName, fExt = os.path.splitext(infile)
     plot_outfile = fName + "_plots.txt"
     if (use_saved):
@@ -205,10 +229,9 @@ def plot_all(infile, use_saved = False):
     for i in range(0, len(x_params)):
         d = objs[i]
         if (not d.empty()):
-            #d.plot()
-            #d.plot_bar()
-            #print d
-            d.plot_sliding(windowSize=100, param_ranges = param_ranges)
+            d.plot_sliding(windowSize=100, x_range = x_ranges[i], y_range = y_ranges[i])
+            #d.plot_sliding_Y(windowSize=100, x_range = x_ranges[i], y_range = y_ranges[i])
+            #d.plot_simple(x_range = x_ranges[i], y_range = y_ranges[i])
         else:
             print d.describe() + " is empty.."
         print d.summary()
