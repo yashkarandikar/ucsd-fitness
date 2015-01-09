@@ -39,8 +39,8 @@ def shuffle_examples(X, Y):
     ncols = X.shape[1]
     XY = np.concatenate((X, Y), axis=1)
     np.random.shuffle(XY)
-    X = XY[:, 0 : ncols - 1]
-    Y = XY[:, ncols - 1 : ]
+    X = XY[:, 0 : ncols]
+    Y = XY[:, ncols : ]
     return [X, Y]
 
 def split_examples(X, Y):
