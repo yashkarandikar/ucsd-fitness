@@ -11,7 +11,54 @@ def count_lines_in_file(infile):
             n += 1
     return n
 
-def shuffle_and_split_data(infile, outfile_base, shuffle, fraction = None, infile_line_count = None):
+def split_data(infile, outfile_base, fraction = None, infile_line_count = None):
+    print "Shuffling disabled.."
+
+    # get number of lines in file
+    N = 0
+    if (infile_line_count is not None):
+        N = int(infile_line_count)
+    else:
+        # count number of lines in file
+        print "Counting lines in file.."
+        N = count_lines_in_file(infile)
+    print "File has %d lines (workouts).." % (N)
+
+    # split into 2 parts
+    if (fraction == None):
+        fraction = 0.5
+    assert(0.0 <= fraction and fraction <= 1.0)
+    end1 = math.ceil(float(N) * fraction)
+
+    # writing
+    outf1 = gzip.open(outfile_base + "1.gz", "w")
+    outf2 = gzip.open(outfile_base + "2.gz", "w")
+    print "Writing 2 sets to files.."
+    with gzip.open(infile) as f:
+        n_line = 0
+        n1 = n2 = 0
+        while n_line < end1:
+            outf1.write(f.readline())
+            n1 += 1
+            n_line += 1
+            if (n_line % 100000 == 0):
+                print "Done writing total %d workouts.." % (n_line)
+        while n_line < N:
+            outf2.write(f.readline())
+            n2 += 1
+            n_line += 1
+            if (n_line % 100000 == 0):
+                print "Done writing total %d workouts.." % (n_line)
+    
+    outf1.close()
+    outf2.close()
+
+    print "Written %d workouts to set 1 and %d workouts to set 2.." % (n1, n2)
+    assert(n1 + n2 == N)
+
+def shuffle_and_split_data(infile, outfile_base, fraction = None, infile_line_count = None):
+    print "Shuffling enabled.."
+
     # get number of lines in file
     N = 0
     if (infile_line_count is not None):
@@ -23,11 +70,8 @@ def shuffle_and_split_data(infile, outfile_base, shuffle, fraction = None, infil
     print "File has %d lines (workouts).." % (N)
 
     # generate a permutation if required
-    if (shuffle):
-        print "Generating permutation.."
-        perm = np.random.permutation(N)
-    else:
-        perm = np.arange(N)
+    print "Generating permutation.."
+    perm = np.random.permutation(N)
 
     # split the permutation into 2 parts, corresponding to the 2 sets
     if (fraction == None):
@@ -80,7 +124,11 @@ if __name__ == "__main__":
         parser.print_usage()
     else:
         t1 = time.time()
-        shuffle_and_split_data(infile = args.infile, outfile_base = args.outfile_base, fraction = args.split_fraction, shuffle = not args.no_shuffle, infile_line_count = args.infile_line_count)
+        shuffle = not args.no_shuffle
+        if (shuffle):
+            shuffle_and_split_data(infile = args.infile, outfile_base = args.outfile_base, fraction = args.split_fraction, infile_line_count = args.infile_line_count)
+        else:
+            split_data(infile = args.infile, outfile_base = args.outfile_base, fraction = args.split_fraction, infile_line_count = args.infile_line_count)
         t2 = time.time()
         print "Time taken = %d" % (t2 - t1)
 
