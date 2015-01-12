@@ -19,6 +19,9 @@ def read_data(infile, x_params, y_param):
     y = []
     n = 0
     n_ignore = 0
+    print "Infile : ", infile
+    print "X params : ", x_params
+    print "y param : ", y_param
     with gzip.open(infile) as f:
         for line in f:
             d = utils.json_to_dict(line)
