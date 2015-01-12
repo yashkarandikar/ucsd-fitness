@@ -205,12 +205,13 @@ def get_data(infile, x_params, y_params, sport_types):
 
 def plot_all(infile, use_saved = False):
     t1 = time.time()
-    x_params = ["pace(avg)", "alt(avg)", "hr(avg)", "Distance"]
-    y_params = ["Duration"] * 4
-    sports = ["Running"] * 4
+    x_params = ["pace(avg)", "alt(avg)", "hr(avg)", "Distance", "Total Ascent", "Total Descent"]
+    y_params = ["Duration"] * 6
+    sports = ["Running"] * 6
     #param_ranges = {"Duration" : [0, 50000], "Distance" : [0, 40], "pace(avg)" : [0, 40], "hr(avg)":[0, 300], "alt(avg)" : [0,10000]}
-    x_ranges = [[0, 25], [0, 10000], [0, 225], [0, 50]]
-    y_ranges = [[0, 30000], [0, 30000], [0, 10000], [0, 80000]]
+    x_ranges = [[0, 25], [0, 10000], [0, 225], [0, 50], [0, 30000], [0, 30000]]
+    y_ranges = [[0, 30000], [0, 30000], [0, 10000], [0, 80000],[0, 80000], [0, 80000]]
+    assert(len(x_params) == len(y_params) and len(x_params) == len(x_ranges) and len(x_ranges) == len(y_ranges))
     fName, fExt = os.path.splitext(infile)
     plot_outfile = fName + "_plots.txt"
     if (use_saved):
