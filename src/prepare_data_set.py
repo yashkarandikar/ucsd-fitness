@@ -13,8 +13,8 @@ class FeatureAbsentException(Exception):
         return "Feature : %s" % (self.feature)
 
 
-def read_data(infile, x_params, y_param):
-    # returns matrices X and y (a single column). An extra binary feature is is introduced for each feature to indicate presence/absence of data. MIssing values are put as 0. These should be replaced by mean AFTER splitting into train, test and validation sets
+def read_data(infile, x_params, y_param, missing_data_mode = "substitute"):
+    # returns matrices X and y (a single column). An extra binary feature is is introduced for each feature to indicate presence/absence of data. MIssing values are put as 0.
     X = []
     y = []
     n = 0
@@ -26,36 +26,40 @@ def read_data(infile, x_params, y_param):
         for line in f:
             d = utils.json_to_dict(line)
             ignore = False
-            xrow = [1]
-            """
-            for xp in x_params:
-                if (not d.has_key(xp)):
+            xrow = []
+            if (missing_data_mode == "ignore"):
+                for xp in x_params:
+                    if (not d.has_key(xp)):
+                        ignore = True
+                        break
+                    xrow.append(d[xp])
+                if (not d.has_key(y_param)):
                     ignore = True
-                    break
-                xrow.append(d[xp])
-            if (not d.has_key(y_param)):
-                ignore = True
-            else:
-                y = d[y_param]
-            if (not ignore):
-                assert(len(xrow) == len(x_params) + 1)
-                X.append(xrow)
-                y.append(y)
-            """
-            # if data is missing, add a feature [0] and put value as 0 for now, else add a feature [1] and put value as actual value
-            for xp in x_params:
-                if (not d.has_key(xp)):
-                    xrow.append(0)  # binary feature
-                    xrow.append(0.0)    # missing value
                 else:
-                    xrow.append(1)  # binary feature
-                    xrow.append(d[xp]) # value
-            if (d.has_key(y_param)):    
-                # consider example only if y value is present
-                y.append(d[y_param])
-                X.append(xrow)
+                    y_val = d[y_param]
+                if (not ignore):
+                    assert(len(xrow) == len(x_params))
+                    X.append(xrow)
+                    y.append(y_val)
+                else:
+                    n_ignore += 1
+            elif (missing_data_mode == "substitute"):
+                # if data is missing, add a feature [0] and put value as 0 for now, else add a feature [1] and put value as actual value
+                for xp in x_params:
+                    if (not d.has_key(xp)):
+                        xrow.append(0)  # binary feature
+                        xrow.append(0.0)    # missing value
+                    else:
+                        xrow.append(1)  # binary feature
+                        xrow.append(d[xp]) # value
+                if (d.has_key(y_param)):    
+                    # consider example only if y value is present
+                    y.append(d[y_param])
+                    X.append(xrow)
+                else:
+                    n_ignore += 1
             else:
-                n_ignore += 1
+                raise Exception("invalid missing_data_mode")
 
             n += 1
             if (n % 100000 == 0):
@@ -69,53 +73,69 @@ def read_data(infile, x_params, y_param):
 
 
 def handle_missing_data(X, x_params):
-    # assumes columns are in the form: 1st column is constant 1, then presence/absence feature followed by feature value, then 2nd feature, so on
+    # assumes columns are in the form: presence/absence feature followed by feature value, then 2nd feature, so on
+    print "Handling missing data.."
+
     ncols = X.shape[1]
-    assert(len(x_params) == (ncols - 1) / 2)
+    assert(len(x_params) == ncols / 2)
     
     # compute means of columns
     col_means = np.sum(X, axis = 0)
-    j = 2
+    j = 1
     while j < ncols:
         if (col_means[0, j - 1] > 0):
             col_means[0, j] /= col_means[0, j - 1]
             j += 2
         else:
-            raise FeatureAbsentException(x_params[j/2 - 1])
+            raise FeatureAbsentException(x_params[j/2])
 
     # replace missing values by mean
     nrows = X.shape[0]
     for i in range(0, nrows):
-        j = 1
+        j = 0
         while (j < ncols - 1):
             if (X[i, j] == 0):  # if missing
                 X[i, j+1] = col_means[0, j + 1]
             j += 2
 
-def prepare_data_set(infile, x_params, y_param, outfile_base=""):
+def normalize_data(X, missing_data_mode = "substitute"):
+    print "Normalizing.."
+    ncols = X.shape[1]
+    means = np.mean(X, axis = 0)
+    stds = np.std(X, axis = 0)
+    if (missing_data_mode == "substitute"):
+        for i in range(0, ncols):
+            if i % 2 == 0:
+                means[0, i] = 0.0
+                stds[0, i] = 1.0
+    X = (X - means) / stds;
+    return X
+
+def add_offset_feature(X):
+    print "Adding offset feature.."
+    nrows = X.shape[0]
+    ones = np.ones((nrows, 1))
+    return np.concatenate((ones, X), axis = 1)
+
+def prepare_data_set(infile, x_params, y_param, outfile_base="", missing_data_mode = "substitute", normalize = True):
     try:
+        print "X params = " + str(x_params)
+        print "Y param = " + str(y_param)
+        print "Options : missing_data_mode = " + missing_data_mode +  ", normalize = " + str(normalize)
         print "Reading data.."
-        [X, y] = read_data(infile, x_params, y_param)    # read data
-        print "Substituting missing data by means"
-        handle_missing_data(X, x_params)
+        [X, y] = read_data(infile, x_params, y_param, missing_data_mode = missing_data_mode)    # read data
+        if (missing_data_mode == "substitute"):
+            handle_missing_data(X, x_params)
+        if (normalize):
+            X = normalize_data(X, missing_data_mode = missing_data_mode)
+        X = add_offset_feature(X)
         print "Writing npy files.."
         np.save(outfile_base + "X.npy", X)
         np.save(outfile_base + "y.npy", y)
     except FeatureAbsentException as e:
         print e
         print "No output files written.."
-    #[X, y] = shuffle_examples(X, y)  # shuffle examples
-    #[X_train, y_train, X_val, y_val, X_test, y_test] = split_examples(X, y)  # split
-    #handle_missing_data(X_train)
-    #handle_missing_data(X_val)
-    #handle_missing_data(X_train)
-    #np.save(outfile_base + "X_train.npy", X_train)
-    #np.save(outfile_base + "y_train.npy", y_train)
-    #np.save(outfile_base + "X_val.npy", X_val)
-    #np.save(outfile_base + "y_val.npy", y_val)
-    #np.save(outfile_base + "X_test.npy", X_test)
-    #np.save(outfile_base + "y_test.npy", y_test)
-
+    
 if __name__ == "__main__":
     #prepare_train_val_test_sets("endoMondo5000_workouts_condensed.gz", ["Distance", "pace(avg)", "hr(avg)","alt(avg)"],"Duration","5000_")
     #prepare_train_val_test_sets("../../data/all_workouts_condensed.gz", ["Distance", "pace(avg)", "hr(avg)","alt(avg)"],"Duration","full_")
@@ -133,7 +153,7 @@ if __name__ == "__main__":
         y_param = args.y_param
         x_params = args.x_param_list.split(",")
         x_params = [s.strip() for s in x_params]
-        prepare_data_set(infile=infile, x_params = x_params, y_param = y_param, outfile_base = args.outfile_base)
+        prepare_data_set(infile=infile, x_params = x_params, y_param = y_param, outfile_base = args.outfile_base, missing_data_mode="ignore")
 
 """
 def shuffle_examples(X, y):
