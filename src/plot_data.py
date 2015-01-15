@@ -223,7 +223,7 @@ def plot_data(infile, x_params, y_params, sports, x_ranges, y_ranges, windowSize
 
     nplots = len(x_params)
     ncols = 2
-    nrows = int(math.ceil(nplots / 2))
+    nrows = int(math.ceil(nplots / 2.0))
 
     plt.figure(1)
     for i in range(0, len(x_params)):
@@ -260,6 +260,16 @@ def plot_hr_vs_all(infile, use_saved):
     assert(len(x_params) == len(y_params) and len(x_params) == len(x_ranges) and len(x_ranges) == len(y_ranges))
     plot_data(infile, x_params, y_params, sports, x_ranges, y_ranges, use_saved = use_saved, windowSize = 100)
 
+def plot_calories_vs_all(infile, use_saved):
+    x_params = ["pace(avg)", "alt(avg)", "Duration", "Distance", "hr(avg)"]
+    y_params = ["Calories"] * 5
+    sports = ["Running"] * 5
+    x_ranges = [[0, 20],[0, 10000],[0, 30000],[0, 50], [50, 200]]
+    y_ranges = [[0, 3000], [0, 2000], [0, 4000], [0, 6000], [0, 1100]]
+    assert(len(x_params) == len(y_params) and len(x_params) == len(x_ranges) and len(x_ranges) == len(y_ranges))
+    plot_data(infile, x_params, y_params, sports, x_ranges, y_ranges, use_saved = use_saved, windowSize = 100)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='See various plots over all workouts')
     parser.add_argument('--infile', type=str, help='.gz file or .txt containing all workouts', dest='infile')
@@ -268,7 +278,7 @@ if __name__ == "__main__":
     if (args.infile is None):
         parser.print_usage()
         exit(0)
-    #plot_all(args.infile, args.use_saved)
     #plot_duration_vs_all(args.infile, args.use_saved)
-    plot_hr_vs_all(args.infile, args.use_saved)
+    #plot_hr_vs_all(args.infile, args.use_saved)
+    plot_calories_vs_all(args.infile, args.use_saved)
 
