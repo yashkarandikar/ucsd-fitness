@@ -78,11 +78,14 @@ def separate_Xy(Xy):
     return [X, y]
 
 def sort_matrix_by_col(m, i):
-    return m[m[:,i].argsort()]
+    return m[np.array(m[:,i].argsort(axis=0).tolist()).ravel()]
+    #return m[m[:,i].argsort()]
 
-def sort_data_by_col(X, Y, i):
-    XY = np.concatenate((X, Y), axis = 1)
-    XY = sort_matrix_by_col(XY, i)
-    X = XY[:,:-1]
-    Y = XY[:,-1:]
-    return [X, Y]
+def sort_data_by_col(X, y, i):
+    #XY = np.concatenate((X, Y), axis = 1)
+    Xy = combine_Xy(X, y)
+    Xy = sort_matrix_by_col(Xy, i)
+    [X, y] = separate_Xy(Xy)
+    #X = XY[:,:-1]
+    #Y = XY[:,-1:]
+    return [X, y]
