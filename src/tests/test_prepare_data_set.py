@@ -16,7 +16,7 @@ def test_read_data():
     infile = os.path.join(cwd, "./data","workouts_condensed_2.gz")
     x_params = ["alt(avg)","Distance"]
     y_param = "Duration"
-    [X, y] = read_data(infile = infile, x_params = x_params, y_param = y_param)
+    [X, y] = read_data(infile = infile, sport = "Running", x_params = x_params, y_param = y_param)
     expected_y = np.matrix([[1443.0],[ 1803.0], [1672.0]])
     expected_X = np.matrix([[0,0,1,2.35], [1,98.1,1,3.35], [1,100.23,1,4.35]])
     assert(np.array_equal(y, expected_y))
@@ -66,7 +66,7 @@ def test_prepare_data_set():
     infile = os.path.join(cwd, "./data","workouts_condensed_2.gz")
     x_params = ["alt(avg)","Distance"]
     y_param = "Duration"
-    prepare_data_set(infile = infile, x_params = x_params, y_param = y_param, outfile_base = "/tmp/fitness/")
+    prepare_data_set(infile = infile, sport = "Running", x_params = x_params, y_param = y_param, outfile_base = "/tmp/fitness/")
     expected_y = np.matrix([[1443.0],[ 1803.0], [1672.0]])
     #expected_X = np.matrix([[1,0,(98.1 + 100.23)/2.0,1,2.35], [1,1,98.1,1,3.35], [1,1,100.23,1,4.35]])
     mean1 = np.mean([99.165, 98.1, 100.23])

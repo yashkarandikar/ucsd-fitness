@@ -13,7 +13,7 @@ class FeatureAbsentException(Exception):
         return "Feature : %s" % (self.feature)
 
 
-def read_data(infile, x_params, y_param, missing_data_mode = "substitute"):
+def read_data(infile, sport, x_params, y_param, missing_data_mode = "substitute"):
     # returns matrices X and y (a single column). An extra binary feature is is introduced for each feature to indicate presence/absence of data. MIssing values are put as 0.
     X = []
     y = []
@@ -24,42 +24,51 @@ def read_data(infile, x_params, y_param, missing_data_mode = "substitute"):
     print "y param : ", y_param
     with gzip.open(infile) as f:
         for line in f:
-            d = utils.json_to_dict(line)
             ignore = False
-            xrow = []
-            if (missing_data_mode == "ignore"):
-                for xp in x_params:
-                    if (not d.has_key(xp)):
-                        ignore = True
-                        break
-                    xrow.append(d[xp])
-                if (not d.has_key(y_param)):
-                    ignore = True
-                else:
-                    y_val = d[y_param]
-                if (not ignore):
-                    assert(len(xrow) == len(x_params))
-                    X.append(xrow)
-                    y.append(y_val)
-                else:
-                    n_ignore += 1
-            elif (missing_data_mode == "substitute"):
-                # if data is missing, add a feature [0] and put value as 0 for now, else add a feature [1] and put value as actual value
-                for xp in x_params:
-                    if (not d.has_key(xp)):
-                        xrow.append(0)  # binary feature
-                        xrow.append(0.0)    # missing value
-                    else:
-                        xrow.append(1)  # binary feature
-                        xrow.append(d[xp]) # value
-                if (d.has_key(y_param)):    
-                    # consider example only if y value is present
-                    y.append(d[y_param])
-                    X.append(xrow)
-                else:
-                    n_ignore += 1
+            d = utils.json_to_dict(line)
+            if (d["sport"] != sport):
+                ignore = True
             else:
-                raise Exception("invalid missing_data_mode")
+                xrow = []
+                if (missing_data_mode == "ignore"):
+                    for xp in x_params:
+                        if (not d.has_key(xp)):
+                            ignore = True
+                            break
+                        xrow.append(d[xp])
+                    if (not d.has_key(y_param)):
+                        ignore = True
+                    else:
+                        y_val = d[y_param]
+                    if (not ignore):
+                        assert(len(xrow) == len(x_params))
+                        X.append(xrow)
+                        y.append(y_val)
+                    #else:
+                        #n_ignore += 1
+                elif ((not ignore) and missing_data_mode == "substitute"):
+                    # if data is missing, add a feature [0] and put value as 0 for now, else add a feature [1] and put value as actual value
+                    for xp in x_params:
+                        if (not d.has_key(xp)):
+                            xrow.append(0)  # binary feature
+                            xrow.append(0.0)    # missing value
+                        else:
+                            xrow.append(1)  # binary feature
+                            xrow.append(d[xp]) # value
+                    if (not d.has_key(y_param)):
+                        ignore = True
+                    else:
+                        y_val = d[y_param]
+                    if (not ignore):    
+                        # consider example only if y value is present
+                        assert(len(xrow) == 2 * len(x_params))
+                        y.append(d[y_param])
+                        X.append(xrow)
+                else:
+                    raise Exception("invalid missing_data_mode")
+
+            if (ignore):
+                n_ignore += 1
 
             n += 1
             if (n % 100000 == 0):
@@ -117,13 +126,13 @@ def add_offset_feature(X):
     ones = np.ones((nrows, 1))
     return np.concatenate((ones, X), axis = 1)
 
-def prepare_data_set(infile, x_params, y_param, outfile_base="", missing_data_mode = "substitute", normalize = True, outlier_remover = None):
+def prepare_data_set(infile, sport, x_params, y_param, outfile_base="", missing_data_mode = "substitute", normalize = True, outlier_remover = None):
     try:
         print "X params = " + str(x_params)
         print "Y param = " + str(y_param)
         print "Options : missing_data_mode = " + missing_data_mode +  ", normalize = " + str(normalize)
         print "Reading data.."
-        [X, y] = read_data(infile, x_params, y_param, missing_data_mode = missing_data_mode)    # read data
+        [X, y] = read_data(infile, sport, x_params, y_param, missing_data_mode = missing_data_mode)    # read data
         if (outlier_remover is not None):
             [X, y] = outlier_remover(X, y)
         if (missing_data_mode == "substitute"):

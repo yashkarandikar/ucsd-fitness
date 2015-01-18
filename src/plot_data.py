@@ -14,12 +14,16 @@ import math
 
 class DataForPlot(object):
 
-    def __init__(self, sport, xparam, yparam):
+    def __init__(self, sport, xparam, yparam, xvals = None, yvals = None):
         self.xparam = xparam
         self.yparam = yparam
         self.sport = sport
-        self.xvals = []
-        self.yvals = []
+        if (xvals is None):
+            xvals = []
+        if (yvals is None):
+            yvals = []
+        self.xvals = xvals
+        self.yvals = yvals
         self.xlabel = self.xparam + " (%s)"%(Unit.get(self.xparam))
         self.ylabel = self.yparam + " (%s)"%(Unit.get(self.yparam))
 
@@ -239,7 +243,7 @@ def plot_data(infile, x_params, y_params, sports, x_ranges, y_ranges, windowSize
 
     t2 = time.time()
     print "Time taken = " + str(t2 - t1)
-    
+
     plt.show()
 
 def plot_duration_vs_all(infile, use_saved):
