@@ -4,6 +4,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from prepare_data_set import prepare_data_set
+from plot_data import DataForPlot
 
 def compute_stats(X, Y, theta):
     Y_predicted = X.dot(theta)
@@ -37,8 +38,8 @@ def remove_outliers(X, y):
     return [X, y]
 
 if __name__ == "__main__":
-    prepare_data_set(infile = "../../data/all_workouts_train_condensed.gz", x_params = ["Distance"], y_param = "Calories", outfile_base="train_calories_distance", missing_data_mode = "ignore", normalize = False, outlier_remover = remove_outliers)
-    prepare_data_set(infile = "../../data/all_workouts_validation_condensed.gz", x_params = ["Distance"], y_param = "Calories", outfile_base="val_calories_distance", missing_data_mode = "ignore", normalize = False, outlier_remover = remove_outliers)
+    prepare_data_set(infile = "../../data/all_workouts_train_condensed.gz", sport = "Running", x_params = ["Distance"], y_param = "Calories", outfile_base="train_calories_distance", missing_data_mode = "ignore", normalize = False, outlier_remover = remove_outliers)
+    prepare_data_set(infile = "../../data/all_workouts_validation_condensed.gz", sport = "Running", x_params = ["Distance"], y_param = "Calories", outfile_base="val_calories_distance", missing_data_mode = "ignore", normalize = False, outlier_remover = remove_outliers)
 
     file_X_train = "train_calories_distanceX.npy"
     file_y_train = "train_calories_distancey.npy"
