@@ -5,46 +5,38 @@ import math
 import matplotlib.pyplot as plt
 from prepare_data_set import prepare_data_set
 from plot_data import DataForPlot
-
-def compute_stats(X, Y, theta):
-    Y_predicted = X.dot(theta)
-    mse = (np.square(Y_predicted - Y)).mean()
-    var = np.var(Y)
-    fvu = mse / var
-    r2  = 1 - fvu
-    return [mse, var, fvu, r2]
+from linear_reg import compute_stats
 
 def remove_outliers(X, y):
     print "Removing outliers.."
-    print "X shape = ", X.shape
-    print "y shape = ", y.shape
     Xy = utils.combine_Xy(X, y)
-    print "Xy shape = ", Xy.shape
 
-    # remove rows distance < 0.1 mi and > 100 mi
+    # remove rows distance < 0.1 mi and > 80 mi
     Xy = utils.sort_matrix_by_col(Xy, 0)
     print "Xy shape = ", Xy.shape
     i = np.searchsorted(Xy[:, 0].A1, 0.1)
-    j = np.searchsorted(Xy[:, 0].A1, 100.0)
+    j = np.searchsorted(Xy[:, 0].A1, 80.0)
     Xy = Xy[i:j, :]
 
-    # remove rows with calories < 0.1 and > 5000
+    # remove rows with duration < 0.1 and > 36000
     Xy = utils.sort_matrix_by_col(Xy, 1)
     i = np.searchsorted(Xy[:, -1].A1, 0.1)
-    j = np.searchsorted(Xy[:, -1].A1, 5000.0)
+    j = np.searchsorted(Xy[:, -1].A1, 36000.0)
     Xy = Xy[i:j, :]
 
     [X, y] = utils.separate_Xy(Xy)
     return [X, y]
 
 if __name__ == "__main__":
-    prepare_data_set(infile = "../../data/all_workouts_train_condensed.gz", sport = "Running", x_params = ["Distance"], y_param = "Calories", outfile_base="train_calories_distance", missing_data_mode = "ignore", normalize = False, outlier_remover = remove_outliers)
-    prepare_data_set(infile = "../../data/all_workouts_validation_condensed.gz", sport = "Running", x_params = ["Distance"], y_param = "Calories", outfile_base="val_calories_distance", missing_data_mode = "ignore", normalize = False, outlier_remover = remove_outliers)
+    train_base = "train_duration_distance"
+    val_base = "val_duration_distance"
+    prepare_data_set(infile = "../../data/all_workouts_train_condensed.gz", sport = "Running", x_params = ["Distance"], y_param = "Duration", outfile_base=train_base, missing_data_mode = "ignore", normalize = False, outlier_remover = remove_outliers)
+    prepare_data_set(infile = "../../data/all_workouts_validation_condensed.gz", sport = "Running", x_params = ["Distance"], y_param = "Duration", outfile_base=val_base, missing_data_mode = "ignore", normalize = False, outlier_remover = remove_outliers)
 
-    file_X_train = "train_calories_distanceX.npy"
-    file_y_train = "train_calories_distancey.npy"
-    file_X_val = "val_calories_distanceX.npy"
-    file_y_val = "val_calories_distancey.npy"
+    file_X_train = train_base + "X.npy"
+    file_y_train = train_base + "y.npy"
+    file_X_val = val_base + "X.npy"
+    file_y_val = val_base + "y.npy"
 
     # read data from files
     X_train = np.load(file_X_train)
