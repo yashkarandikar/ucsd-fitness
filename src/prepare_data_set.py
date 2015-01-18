@@ -19,6 +19,9 @@ def read_data(infile, sport, x_params, y_param, missing_data_mode = "substitute"
     y = []
     n = 0
     n_ignore = 0
+    x_missing = 0
+    y_missing = 0
+    sport_missing = 0
     print "Infile : ", infile
     print "X params : ", x_params
     print "y param : ", y_param
@@ -28,35 +31,38 @@ def read_data(infile, sport, x_params, y_param, missing_data_mode = "substitute"
             d = utils.json_to_dict(line)
             if (d["sport"] != sport):
                 ignore = True
+                sport_missing += 1
             else:
                 xrow = []
                 if (missing_data_mode == "ignore"):
                     for xp in x_params:
                         if (not d.has_key(xp)):
                             ignore = True
+                            x_missing += 1
                             break
                         xrow.append(d[xp])
                     if (not d.has_key(y_param)):
                         ignore = True
+                        y_missing += 1
                     else:
                         y_val = d[y_param]
                     if (not ignore):
                         assert(len(xrow) == len(x_params))
                         X.append(xrow)
                         y.append(y_val)
-                    #else:
-                        #n_ignore += 1
                 elif ((not ignore) and missing_data_mode == "substitute"):
                     # if data is missing, add a feature [0] and put value as 0 for now, else add a feature [1] and put value as actual value
                     for xp in x_params:
                         if (not d.has_key(xp)):
                             xrow.append(0)  # binary feature
                             xrow.append(0.0)    # missing value
+                            x_missing += 1
                         else:
                             xrow.append(1)  # binary feature
                             xrow.append(d[xp]) # value
                     if (not d.has_key(y_param)):
                         ignore = True
+                        y_missing += 1
                     else:
                         y_val = d[y_param]
                     if (not ignore):    
@@ -77,6 +83,9 @@ def read_data(infile, sport, x_params, y_param, missing_data_mode = "substitute"
     assert(len(X) == len(y))
     X = np.matrix(X)
     y = np.matrix(y).T
+    print "%d workouts did not match the sport" % (sport_missing)
+    print "%d workouts did not contain one or more X parameters" % (x_missing)
+    print "%d workouts did not contain Y parameter" % (y_missing)
     print "%d workouts ignored.." % (n_ignore)
     return [X,y]
 
@@ -126,23 +135,44 @@ def add_offset_feature(X):
     ones = np.ones((nrows, 1))
     return np.concatenate((ones, X), axis = 1)
 
-def prepare_data_set(infile, sport, x_params, y_param, outfile_base="", missing_data_mode = "substitute", normalize = True, outlier_remover = None):
+def generate_param_indices(x_params, missing_data_mode, with_intercept):
+    d = {}
+    assert(missing_data_mode == "ignore" or missing_data_mode == "substitute")
+    ind = 0
+    if (with_intercept):
+        d["intercept"] = 0
+        ind += 1
+    if (missing_data_mode == "ignore"):
+        for i in range(0, len(x_params)):
+            d[x_params[i]] = ind; ind += 1
+        assert(len(d.keys()) == len(x_params) + 1.0 * with_intercept)
+    else:
+        for i in range(0, len(x_params)):
+            d[x_params[i] + "_present"] = ind; ind += 1
+            d[x_params[i]] = ind; ind += 1
+        assert(len(d.keys()) == (2 * len(x_params)) + 1.0 * with_intercept)
+    return d
+
+def prepare_data_set(infile, sport, x_params, y_param, outfile, missing_data_mode = "substitute", normalize = True, outlier_remover = None):
     try:
         print "X params = " + str(x_params)
         print "Y param = " + str(y_param)
         print "Options : missing_data_mode = " + missing_data_mode +  ", normalize = " + str(normalize)
         print "Reading data.."
         [X, y] = read_data(infile, sport, x_params, y_param, missing_data_mode = missing_data_mode)    # read data
+        param_indices = generate_param_indices(x_params, missing_data_mode, with_intercept = False)
         if (outlier_remover is not None):
-            [X, y] = outlier_remover(X, y)
+            [X, y] = outlier_remover(X, y, x_params, y_param, missing_data_mode, param_indices)
         if (missing_data_mode == "substitute"):
             handle_missing_data(X, x_params)
         if (normalize):
             X = normalize_data(X, missing_data_mode = missing_data_mode)
         X = add_offset_feature(X)
-        print "Writing npy files.."
-        np.save(outfile_base + "X.npy", X)
-        np.save(outfile_base + "y.npy", y)
+        param_indices = generate_param_indices(x_params, missing_data_mode, with_intercept = True)
+        print "Writing to disk.."
+        #np.save(outfile_base + "X.npy", X)
+        #np.save(outfile_base + "y.npy", y)
+        np.savez(outfile, X = X, y = y, param_indices = param_indices)
         return [X, y]
     except FeatureAbsentException as e:
         print e
@@ -151,11 +181,11 @@ def prepare_data_set(infile, sport, x_params, y_param, outfile_base="", missing_
 if __name__ == "__main__":
     #prepare_train_val_test_sets("endoMondo5000_workouts_condensed.gz", ["Distance", "pace(avg)", "hr(avg)","alt(avg)"],"Duration","5000_")
     #prepare_train_val_test_sets("../../data/all_workouts_condensed.gz", ["Distance", "pace(avg)", "hr(avg)","alt(avg)"],"Duration","full_")
-    parser = argparse.ArgumentParser(description='Reads .gz file, extracts given X params, given y param and saves X and y .npy files')
+    parser = argparse.ArgumentParser(description='Reads .gz file, extracts given X params, given y param and saves as a single .npz files')
     parser.add_argument('--infile', type=str, help='.gz file', dest='infile')
     parser.add_argument('--x-params', type=str, help='comma separated list of X parameters', dest='x_param_list')
     parser.add_argument('--y-param', type=str, help='y param', dest='y_param')
-    parser.add_argument('--outfile-base', type=str, help='prefix name of output .npy files', dest='outfile_base', default="")
+    parser.add_argument('--outfile', type=str, help='output .npz file', dest='outfile', default="")
     args = parser.parse_args()
     if (args.infile is None or args.x_param_list is None or args.y_param is None):
         parser.print_usage()
@@ -165,7 +195,7 @@ if __name__ == "__main__":
         y_param = args.y_param
         x_params = args.x_param_list.split(",")
         x_params = [s.strip() for s in x_params]
-        prepare_data_set(infile=infile, x_params = x_params, y_param = y_param, outfile_base = args.outfile_base, missing_data_mode="ignore", normalize=True)
+        prepare_data_set(infile=infile, x_params = x_params, y_param = y_param, outfile = args.outfile, missing_data_mode="ignore", normalize=True)
 
 """
 def shuffle_examples(X, y):
