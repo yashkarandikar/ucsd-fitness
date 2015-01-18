@@ -117,13 +117,15 @@ def add_offset_feature(X):
     ones = np.ones((nrows, 1))
     return np.concatenate((ones, X), axis = 1)
 
-def prepare_data_set(infile, x_params, y_param, outfile_base="", missing_data_mode = "substitute", normalize = True):
+def prepare_data_set(infile, x_params, y_param, outfile_base="", missing_data_mode = "substitute", normalize = True, outlier_remover = None):
     try:
         print "X params = " + str(x_params)
         print "Y param = " + str(y_param)
         print "Options : missing_data_mode = " + missing_data_mode +  ", normalize = " + str(normalize)
         print "Reading data.."
         [X, y] = read_data(infile, x_params, y_param, missing_data_mode = missing_data_mode)    # read data
+        if (outlier_remover is not None):
+            [X, y] = outlier_remover(X, y)
         if (missing_data_mode == "substitute"):
             handle_missing_data(X, x_params)
         if (normalize):
@@ -132,6 +134,7 @@ def prepare_data_set(infile, x_params, y_param, outfile_base="", missing_data_mo
         print "Writing npy files.."
         np.save(outfile_base + "X.npy", X)
         np.save(outfile_base + "y.npy", y)
+        return [X, y]
     except FeatureAbsentException as e:
         print e
         print "No output files written.."
@@ -153,7 +156,7 @@ if __name__ == "__main__":
         y_param = args.y_param
         x_params = args.x_param_list.split(",")
         x_params = [s.strip() for s in x_params]
-        prepare_data_set(infile=infile, x_params = x_params, y_param = y_param, outfile_base = args.outfile_base, missing_data_mode="ignore")
+        prepare_data_set(infile=infile, x_params = x_params, y_param = y_param, outfile_base = args.outfile_base, missing_data_mode="ignore", normalize=True)
 
 """
 def shuffle_examples(X, y):
