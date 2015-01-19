@@ -84,9 +84,66 @@ def test_sort_data_by_col():
         for j in range(0, x - 1):
             assert(XY_sort[j, i] <= XY_sort[j+1, i])
 
+def test_remove_rows_by_condition():
+    n = 10
+    m = np.matrix(np.random.randint(low = 0, high = 100000, size=(n, n)))
+    cols = range(0, n)
+    lower_bounds = [0] * n
+    upper_bounds = [100000] * n
+    m2 = utils.remove_rows_by_condition(m, cols, lower_bounds, upper_bounds)
+    m_sorted = utils.sort_matrix_by_col(m, 0) 
+    m2_sorted = utils.sort_matrix_by_col(m2, 0)
+    print m_sorted
+    print m2_sorted
+    print m_sorted - m2_sorted
+    assert(np.array_equal(m_sorted, m2_sorted))
+
+    m = np.matrix([[1.0, 2.0, 300.0], [5.0, -2.32, 9.99], [200.0, 32.32, 1.2]])
+    cols = [0, 2]
+    lower_bounds = [float("-inf"), 0.0]
+    upper_bounds = [10.0, 10.0]
+    m2 = utils.remove_rows_by_condition(m, cols, lower_bounds, upper_bounds)
+    m_expected = np.matrix([[5.0, -2.32, 9.99]])
+    assert(np.array_equal(m2, m_expected))
+
+def test_shuffle_and_split_Xy():
+    X = np.matrix(np.random.rand(100, 100))
+    y = np.matrix(np.random.rand(100, 1))
+    [X1, y1, X2, y2] = utils.shuffle_and_split_Xy(X, y, fraction = 0.77)
+    assert(X1.shape[0] == 77)
+    assert(y1.shape[0] == 77)
+    assert(X2.shape[0] == 23)
+    assert(y2.shape[0] == 23)
+
+    nrows = np.random.randint(100)
+    ncols = np.random.randint(100)
+    X = np.matrix(np.random.rand(nrows, ncols))
+    y = np.matrix(np.random.rand(nrows, 1))
+    [X1, y1, X2, y2] = utils.shuffle_and_split_Xy(X, y, fraction = 0.51)
+    assert(X1.shape[0] + X2.shape[0] == nrows)
+    assert(X1.shape[0] == y1.shape[0])
+    assert(X2.shape[0] == y2.shape[0])
+    assert(X1.shape[1] == ncols)
+    assert(X2.shape[1] == ncols)
+
+def test_extract_columns_by_names():
+    # ignore mode
+    m = np.matrix([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]])
+    param_indices = {"intercept": 0, "Distance" : 1, "hr(avg)" : 2, "Duration" : 3, "Calories" : 4}
+    m2 = utils.extract_columns_by_names(m, ["Distance", "Calories"], param_indices)
+    assert(np.array_equal(m2, np.matrix([[2, 5], [2, 5], [2, 5]])))
+
+    # substitute mode
+    m = np.matrix([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5], [1, 2, 3, 4, 5]])
+    param_indices = {"intercept": 0, "Distance_present" : 1, "Distance" : 2, "Duration_present" : 3, "Duration" : 4}
+    m2 = utils.extract_columns_by_names(m, ["Distance", "Duration"], param_indices)
+    assert(np.array_equal(m2, np.matrix([[2, 3, 4, 5], [2, 3, 4, 5], [2, 3, 4, 5]])))
 
 if __name__ == "__main__":
     test_sort_matrix_by_col()
     test_combine_Xy()
     test_separate_Xy()
     test_sort_data_by_col()
+    test_remove_rows_by_condition()
+    test_shuffle_and_split_Xy()
+    test_extract_columns_by_names()

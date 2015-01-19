@@ -92,7 +92,7 @@ def remove_rows_by_condition(m, cols, lower_bounds, upper_bounds):
         c = cols[i]
         m = sort_matrix_by_col(m, c)
         l = lower_bounds[i]; u = upper_bounds[i]
-        i = np.searchsorted(m[:, c].A1, lower_bounds[i])
+        i = np.searchsorted(m[:, c].A1, l)
         j = np.searchsorted(m[:, c].A1, u)
         m = m[i:j, :]
     return m
@@ -108,6 +108,22 @@ def shuffle_and_split_Xy(X, y, fraction):
     return [X_1, y_1, X_2, y_2]
 
 def extract_columns_by_names(m, params, param_indices):
+    cols = [False] * m.shape[1] 
+    for i in range(0, len(params)):
+        p = params[i]
+        i = param_indices[p]
+        cols[i] = True
+        if (param_indices.has_key(p + "_present")):
+            cols[param_indices[p + "_present"]] = True
+
+    delete_cols = []
+    for i in range(0, m.shape[1]):
+        if (not cols[i]):
+            delete_cols.append(i)
+    
+    return np.delete(m, delete_cols, axis = 1)
+
+    """
     p = params[0]
     m_new = None
     if (param_indices.has_key(p + "_present")):
@@ -122,6 +138,9 @@ def extract_columns_by_names(m, params, param_indices):
         if (param_indices.has_key(p + "_present")):
             m_new = np.concatenate((m_new, np.matrix(m[:, param_indices[p + "_present"]]).T), axis = 1)
         m_new = np.concatenate((m_new, np.matrix(m[:, i]).T), axis = 1)
+    print m
+    print m_new.T
     assert(m_new.shape[0] == m.shape[0])
     return m_new
+    """
 

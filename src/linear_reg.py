@@ -15,7 +15,6 @@ def compute_stats(X, Y, theta):
 def residual_plots(X_full, X_predictor, y, x_params, predictor_params, theta, param_indices):
     # residual plots
     errors = y - X_predictor.dot(theta)
-    print errors.shape
     other_params = [p for p in x_params if (p not in predictor_params) ]
     for p in other_params:
         c = param_indices[p]
