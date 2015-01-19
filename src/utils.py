@@ -52,8 +52,6 @@ def get_user_id_from_filename(infile):
         raise Exception("Filename is not in recognized format")
     return int(parts[0])
 
-
-
 def combine_gzip_files(files, outfile):
     # combines multiple gzip files into one single gzipped file
     command = "cat"
@@ -82,10 +80,48 @@ def sort_matrix_by_col(m, i):
     #return m[m[:,i].argsort()]
 
 def sort_data_by_col(X, y, i):
-    #XY = np.concatenate((X, Y), axis = 1)
     Xy = combine_Xy(X, y)
     Xy = sort_matrix_by_col(Xy, i)
     [X, y] = separate_Xy(Xy)
-    #X = XY[:,:-1]
-    #Y = XY[:,-1:]
     return [X, y]
+
+def remove_rows_by_condition(m, cols, lower_bounds, upper_bounds):
+    assert(len(cols) == len(lower_bounds) and len(lower_bounds) == len(upper_bounds))
+    n = len(cols)
+    for i in range(0, n):
+        c = cols[i]
+        m = sort_matrix_by_col(m, c)
+        l = lower_bounds[i]; u = upper_bounds[i]
+        i = np.searchsorted(m[:, c].A1, lower_bounds[i])
+        j = np.searchsorted(m[:, c].A1, u)
+        m = m[i:j, :]
+    return m
+
+def shuffle_and_split_Xy(X, y, fraction):
+    Xy = combine_Xy(X, y)
+    np.random.shuffle(Xy)
+    end1 = fraction * Xy.shape[0]
+    Xy_1 = Xy[:end1, :]
+    Xy_2 = Xy[end1:, :]
+    [X_1, y_1] = separate_Xy(Xy_1)
+    [X_2, y_2] = separate_Xy(Xy_2)
+    return [X_1, y_1, X_2, y_2]
+
+def extract_columns_by_names(m, params, param_indices):
+    p = params[0]
+    m_new = None
+    if (param_indices.has_key(p + "_present")):
+        m_new = np.matrix(m[:, param_indices[p + "_present"]]).T
+        m_new = np.concatenate((m_new, np.matrix(m[:, param_indices[p]]).T), axis = 1)
+    else:
+        m_new = np.matrix(m[:, param_indices[p]]).T
+    
+    for i in range(1, len(params)):
+        p = params[i]
+        i = param_indices[p]
+        if (param_indices.has_key(p + "_present")):
+            m_new = np.concatenate((m_new, np.matrix(m[:, param_indices[p + "_present"]]).T), axis = 1)
+        m_new = np.concatenate((m_new, np.matrix(m[:, i]).T), axis = 1)
+    assert(m_new.shape[0] == m.shape[0])
+    return m_new
+
