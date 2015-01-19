@@ -40,7 +40,7 @@ class DataForPlot(object):
     def plot_simple(self, x_range = None, y_range = None):
         assert(len(self.xvals) == len(self.yvals))
         self.sort()
-        plt.figure()
+        #plt.figure()
         plt.plot(self.xvals, self.yvals, 'o')
         if (x_range is not None):
             plt.xlim(x_range)

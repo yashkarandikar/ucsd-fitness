@@ -52,14 +52,17 @@ def read_data(infile, sport, x_params, y_param, missing_data_mode = "substitute"
                         y.append(y_val)
                 elif ((not ignore) and missing_data_mode == "substitute"):
                     # if data is missing, add a feature [0] and put value as 0 for now, else add a feature [1] and put value as actual value
+                    x_param_missing = False
                     for xp in x_params:
                         if (not d.has_key(xp)):
                             xrow.append(0)  # binary feature
                             xrow.append(0.0)    # missing value
-                            x_missing += 1
+                            x_param_missing = True
                         else:
                             xrow.append(1)  # binary feature
                             xrow.append(d[xp]) # value
+                    if (x_param_missing):
+                        x_missing += 1
                     if (not d.has_key(y_param)):
                         ignore = True
                         y_missing += 1
