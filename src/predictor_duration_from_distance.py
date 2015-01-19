@@ -7,9 +7,11 @@ from prepare_data_set import prepare_data_set
 from plot_data import DataForPlot
 from linear_reg import compute_stats, predictor_plots, residual_plots
 import sys
+from unit import Unit
 
 def remove_outliers(X, y, x_params, y_param, missing_data_mode, param_indices):
     print "Removing outliers.."
+    N1 = X.shape[0]
     Xy = utils.combine_Xy(X, y)
     params = x_params + [y_param]
     assert(missing_data_mode == "ignore" or missing_data_mode == "substitute")
@@ -21,16 +23,17 @@ def remove_outliers(X, y, x_params, y_param, missing_data_mode, param_indices):
     cols = []; lower_bounds = []; upper_bounds = []
 
     # remove rows distance < 0.1 mi and > 80 mi
-    #c = param_to_col("Distance", x_params, missing_data_mode)
     c = param_indices["Distance"]
     cols.append(c); lower_bounds.append(0.1); upper_bounds.append(80.0)
-    
+
     # remove rows with duration < 0.1 and > 36000
     cols.append(Xy.shape[1] - 1)    # Duration
     lower_bounds.append(0.1); upper_bounds.append(36000.0)
 
     Xy = utils.remove_rows_by_condition(Xy, cols, lower_bounds, upper_bounds)
     [X, y] = utils.separate_Xy(Xy)
+    N2 = X.shape[0]
+    print "%d rows removed during outlier removal.." % (N2 - N1)
     return [X, y]
 
 if __name__ == "__main__":
@@ -43,7 +46,8 @@ if __name__ == "__main__":
     y_param = "Duration"
     missing_data_mode = "substitute"
     normalize = False
-    prepare_data_set(infile = infile, sport = sport, x_params = x_params, y_param = y_param, outfile = outfile, missing_data_mode = missing_data_mode, normalize = normalize, outlier_remover = remove_outliers)
+    randomState = np.random.RandomState(seed = 12345)
+    #prepare_data_set(infile = infile, sport = sport, x_params = x_params, y_param = y_param, outfile = outfile, missing_data_mode = missing_data_mode, normalize = normalize, outlier_remover = remove_outliers)
    
     # load data from file
     data = np.load(outfile)
@@ -52,7 +56,7 @@ if __name__ == "__main__":
     param_indices = data["param_indices"][()]   # [()] is required to convert numpy ndarray back to dictionary
     
     # split into training and validation
-    [X_train, y_train, X_val, y_val] = utils.shuffle_and_split_Xy(X, y, fraction = 0.75)
+    [X_train, y_train, X_val, y_val] = utils.shuffle_and_split_Xy(X, y, fraction = 0.75, randomState = randomState)
 
     # extract relevant columns if not all columns need to be used - useful if you want to use certain features for training and then plot the residual errors against other features
     predictor_params = ["intercept","Distance"]   
@@ -69,8 +73,41 @@ if __name__ == "__main__":
     print "Stats for validation data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (X_val.shape[0], mse, var, fvu, r2)
 
     # residual plots and predictor plots
-    residual_plots(X_train, X_train_distance, y_train, x_params, predictor_params, theta, param_indices)
-    predictor_plots(X_train, y_train, x_params, y_param, predictor_params, param_indices)
+    errors = y_train - X_train_distance.dot(theta)
+
+    plt.figure()
+
+    plt.subplot(3,2,0)
+    p = "alt(avg)"
+    alt = DataForPlot(sport, p, "error", xvals = X_train[:, param_indices[p]], yvals = errors)
+    alt.plot_simple(x_range = [-1000, 10000])
+    plt.ylabel("Error in duration(" + Unit.get("Duration") + ")")
     
+    plt.subplot(3,2,1)
+    p = "hr(avg)"
+    alt = DataForPlot(sport, p, "error", xvals = X_train[:, param_indices[p]], yvals = errors)
+    alt.plot_simple(x_range = [0, 250])
+    plt.ylabel("Error in duration(" + Unit.get("Duration") + ")")
+    
+    plt.subplot(3,2,2)
+    p = "Total Ascent"
+    alt = DataForPlot(sport, p, "error", xvals = X_train[:, param_indices[p]], yvals = errors)
+    alt.plot_simple(x_range = [0, 20000])
+    plt.ylabel("Error in duration(" + Unit.get("Duration") + ")")
+    
+    plt.subplot(3,2,3)
+    p = "Total Descent"
+    alt = DataForPlot(sport, p, "error", xvals = X_train[:, param_indices[p]], yvals = errors)
+    alt.plot_simple(x_range = [0, 20000])
+    plt.ylabel("Error in duration(" + Unit.get("Duration") + ")")
+
+    plt.subplot(3,2,4)
+    p = "pace(avg)"
+    alt = DataForPlot(sport, p, "error", xvals = X_train[:, param_indices[p]], yvals = errors)
+    alt.plot_simple(x_range = [0, 40])
+    plt.ylabel("Error in duration(" + Unit.get("Duration") + ")")
+    
+    #predictor_plots(X_train, y_train, x_params, y_param, predictor_params, param_indices)
+    plt.tight_layout()
     plt.show()
 

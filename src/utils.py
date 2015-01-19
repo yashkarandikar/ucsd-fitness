@@ -97,9 +97,12 @@ def remove_rows_by_condition(m, cols, lower_bounds, upper_bounds):
         m = m[i:j, :]
     return m
 
-def shuffle_and_split_Xy(X, y, fraction):
+def shuffle_and_split_Xy(X, y, fraction, randomState = None):
     Xy = combine_Xy(X, y)
-    np.random.shuffle(Xy)
+    if (randomState is not None):
+        randomState.shuffle(Xy)
+    else:
+        np.random.shuffle(Xy)
     end1 = fraction * Xy.shape[0]
     Xy_1 = Xy[:end1, :]
     Xy_2 = Xy[end1:, :]
