@@ -1,0 +1,282 @@
+Done with 100000 workouts..
+Done with 200000 workouts..
+Done with 300000 workouts..
+Done with 400000 workouts..
+Done with 500000 workouts..
+Done with 600000 workouts..
+Done with 700000 workouts..
+Done with 800000 workouts..
+Done with 900000 workouts..
+Done with 1000000 workouts..
+Done with 1100000 workouts..
+Done with 1200000 workouts..
+Done with 1300000 workouts..
+Done with 1400000 workouts..
+Done with 1500000 workouts..
+Done with 1600000 workouts..
+Done with 1700000 workouts..
+Done with 1800000 workouts..
+Done with 1900000 workouts..
+Done with 2000000 workouts..
+Done with 2100000 workouts..
+Done with 2200000 workouts..
+Done with 2300000 workouts..
+Done with 2400000 workouts..
+Done with 2500000 workouts..
+Done with 2600000 workouts..
+Done with 2700000 workouts..
+Done with 2800000 workouts..
+Done with 2900000 workouts..
+Done with 3000000 workouts..
+Done with 3100000 workouts..
+Done with 3200000 workouts..
+Done with 3300000 workouts..
+Done with 3400000 workouts..
+Done with 3500000 workouts..
+Done with 3600000 workouts..
+Done with 3700000 workouts..
+Done with 3800000 workouts..
+Done with 3900000 workouts..
+Done with 4000000 workouts..
+Done with 4100000 workouts..
+Done with 4200000 workouts..
+Done with 4300000 workouts..
+Done with 4400000 workouts..
+Done with 4500000 workouts..
+Done with 4600000 workouts..
+Done with 4700000 workouts..
+Done with 4800000 workouts..
+Done with 4900000 workouts..
+Done with 5000000 workouts..
+Done with 5100000 workouts..
+
+Parameter           # Workouts          
+----------------------------------------
+date-time           5160097             
+workout_id          5160097             
+user_id             5160097             
+sport               5160097             
+Distance            5088648             
+Duration            4875315             
+Calories            4866787             
+distance(avg)       4708743             
+duration(avg)       4466859             
+Hydration           4199058             
+Max. Altitude       4041002             
+Min. Altitude       4041002             
+Avg. Speed          3977746             
+Total Ascent        3969598             
+Total Descent       3969350             
+lat(avg)            3965241             
+lng(avg)            3965241             
+Weather             3956548             
+Max. Speed          3679352             
+speed(avg)          2441356             
+pace(avg)           2001404             
+alt(avg)            440801              
+Wind                302310              
+Humidity            302310              
+Temperature         302310              
+Max. Heart Rate     150812              
+Cadence             145737              
+Avg. Heart Rate     144154              
+Steps               132405              
+Avg. Steps/Min      130967              
+cad(avg)            125383              
+hr(avg)             108762              
+Fitness Level       7634                
+Fitness Score       7634                
+HR After Test       1011                
+
+User ID             # Workouts          
+----------------------------------------
+2209215             381                 
+15358457            308                 
+3701695             276                 
+11676100            275                 
+14038398            275                 
+7654914             270                 
+4226208             261                 
+15353635            247                 
+15509534            230                 
+10691167            224                 
+15511435            222                 
+15346787            215                 
+5839464             211                 
+3599912             209                 
+4288677             206                 
+3284559             205                 
+2349913             204                 
+10678799            196                 
+9463074             186                 
+10051240            184                 
+1680043             182                 
+15173718            182                 
+15091682            181                 
+15257019            178                 
+4201333             177                 
+275849              174                 
+15226534            173                 
+13562275            172                 
+3542840             171                 
+503392              169                 
+1800271             168                 
+3648022             168                 
+5260511             168                 
+15126007            168                 
+3867177             167                 
+11341230            164                 
+466138              163                 
+14986573            163                 
+1760006             163                 
+14966513            162                 
+15521567            160                 
+15159851            159                 
+14942438            158                 
+13270652            156                 
+15273686            155                 
+14904942            155                 
+8530887             154                 
+9248775             153                 
+15507402            152                 
+15220809            152                 
+7457465             150                 
+15005843            149                 
+15136686            147                 
+15005228            147                 
+14336157            146                 
+14968188            146                 
+15316533            145                 
+14529947            145                 
+15221961            144                 
+15159883            144                 
+1856845             143                 
+15327342            139                 
+15260670            134                 
+1331645             133                 
+4567509             132                 
+8165854             131                 
+7185922             131                 
+13404284            131                 
+1586927             130                 
+14955562            130                 
+5026303             130                 
+15064989            129                 
+380663              129                 
+8176278             127                 
+2477292             127                 
+1081719             127                 
+8324390             127                 
+15240033            127                 
+7362847             126                 
+12562772            125                 
+15525154            125                 
+15080625            123                 
+11720066            122                 
+1760731             122                 
+15302132            121                 
+15222700            120                 
+4233611             120                 
+14984463            119                 
+13688240            119                 
+14303343            119                 
+15545103            119                 
+15050811            117                 
+4496645             116                 
+14010458            116                 
+1576289             116                 
+10719908            115                 
+3125770             115                 
+10366902            113                 
+15416093            113                 
+15154249            112                 
+
+Sport               # Workouts          
+----------------------------------------
+Running             2207966             
+Walking             1077169             
+Cycling, sport      467921              
+Cycling, transport  407501              
+Mountain biking     214617              
+Step counter        132662              
+Fitness walking     86436               
+Hiking              73754               
+Weight training     57158               
+Aerobics            45207               
+Indoor cycling      43155               
+Swimming            28203               
+Skating             27937               
+Skiing, cross country25134               
+Circuit Training    23947               
+Treadmill running   20991               
+Elliptical training 20608               
+Other               18420               
+Riding              14934               
+Skiing, downhill    13394               
+Roller skiing       11125               
+Treadmill walking   10578               
+Yoga                9280                
+Football, soccer    9241                
+Dancing             8001                
+Badminton           7519                
+Climbing stairs     6949                
+Martial arts        6566                
+Gymnastics          6531                
+Golfing             6079                
+Basketball          5789                
+Rowing              5561                
+Pilates             5426                
+Boxing              5077                
+Orienteering        4926                
+Kayaking            4277                
+Snowboarding        4104                
+Tennis              4099                
+Baseball            3463                
+Climbing            3462                
+Football, American  3309                
+Skateboarding       3056                
+Squash              2799                
+Volleyball, indoor  2134                
+Handball            1474                
+Hockey              1427                
+Table tennis        1372                
+Volleyball, beach   1176                
+Sailing             1061                
+Brisk walking       932                 
+Wheelchair          855                 
+Kite surfing        853                 
+Snowshoeing         789                 
+Scuba diving        641                 
+Cricket             631                 
+Windsurfing         589                 
+Walking, transport  360                 
+Surfing             324                 
+Fencing             294                 
+Football, rugby     271                 
+Polo                108                 
+Strolling in the Mall or Outdoors82                  
+Household Chores - Light72                  
+Dance Fit           70                  
+Calisthenics        46                  
+Jumping Rope        45                  
+Household Chores - Moderate23                  
+New Great Singapore Workout22                  
+Athletics - Jumps   13                  
+Athletics - Sprints 12                  
+Weight lifting      10                  
+Archery             9                   
+Netball             9                   
+Bowling             9                   
+Taichi              8                   
+Athletics - Throws  7                   
+Trekking            7                   
+Quick Six           6                   
+Dragonboat          5                   
+Line Dancing        5                   
+FaBulouS - Flexibility, Balance and Strength Routine5                   
+Qigong              3                   
+Rock Climbing       2                   
+Pickleball          2                   
+Gardening           1                   
+Health Qigong       1                   
+Floorball           1                   
