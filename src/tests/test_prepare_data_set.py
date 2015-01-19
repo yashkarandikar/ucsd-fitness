@@ -100,7 +100,7 @@ def test_prepare_data_set():
     sport = "Running"
     
     # substitute mode
-    prepare_data_set(infile = infile, sport = sport, x_params = x_params, y_param = y_param, outfile = outfile, missing_data_mode = "substitute")
+    prepare_data_set(infile = infile, sport = sport, x_params = x_params, y_param = y_param, outfile = outfile, missing_data_mode = "substitute", split_fraction = 1.0, shuffle_before_split = False) # don't split
     expected_y = np.matrix([[1443.0],[ 1803.0], [1672.0]])
     mean1 = np.mean([99.165, 98.1, 100.23])
     std1 = np.std([99.165, 98.1, 100.23])
@@ -111,15 +111,17 @@ def test_prepare_data_set():
                     [1, 1, (100.23 - mean1)/std1, 1, (4.35- mean2) / std2]])
     expected_param_indices = {"intercept": 0, "alt(avg)_present" : 1, "alt(avg)" : 2, "Distance_present" : 3, "Distance" : 4}
     assert(os.path.isfile(outfile))
-    obtained_X = np.load(outfile)["X"]
-    obtained_y = np.load(outfile)["y"]
+    obtained_X = np.load(outfile)["X1"]
+    obtained_y = np.load(outfile)["y1"]
+    assert(np.load(outfile)["X2"].shape[0] == 0)
+    assert(np.load(outfile)["y2"].shape[0] == 0)
     param_indices = np.load(outfile)["param_indices"][()]
     assert(expected_param_indices == param_indices)
     assert(np.array_equal(obtained_y, expected_y))
     assert(np.allclose(expected_X, obtained_X))
 
     # ignore mode
-    prepare_data_set(infile = infile, sport = sport, x_params = x_params, y_param = y_param, outfile = outfile, missing_data_mode = "ignore")
+    prepare_data_set(infile = infile, sport = sport, x_params = x_params, y_param = y_param, outfile = outfile, missing_data_mode = "ignore", split_fraction = 1.0, shuffle_before_split = False)
     expected_y = np.matrix([[ 1803.0], [1672.0]])
     mean1 = np.mean([98.1, 100.23])
     std1 = np.std([98.1, 100.23])
@@ -129,10 +131,14 @@ def test_prepare_data_set():
                     [1, (100.23 - mean1)/std1, (4.35- mean2) / std2]])
     expected_param_indices = {"intercept": 0, "alt(avg)" : 1, "Distance" : 2}
     assert(os.path.isfile(outfile))
-    obtained_X = np.load(outfile)["X"]
-    obtained_y = np.load(outfile)["y"]
+    obtained_X = np.load(outfile)["X1"]
+    obtained_y = np.load(outfile)["y1"]
+    assert(np.load(outfile)["X2"].shape[0] == 0)
+    assert(np.load(outfile)["y2"].shape[0] == 0)
     param_indices = np.load(outfile)["param_indices"][()]
     assert(expected_param_indices == param_indices)
+    print obtained_y
+    print expected_y
     assert(np.array_equal(obtained_y, expected_y))
     assert(np.allclose(expected_X, obtained_X))
 

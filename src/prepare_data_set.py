@@ -10,7 +10,7 @@ class FeatureAbsentException(Exception):
         self.feature = feature
 
     def __str__(self):
-        return "Feature : %s" % (self.feature)
+        return "Feature : %s absent in data" % (self.feature)
 
 
 def read_data(infile, sport, x_params, y_param, missing_data_mode = "substitute"):
@@ -96,7 +96,10 @@ def read_data(infile, sport, x_params, y_param, missing_data_mode = "substitute"
 def handle_missing_data(X, x_params):
     # assumes columns are in the form: presence/absence feature followed by feature value, then 2nd feature, so on
     print "Handling missing data.."
-
+    
+    if (X.shape[0] == 0 or X.shape[1] == 0):
+        return
+    
     ncols = X.shape[1]
     assert(len(x_params) == ncols / 2)
     
@@ -156,34 +159,45 @@ def generate_param_indices(x_params, missing_data_mode, with_intercept):
         assert(len(d.keys()) == (2 * len(x_params)) + 1.0 * with_intercept)
     return d
 
-def prepare_data_set(infile, sport, x_params, y_param, outfile, missing_data_mode = "substitute", normalize = True, outlier_remover = None):
+def prepare_data_set(infile, sport, x_params, y_param, outfile, split_fraction, shuffle_before_split = True, missing_data_mode = "substitute", normalize = True, outlier_remover = None):
     try:
+        randomState = np.random.RandomState(seed = 12345)
         print "X params = " + str(x_params)
         print "Y param = " + str(y_param)
-        print "Options : missing_data_mode = " + missing_data_mode +  ", normalize = " + str(normalize)
+        print "Options : missing_data_mode = " + missing_data_mode +  ", normalize = " + str(normalize) + " split fraction = " + str(split_fraction)
         print "Reading data.."
         [X, y] = read_data(infile, sport, x_params, y_param, missing_data_mode = missing_data_mode)    # read data
         param_indices = generate_param_indices(x_params, missing_data_mode, with_intercept = False)
+
+        # remove outliers
         if (outlier_remover is not None):
             [X, y] = outlier_remover(X, y, x_params, y_param, missing_data_mode, param_indices)
+
+        # Shuffle and split data
+        [X1, y1, X2, y2] = utils.shuffle_and_split_Xy(X, y, split_fraction, randomState = randomState, shuffle = shuffle_before_split)
+
+        # substitute for missing values
         if (missing_data_mode == "substitute"):
-            handle_missing_data(X, x_params)
+            handle_missing_data(X1, x_params)
+            handle_missing_data(X2, x_params)
+        
+        # Normalization for unit variance and zero mean
         if (normalize):
-            X = normalize_data(X, missing_data_mode = missing_data_mode)
-        X = add_offset_feature(X)
+            X1 = normalize_data(X1, missing_data_mode = missing_data_mode)
+            X2 = normalize_data(X2, missing_data_mode = missing_data_mode)
+
+        # add an intercept feature of all 1's
+        X1 = add_offset_feature(X1)
+        X2 = add_offset_feature(X2)
         param_indices = generate_param_indices(x_params, missing_data_mode, with_intercept = True)
+
         print "Writing to disk.."
-        #np.save(outfile_base + "X.npy", X)
-        #np.save(outfile_base + "y.npy", y)
-        np.savez(outfile, X = X, y = y, param_indices = param_indices)
-        return [X, y]
+        np.savez(outfile, X1 = X1, y1 = y1, X2 = X2, y2 = y2, param_indices = param_indices)
     except FeatureAbsentException as e:
         print e
         print "No output files written.."
     
 if __name__ == "__main__":
-    #prepare_train_val_test_sets("endoMondo5000_workouts_condensed.gz", ["Distance", "pace(avg)", "hr(avg)","alt(avg)"],"Duration","5000_")
-    #prepare_train_val_test_sets("../../data/all_workouts_condensed.gz", ["Distance", "pace(avg)", "hr(avg)","alt(avg)"],"Duration","full_")
     parser = argparse.ArgumentParser(description='Reads .gz file, extracts given X params, given y param and saves as a single .npz files')
     parser.add_argument('--infile', type=str, help='.gz file', dest='infile')
     parser.add_argument('--x-params', type=str, help='comma separated list of X parameters', dest='x_param_list')
@@ -199,61 +213,3 @@ if __name__ == "__main__":
         x_params = args.x_param_list.split(",")
         x_params = [s.strip() for s in x_params]
         prepare_data_set(infile=infile, x_params = x_params, y_param = y_param, outfile = args.outfile, missing_data_mode="ignore", normalize=True)
-
-"""
-def shuffle_examples(X, y):
-    # randomize examples (shuffle X and y in unison)
-    ncols = X.shape[1]
-    Xy = np.concatenate((X, y), axis=1)
-    np.random.shuffle(Xy)
-    X = Xy[:, 0 : ncols]
-    y = Xy[:, ncols : ]
-    return [X, y]
-
-def split_into_2(X, y, fraction):
-    # split data into 2
-    N = X.shape[0]
-    end1 = math.ceil(float(N) * train_percent)
-    X_1 = X[0 : end1, :]
-    y_1 = y[0 : end1, :]
-    
-    X_2 = X[end1 : , :]
-    y_2 = y[end1 : , :]
-
-    assert(X_1.shape[0] == y_1.shape[0])
-    assert(X_2.shape[0] == y_2.shape[0])
-
-    print "Set 1 has " + str(X_1.shape[0]) + " examples"
-    print "Set 2 has " + str(X_val.shape[0]) + " examples"
-
-    return [X_1, y_1, X_2, y_2]
-
-
-def split_examples_train_test_val(X, y):
-    # split data into training test val sets
-    train_percent = 0.10
-    val_percent = 0.10
-    test_percent = 1.0 - train_percent - val_percent
-
-    N = X.shape[0]
-    train_end = math.ceil(float(N) * train_percent)
-    X_train = X[0 : train_end, :]
-    y_train = y[0 : train_end, :]
-    
-    val_end = train_end + (float(N) * val_percent)
-    X_val = X[train_end : val_end, :]
-    y_val = y[train_end : val_end, :]
-
-    X_test = X[val_end : , :]
-    y_test = y[val_end : , :]
-
-    assert(X_train.shape[0] == y_train.shape[0])
-    assert(X_val.shape[0] == y_val.shape[0])
-    assert(X_test.shape[0] == y_test.shape[0])
-
-    print "Training set has " + str(X_train.shape[0]) + " examples"
-    print "Validation set has " + str(X_val.shape[0]) + " examples"
-    print "Test set has " + str(X_test.shape[0]) + " examples"
-
-    return [X_train, y_train, X_val, y_val, X_test, y_test]
-"""
