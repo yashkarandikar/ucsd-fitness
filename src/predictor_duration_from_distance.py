@@ -23,17 +23,22 @@ def remove_outliers(X, y, x_params, y_param, missing_data_mode, param_indices):
     cols = []; lower_bounds = []; upper_bounds = []
 
     # remove rows distance < 0.1 mi and > 80 mi
-    c = param_indices["Distance"]
-    cols.append(c); lower_bounds.append(0.1); upper_bounds.append(80.0)
+    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(80.0)
 
     # remove rows with duration < 0.1 and > 36000
     cols.append(Xy.shape[1] - 1)    # Duration
     lower_bounds.append(0.1); upper_bounds.append(36000.0)
 
+    # remove rows with other parameters < 0.1
+    #c = param_indices["pace(avg)"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
+    c = param_indices["Total Ascent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
+    c = param_indices["Total Descent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
+    c = param_indices["alt(avg)"]; cols.append(c); lower_bounds.append(-1000); upper_bounds.append(30000)
+
     Xy = utils.remove_rows_by_condition(Xy, cols, lower_bounds, upper_bounds)
     [X, y] = utils.separate_Xy(Xy)
     N2 = X.shape[0]
-    print "%d rows removed during outlier removal.." % (N2 - N1)
+    print "%d rows removed during outlier removal.." % (N1 - N2)
     return [X, y]
 
 if __name__ == "__main__":
@@ -42,29 +47,32 @@ if __name__ == "__main__":
     #infile = "endoMondo5000_workouts_condensed.gz"
     outfile = "train_val_duration_distance.npz"
     sport = "Running"
-    x_params = ["Distance","pace(avg)","alt(avg)","hr(avg)","Total Ascent","Total Descent"]
+    x_params = ["Distance","alt(avg)","Total Ascent","Total Descent"]
     y_param = "Duration"
     missing_data_mode = "substitute"
     normalize = False
-    randomState = np.random.RandomState(seed = 12345)
-    #prepare_data_set(infile = infile, sport = sport, x_params = x_params, y_param = y_param, outfile = outfile, missing_data_mode = missing_data_mode, normalize = normalize, outlier_remover = remove_outliers)
+    split_fraction = 0.75
+    outlier_remover = remove_outliers
+    #randomState = np.random.RandomState(seed = 12345)
+    prepare_data_set(infile = infile, sport = sport, x_params = x_params, y_param = y_param, outfile = outfile, missing_data_mode = missing_data_mode, normalize = normalize, outlier_remover = outlier_remover, split_fraction = split_fraction)
    
     # load data from file
     data = np.load(outfile)
-    X = data["X"]
-    y = data["y"]
+    X_train = data["X1"]
+    y_train = data["y1"]
+    X_val = data["X2"]
+    y_val = data["y2"]
     param_indices = data["param_indices"][()]   # [()] is required to convert numpy ndarray back to dictionary
     
-    # split into training and validation
-    [X_train, y_train, X_val, y_val] = utils.shuffle_and_split_Xy(X, y, fraction = 0.75, randomState = randomState)
-
-    # extract relevant columns if not all columns need to be used - useful if you want to use certain features for training and then plot the residual errors against other features
-    predictor_params = ["intercept","Distance"]   
-    X_train_distance = utils.extract_columns_by_names(X_train, predictor_params, param_indices)
-    X_val_distance = utils.extract_columns_by_names(X_val, predictor_params, param_indices)
-
-    # train model
+    # extract relevant columns if not all columns need to be used - useful if you want to use certain features for training and then plot the residual errors against other features and train model
+    #predictor_params = ["intercept","Distance"]   
+    #X_train_distance = utils.extract_columns_by_names(X_train, predictor_params, param_indices)
+    #X_val_distance = utils.extract_columns_by_names(X_val, predictor_params, param_indices)
+    X_train_distance = X_train
+    X_val_distance = X_val
     theta,residuals,rank,s = np.linalg.lstsq(X_train_distance, y_train)
+
+    print "theta = ", theta
 
     # compute statistics on training set and validation set
     [mse, var, fvu, r2] = compute_stats(X_train_distance, y_train, theta)
@@ -73,6 +81,7 @@ if __name__ == "__main__":
     print "Stats for validation data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (X_val.shape[0], mse, var, fvu, r2)
 
     # residual plots and predictor plots
+    """
     errors = y_train - X_train_distance.dot(theta)
 
     plt.figure()
@@ -110,4 +119,5 @@ if __name__ == "__main__":
     #predictor_plots(X_train, y_train, x_params, y_param, predictor_params, param_indices)
     plt.tight_layout()
     plt.show()
+    """
 

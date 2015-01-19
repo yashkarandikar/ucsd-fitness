@@ -50,9 +50,9 @@ def get_stats(infile):
                 print "Done with %d workouts.." % (nlines)
 
     # print stats
-    print_stats(workouts_for_param, 20, "Parameter", "# Workouts")
-    print_stats(workouts_for_user, 10, "User ID", "# Workouts")
-    print_stats(workouts_for_sport, 10, "Sport", "# Workouts")
+    print_stats(workouts_for_param, 100, "Parameter", "# Workouts")
+    print_stats(workouts_for_user, 100, "User ID", "# Workouts")
+    print_stats(workouts_for_sport, 100, "Sport", "# Workouts")
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='See various plots over all workouts')
