@@ -2,6 +2,7 @@ import argparse
 import gzip
 import utils
 import operator
+import numpy as np
 
 def print_stats(d, count, col1, col2):
     print ""
@@ -15,7 +16,6 @@ def print_stats(d, count, col1, col2):
         lim -= 1
         if (lim == 0):
             break
-
 
 def get_stats(infile):
     workouts_for_param = {}
@@ -53,6 +53,15 @@ def get_stats(infile):
     print_stats(workouts_for_param, 100, "Parameter", "# Workouts")
     print_stats(workouts_for_user, 100, "User ID", "# Workouts")
     print_stats(workouts_for_sport, 100, "Sport", "# Workouts")
+
+    n_users = len(workouts_for_user.keys())
+    print "Total number of users : ", n_users
+    d = sorted(workouts_for_user.items(), key=operator.itemgetter(1))
+    #d.reverse()
+    d_vals = [v for (k,v) in d]
+    for i in range(10, 400, 30):
+        print "Number of users with more than %d workouts : %d" % (i, n_users - np.searchsorted(d_vals, i))
+    
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='See various plots over all workouts')
