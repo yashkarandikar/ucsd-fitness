@@ -280,3 +280,17 @@ Pickleball          2
 Gardening           1                   
 Health Qigong       1                   
 Floorball           1                   
+Total number of users :  1631086
+Number of users with more than 10 workouts : 81904
+Number of users with more than 40 workouts : 1564
+Number of users with more than 70 workouts : 337
+Number of users with more than 100 workouts : 145
+Number of users with more than 130 workouts : 71
+Number of users with more than 160 workouts : 41
+Number of users with more than 190 workouts : 18
+Number of users with more than 220 workouts : 11
+Number of users with more than 250 workouts : 7
+Number of users with more than 280 workouts : 2
+Number of users with more than 310 workouts : 1
+Number of users with more than 340 workouts : 1
+Number of users with more than 370 workouts : 1
