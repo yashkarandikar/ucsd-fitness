@@ -12,6 +12,40 @@ class FeatureAbsentException(Exception):
     def __str__(self):
         return "Feature : %s absent in data" % (self.feature)
 
+def read_data_as_lists(infile, sport, params):
+    print "Infile : ", infile
+    print "params : ", params
+    sport_missing = 0
+    param_missing = 0
+    n_ignore = 0
+    data = []
+    with gzip.open(infile) as f:
+        for line in f:
+            d = utils.json_to_dict(line)
+            example = []
+            ignore = False
+            if (d["sport"] != sport):
+                ignore = True
+                sport_missing += 1
+            else:
+                for k in params:
+                    if not d.has_key(k):
+                        param_missing += 1
+                        ignore = True
+                        break
+                    else:
+                        example.append(d[k])
+            if (ignore):
+                n_ignore += 1
+            else:
+                data.append(example)
+
+    print "%d workouts did not match the sport" % (sport_missing)
+    print "%d workouts did not contain one or more parameters" % (param_missing)
+    print "%d workouts ignored.." % (n_ignore)
+    print "%d workouts successfully returned.." % (len(data))
+    return data
+
 
 def read_data(infile, sport, x_params, y_param, missing_data_mode = "substitute"):
     # returns matrices X and y (a single column). An extra binary feature is is introduced for each feature to indicate presence/absence of data. MIssing values are put as 0.
