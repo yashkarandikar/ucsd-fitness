@@ -277,7 +277,7 @@ def plot_max_hr_vs_all(infile, use_saved):
     x_params = ["Distance", "Total Ascent", "Total Descent"]
     y_params = ["Max. Heart Rate"] * 3
     sports = ["Running"] * 3
-    x_ranges = [[0, 50],[0, 20000],[0, 20000]]
+    x_ranges = [[0, 20],[0, 5000],[0, 5000]]
     y_ranges = [[0, 300]] * 3
     assert(len(x_params) == len(y_params) and len(x_params) == len(x_ranges) and len(x_ranges) == len(y_ranges))
     plot_data(infile, x_params, y_params, sports, x_ranges, y_ranges, use_saved = use_saved, windowSize = 100)
