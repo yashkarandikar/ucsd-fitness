@@ -45,51 +45,52 @@ def remove_outliers(X, y, x_params, y_param, missing_data_mode, param_indices):
 def is_sorted(data):
     N = len(data)
     for i in range(0, N - 1):
-        if (data[i][1] > data[i+1][1]):
+        if (data[i, 1] > data[i+1, 1]):
             return False
     return True
 
-def E(theta, *data):
+def E(theta, data):
     # error function to be minimized
     # assumes data has 4 columns : user_id, user_number, distance, duration and that it is sorted
-    assert(is_sorted(data))
+    #assert(is_sorted(data))
     i = 0
-    N = len(data)
+    N = data.shape[0]
     e = 0
-    theta_0 = float(theta[-2])
-    theta_1 = float(theta[-1])
+    theta_0 = theta[-2]
+    theta_1 = theta[-1]
     while i < N:
-        u = int(data[i][0])
-        alpha = float(theta[u])
-        while i < N and data[i][0] == u:
-            d = float(data[i][2])
-            t = float(data[i][3])
+        u = int(data[i, 0])
+        alpha = theta[u]
+        while i < N and data[i, 0] == u:
+            d = data[i, 2]
+            t = data[i, 3]
             e += math.pow(alpha * (theta_0 + theta_1 * d) - t, 2)
             i += 1
     print "E = ", e
     return e
 
-def Eprime(theta, *data):
+def Eprime(theta, data):
     N = len(data)
-    n_users = float(data[-1][0])
+    n_users = data[-1, 0]
     assert(len(theta) == n_users + 2)
-    theta_0 = float(theta[-2])
-    theta_1 = float(theta[-1])
-    dE = [0.0] * len(theta)
+    theta_0 = theta[-2]
+    theta_1 = theta[-1]
+    dE = np.array([0.0] * len(theta))
     i = 0
     while i < N:
-        u = int(data[i][0])
-        alpha_u = float(theta[u])
-        while i < N and data[i][0] == u:
+        u = int(data[i, 0])
+        alpha_u = theta[u]
+        while i < N and data[i, 0] == u:
             # dE / d_alpha_u
-            d = float(data[i][2])
-            t = float(data[i][3])
+            d = data[i, 2]
+            t = data[i, 3]
             dE[u] += 2 * (alpha_u * (theta_0 + theta_1 * d) - t) * (theta_0 + theta_1 * d)
-            i += 1
 
             # dE / d_theta_0 and 1
             dE[-2] += 2 * alpha_u * (alpha_u*(theta_0 + theta_1 * d) - t)
             dE[-1] += 2 * alpha_u * d * (alpha_u*(theta_0 + theta_1 * d) - t)
+            
+            i += 1
     return dE
 
 def add_user_number_column(data):
@@ -104,6 +105,33 @@ def add_user_number_column(data):
             i += 1
         uin += 1
 
+def convert_to_ints(data):
+    for d in data:
+        assert(len(d) == 3)
+        d[0] = int(d[0])
+        d[1] = float(d[1])
+        d[2] = float(d[2])
+
+def compute_stats(data, theta):
+    N = data.shape[0]
+    theta_0 = theta[-2]
+    theta_1 = theta[-1]
+    t = np.array([0.0] * N)
+    tprime = np.array([0.0] * N)
+    mse = 0.0
+    for i in range(0, N):
+        u = data[i][0]
+        alpha = theta[u]
+        d = data[i][2]
+        t[i] = data[i][3]
+        tprime[i] = math.pow(alpha * (theta_0 + theta_1 * d) - t, 2)
+    mse = (np.square(t - tprime)).mean()
+    var = np.var(t)
+    fvu = mse / var
+    r2 = 1 - fvu
+    return [mse, var,fvu, r2]
+
+
 if __name__ == "__main__":
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
@@ -112,15 +140,20 @@ if __name__ == "__main__":
     sport = "Running"
     params = ["user_id","Distance", "Duration"]
     data = read_data_as_lists(infile, sport, params)
+    convert_to_ints(data)
     data.sort(key=lambda x: x[0])
     add_user_number_column(data)
-    data = np.asarray(data)
+    data = np.matrix(data)
     print data
     
-    n_users = int(data[-1][0])
+    n_users = data[-1, 0]
     print "Number of users = ", n_users
-    theta = np.array([0.0] * (n_users + 2))
-    scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (data))
+    #theta = np.array([0.0] * (n_users + 2))
+    theta = [1.0] * (n_users + 2)
+    print E(theta, data)
+    print Eprime(theta, data)
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (data, ))
+    print info
 
     #y_param = "Duration"
     #missing_data_mode = "substitute"
@@ -145,10 +178,8 @@ if __name__ == "__main__":
     
     #print "theta = ", theta
 
-    """
     # compute statistics on training set and validation set
-    [mse, var, fvu, r2] = compute_stats(X_train_distance, y_train, theta)
+    [mse, var, fvu, r2] = compute_stats(data, theta)
     print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (X_train.shape[0],mse, var, fvu, r2)
-    [mse, var, fvu, r2] = compute_stats(X_val_distance, y_val, theta)
-    print "Stats for validation data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (X_val.shape[0], mse, var, fvu, r2)
-    """
+    #[mse, var, fvu, r2] = compute_stats(X_val_distance, y_val, theta)
+    #print "Stats for validation data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (X_val.shape[0], mse, var, fvu, r2)
