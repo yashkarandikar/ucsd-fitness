@@ -5,10 +5,11 @@ import math
 import matplotlib.pyplot as plt
 from prepare_data_set import prepare_data_set, read_data_as_lists
 from plot_data import DataForPlot
-from linear_reg import compute_stats, predictor_plots, residual_plots
+#from linear_reg import compute_stats, predictor_plots, residual_plots
 import sys
 from unit import Unit
 import scipy.optimize
+import time
 
 def remove_outliers(X, y, x_params, y_param, missing_data_mode, param_indices):
     print "Removing outliers.."
@@ -69,6 +70,34 @@ def E(theta, data):
     print "E = ", e
     return e
 
+"""
+def E_vec(theta, data, workout_count_for_user):
+    # error function to be minimized
+    # assumes data has 4 columns : user_id, user_number, distance, duration and that it is sorted
+    
+    # append column of alpha and scale distances column by alphas
+    n_users = len(workout_count_for_user)
+    n_workouts = data.shape[0]
+    alpha_temp = theta[:n_users]
+    alpha = []
+    for i in range(0, n_users):
+        alpha = alpha + [alpha_temp[i]] * workout_count_for_user[i]
+    alpha = np.matrix([alpha]).T
+    data_aug = np.concatenate((alpha, data), axis = 1)
+    temp = np.concatenate((np.ones((n_workouts, 3)), alpha, np.ones((n_workouts, 1))), axis = 1)
+    data_aug = np.multiply(data_aug, temp)
+
+    theta_0 = theta[-2]
+    theta_1 = theta[-1]
+    theta_vec = np.matrix([[theta_0], [0.0], [0.0], [1.0], [0.0]])
+    diff = data_aug.dot(theta_vec) - data_aug[:, -1]
+    assert(diff.shape[0] == n_workouts)
+    assert(diff.shape[1] == 1)
+    e = ((diff.T).dot(diff))[0, 0]
+    print "E = ", e
+    return e
+"""
+
 def Eprime(theta, data):
     N = len(data)
     n_users = data[-1, 0]
@@ -96,14 +125,18 @@ def Eprime(theta, data):
 def add_user_number_column(data):
     data.sort(key=lambda x: x[0])
     n = len(data)
-    uin = 1
+    uin = 0
     i = 0
+    workout_count_for_user = [0]
     while i < n:
         u = data[i][0]
+        workout_count_for_user.append(0)
         while i < n and data[i][0] == u:
             data[i] = [uin] + data[i]
             i += 1
+            workout_count_for_user[uin] += 1
         uin += 1
+    return workout_count_for_user
 
 def convert_to_ints(data):
     for d in data:
@@ -120,11 +153,11 @@ def compute_stats(data, theta):
     tprime = np.array([0.0] * N)
     mse = 0.0
     for i in range(0, N):
-        u = data[i][0]
+        u = data[i, 0]
         alpha = theta[u]
-        d = data[i][2]
-        t[i] = data[i][3]
-        tprime[i] = math.pow(alpha * (theta_0 + theta_1 * d) - t, 2)
+        d = data[i, 2]
+        t[i] = data[i, 3]
+        tprime[i] = alpha * (theta_0 + theta_1 * d)
     mse = (np.square(t - tprime)).mean()
     var = np.var(t)
     fvu = mse / var
@@ -142,16 +175,12 @@ if __name__ == "__main__":
     data = read_data_as_lists(infile, sport, params)
     convert_to_ints(data)
     data.sort(key=lambda x: x[0])
-    add_user_number_column(data)
+    workout_count_for_user = add_user_number_column(data)
     data = np.matrix(data)
-    print data
     
     n_users = data[-1, 0]
-    print "Number of users = ", n_users
     #theta = np.array([0.0] * (n_users + 2))
     theta = [1.0] * (n_users + 2)
-    print E(theta, data)
-    print Eprime(theta, data)
     [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (data, ))
     print info
 
@@ -180,6 +209,6 @@ if __name__ == "__main__":
 
     # compute statistics on training set and validation set
     [mse, var, fvu, r2] = compute_stats(data, theta)
-    print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (X_train.shape[0],mse, var, fvu, r2)
+    print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (data.shape[0],mse, var, fvu, r2)
     #[mse, var, fvu, r2] = compute_stats(X_val_distance, y_val, theta)
     #print "Stats for validation data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (X_val.shape[0], mse, var, fvu, r2)
