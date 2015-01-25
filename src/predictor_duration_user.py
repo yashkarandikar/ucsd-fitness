@@ -167,8 +167,8 @@ def compute_stats(data, theta):
 
 if __name__ == "__main__":
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    infile = "endoMondo5000_workouts_condensed.gz"
+    infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    #infile = "endoMondo5000_workouts_condensed.gz"
     outfile = "train_val_duration_distance_user.npz"
     sport = "Running"
     params = ["user_id","Distance", "Duration"]
@@ -179,9 +179,8 @@ if __name__ == "__main__":
     data = np.matrix(data)
     
     n_users = data[-1, 0]
-    #theta = np.array([0.0] * (n_users + 2))
     theta = [1.0] * (n_users + 2)
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (data, ))
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (data, ), maxfun=10)
     print info
 
     #y_param = "Duration"
