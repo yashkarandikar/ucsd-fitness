@@ -54,6 +54,7 @@ def is_sorted(data):
 def E(theta, data):
     # error function to be minimized
     # assumes data has 4 columns : user_id, user_number, distance, duration and that it is sorted
+    t1 = time.time()
     i = 0
     N = data.shape[0]
     e = 0
@@ -67,7 +68,8 @@ def E(theta, data):
             t = data[i, 3]
             e += math.pow(alpha * (theta_0 + theta_1 * d) - t, 2)
             i += 1
-    print "E = ", e
+    t2 = time.time()
+    print "E = %f, time taken = %f" % (e, t2 - t1)
     return e
 
 """
@@ -94,11 +96,55 @@ def E_vec(theta, data, workout_count_for_user):
     assert(diff.shape[0] == n_workouts)
     assert(diff.shape[1] == 1)
     e = ((diff.T).dot(diff))[0, 0]
-    print "E = ", e
     return e
 """
 
+def Eprime_fast(theta, data):
+    t1 = time.time()
+    N = len(data)
+    n_users = int(data[-1, 0])
+    assert(len(theta) == n_users + 2)
+    theta_0 = theta[-2]
+    theta_1 = theta[-1]
+    #dE = np.array([0.0] * len(theta))
+    dE = [0.0] * len(theta)
+    i = 0
+    uins = np.array(range(0, n_users))
+    col0 = data[:, 0]
+    u_indices = list(np.searchsorted(col0, uins))
+    u_indices.append(N)
+    
+    dE_theta0 = 0.0
+    dE_theta1 = 0.0
+
+    for i in range(0, n_users):
+        start_u = u_indices[i]
+        end_u = u_indices[i+1]
+        alpha_u = theta[i]
+        for j in range(start_u, end_u):
+            t = data[j, -1]
+            d = data[j, 2]
+            t0_t1_d = theta_0 + theta_1 * d
+            a_t0_t1_d = alpha_u * t0_t1_d
+            #dE[i] += 2 * (a_t0_t1_d - t) * t0_t1_d
+            dE[i] = dE[i] + 2 * (a_t0_t1_d - t) * t0_t1_d
+
+            # dE / d_theta_0 and 1
+            dE0 = 2 * alpha_u * (a_t0_t1_d - t)
+            #dE[-2] += dE0 
+            #dE[-1] += dE0 * d
+            dE_theta0 += dE0
+            dE_theta1 += dE0 * d
+        
+    dE[-2] = dE_theta0
+    dE[-1] = dE_theta1
+    t2 = time.time()
+    print "E prime : time taken = ", t2 - t1
+    return np.array(dE)
+
+
 def Eprime(theta, data):
+    t1 = time.time()
     N = len(data)
     n_users = data[-1, 0]
     assert(len(theta) == n_users + 2)
@@ -120,6 +166,8 @@ def Eprime(theta, data):
             dE[-1] += 2 * alpha_u * d * (alpha_u*(theta_0 + theta_1 * d) - t)
             
             i += 1
+    t2 = time.time()
+    print "E prime : time taken = ", t2 - t1
     return dE
 
 def add_user_number_column(data):
@@ -165,7 +213,7 @@ def compute_stats(data, theta):
     r2 = 1 - fvu
     return [mse, var,fvu, r2]
 
-def shuffle_and_split_data_by_user_333(data, fraction = 0.5):
+def shuffle_and_split_data_by_user_fast(data, fraction = 0.5):
     # assumes data is numpy matrix form
     # assumes 0th column is the user number
     assert(type(data).__name__ == "matrix")
@@ -202,40 +250,6 @@ def shuffle_and_split_data_by_user_333(data, fraction = 0.5):
     print len(d1_indices)
     print len(d2_indices)
     return [d1, d2]
-
-
-def shuffle_and_split_data_by_user_222(data, fraction = 0.5):
-    # assumes data is numpy matrix form
-    # assumes 0th column is the user number
-    assert(type(data).__name__ == "matrix")
-    d1_indices = []; d2_indices = [];
-    i = 0
-    N = len(data)
-    randomState = np.random.RandomState(seed = 12345)
-    while i < N:
-        u = data[i, 0]
-        Nu = 0
-        start_u = i
-        # get all rows for this user
-        while i < N and data[i, 0] == u:
-            Nu += 1
-            i += 1
-        if Nu > 1:    # discard users with only 1 workout
-            #data_u = data[start_u:i, :]
-            perm = range(start_u,i)
-            random.shuffle(perm)
-            #perm = list(randomState.permutation(range(start_u, i)))
-            end1 = int(math.ceil((fraction * float(Nu))))
-            d1_indices = d1_indices + perm[:end1]
-            d2_indices = d2_indices + perm[end1:]
-        if (u % 10000 == 0):
-            print "Done with %d users " % (u)
-    #print len(d1)
-    #print len(d2)
-    d1 = data[d1_indices, :]
-    d2 = data[d2_indices, :]
-    return [d1, d2]
-
 
 def shuffle_and_split_data_by_user(data, fraction = 0.5):
     # assumes data is numpy matrix form
@@ -284,23 +298,23 @@ def prepare(infile, outfile):
     print "Converting data matrix to numpy format"
     data = np.matrix(data)
     print "Splitting data into training and validation"
-    [d1, d2] = shuffle_and_split_data_by_user_333(data)
+    [d1, d2] = shuffle_and_split_data_by_user_fast(data)
     print "Saving data to disk"
     np.savez(outfile, d1 = d1, d2 = d2)
 
 if __name__ == "__main__":
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    #infile = "endoMondo5000_workouts_condensed.gz"
-    infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    infile = "endoMondo5000_workouts_condensed.gz"
+    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     outfile = "train_val_distance_user.npz"
     prepare(infile, outfile)
     data = np.load(outfile)
     train = data["d1"]
-    val = data["d2"]    
+    val = data["d2"]
     n_users = train[-1, 0]
     print "Number of users = ", n_users
     theta = [1.0] * (n_users + 2)
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=100)
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime_fast, args = (train, ), maxfun=100)
     print "length of theta vector = ", len(theta)
     print info
     [mse, var, fvu, r2] = compute_stats(train, theta)
