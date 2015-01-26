@@ -53,7 +53,6 @@ def is_sorted(data):
 def E(theta, data):
     # error function to be minimized
     # assumes data has 4 columns : user_id, user_number, distance, duration and that it is sorted
-    #assert(is_sorted(data))
     i = 0
     N = data.shape[0]
     e = 0
@@ -127,18 +126,18 @@ def add_user_number_column(data):
     n = len(data)
     uin = 0
     i = 0
-    workout_count_for_user = [0]
+    #workout_count_for_user = [0]
     while i < n:
         u = data[i][0]
-        workout_count_for_user.append(0)
+        #workout_count_for_user.append(0)
         while i < n and data[i][0] == u:
             data[i] = [uin] + data[i]
             i += 1
-            workout_count_for_user[uin] += 1
+            #workout_count_for_user[uin] += 1
         uin += 1
-    return workout_count_for_user
+    #return workout_count_for_user
 
-def convert_to_ints(data):
+def convert_to_strings(data):
     for d in data:
         assert(len(d) == 3)
         d[0] = int(d[0])
@@ -164,24 +163,73 @@ def compute_stats(data, theta):
     r2 = 1 - fvu
     return [mse, var,fvu, r2]
 
+def split_data_by_user(data, fraction = 0.5):
+    # assumes data is numpy matrix form
+    assert(type(data).__name__ == "matrix")
+    d1 = None; d2 = None;
+    i = 0
+    N = len(data)
+    randomState = np.random.RandomState(seed = 12345)
+    while i < N:
+        u = data[i, 0]
+        data_u = data[i, :]
+        i += 1
+        # get all rows for this user
+        while i < N and data[i, 0] == u:
+            data_u = np.concatenate((data_u, data[i]), axis = 0)
+            #data_u = data_u + data[i]
+            i += 1
+        if len(data_u) > 1:    # discard users with only 1 workout
+            # shuffle and split
+            [m1, m2] = utils.shuffle_and_split_mat_rows(data_u, fraction = fraction, randomState = randomState)
+            #[m1, m2] = utils.shuffle_and_split_lists(data_u, fraction = fraction, seed = 12345)
+            if (d1 is None and d2 is None):
+                d1 = m1; d2 = m2
+            else:
+                d1 = np.concatenate((d1, m1), axis = 0)
+                d2 = np.concatenate((d2, m2), axis = 0)
+            #d1 = d1 + m1
+            #d2 = d2 + m2
+    print len(d1)
+    print len(d2)
+    return [d1, d2]
 
-if __name__ == "__main__":
-    # prepare data set.. Run once and comment it out if running multiple times with same settings
-    infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    #infile = "endoMondo5000_workouts_condensed.gz"
-    outfile = "train_val_duration_distance_user.npz"
+def prepare(infile, outfile):
     sport = "Running"
     params = ["user_id","Distance", "Duration"]
     data = read_data_as_lists(infile, sport, params)
-    convert_to_ints(data)
-    data.sort(key=lambda x: x[0])
-    workout_count_for_user = add_user_number_column(data)
+    print "Converting strings to numbers.."
+    convert_to_strings(data)   # convert from strings to numbers
+    print "Sorting data by users.."
+    data.sort(key=lambda x: x[0])   # sort by user ID
+    print "Adding user numbers.."
+    add_user_number_column(data)    # add a user number 
+    print "Converting data matrix to numpy format"
     data = np.matrix(data)
-    
-    n_users = data[-1, 0]
+    print "Splitting data into training and validation"
+    [d1, d2] = split_data_by_user(data)
+    print "Saving data to disk"
+    np.savez(outfile, d1 = d1, d2 = d2)
+
+if __name__ == "__main__":
+    # prepare data set.. Run once and comment it out if running multiple times with same settings
+    infile = "endoMondo5000_workouts_condensed.gz"
+    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    outfile = "train_val_distance_user.npz"
+    prepare(infile, outfile)
+    data = np.load(outfile)
+    train = data["d1"]
+    val = data["d2"]    
+    n_users = train[-1, 0]
+    print "Number of users = ", n_users
     theta = [1.0] * (n_users + 2)
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (data, ), maxfun=10)
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=100)
+    print "length of theta vector = ", len(theta)
     print info
+    [mse, var, fvu, r2] = compute_stats(train, theta)
+    print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
+    [mse, var, fvu, r2] = compute_stats(val, theta)
+    print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
 
     #y_param = "Duration"
     #missing_data_mode = "substitute"
@@ -207,7 +255,7 @@ if __name__ == "__main__":
     #print "theta = ", theta
 
     # compute statistics on training set and validation set
-    [mse, var, fvu, r2] = compute_stats(data, theta)
-    print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (data.shape[0],mse, var, fvu, r2)
+    #[mse, var, fvu, r2] = compute_stats(data, theta)
+    #print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (data.shape[0],mse, var, fvu, r2)
     #[mse, var, fvu, r2] = compute_stats(X_val_distance, y_val, theta)
     #print "Stats for validation data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (X_val.shape[0], mse, var, fvu, r2)

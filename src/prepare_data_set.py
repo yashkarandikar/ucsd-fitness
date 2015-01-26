@@ -18,6 +18,7 @@ def read_data_as_lists(infile, sport, params):
     sport_missing = 0
     param_missing = 0
     n_ignore = 0
+    n = 0
     data = []
     with gzip.open(infile) as f:
         for line in f:
@@ -39,6 +40,9 @@ def read_data_as_lists(infile, sport, params):
                 n_ignore += 1
             else:
                 data.append(example)
+            n += 1
+            if (n % 100000 == 0):
+                print "%d workouts read.." % (n)
 
     print "%d workouts did not match the sport" % (sport_missing)
     print "%d workouts did not contain one or more parameters" % (param_missing)

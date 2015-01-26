@@ -2,6 +2,8 @@ import simplejson as json
 import os
 import gzip
 import numpy as np
+import math
+import random
 
 def get_workouts(infile):
     # assumes each line of the input file is a json structure
@@ -110,6 +112,31 @@ def shuffle_and_split_Xy(X, y, fraction, randomState = None, shuffle = True):
     [X_1, y_1] = separate_Xy(Xy_1)
     [X_2, y_2] = separate_Xy(Xy_2)
     return [X_1, y_1, X_2, y_2]
+
+def shuffle_and_split_mat_rows(m, fraction, randomState = None, shuffle = True):
+    if (shuffle):
+        if (randomState is not None):
+            randomState.shuffle(m)
+        else:
+            np.random.shuffle(m)
+    end1 = math.ceil(fraction * m.shape[0])
+    m1 = m[:end1, :]
+    m2 = m[end1:, :]
+    return [m1, m2]
+
+def shuffle_and_split_lists(lists, fraction, seed = None, shuffle = True):
+    orig_state = random.getstate()
+    if (shuffle):
+        if (seed is not None):
+            random.seed(seed)
+        else:
+            random.shuffle(lists)
+    end1 = int(math.ceil(fraction * len(lists)))
+    l1 = lists[:end1]
+    l2 = lists[end1:]
+    random.setstate(orig_state)
+    return [l1, l2]
+
 
 def extract_columns_by_names(m, params, param_indices):
     cols = [False] * m.shape[1] 
