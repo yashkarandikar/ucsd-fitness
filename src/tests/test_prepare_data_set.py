@@ -3,7 +3,7 @@ import sys
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath,'..'))
 import utils
-from prepare_data_set import read_data, handle_missing_data, FeatureAbsentException, prepare_data_set, normalize_data, add_offset_feature, generate_param_indices
+from prepare_data_set import read_data, handle_missing_data, FeatureAbsentException, prepare_data_set, normalize_data, add_offset_feature, generate_param_indices, read_data_as_lists, shuffle_and_split_data_by_user
 import numpy as np
 
 def create_tmp_folder():
@@ -29,6 +29,15 @@ def test_read_data():
     expected_X = np.matrix([[98.1,3.35], [100.23,4.35]])
     assert(np.array_equal(y, expected_y))
     assert(np.array_equal(expected_X, X))
+
+def test_read_data_as_lists():
+    cwd = os.path.dirname(os.path.abspath(__file__))
+    infile = os.path.join(cwd, "./data","workouts_condensed_2.gz")
+    params = ["alt(avg)","Distance", "Duration"]
+    sport = "Running"
+    data = read_data_as_lists(infile, sport, params)
+    expected_data = [[98.1, 3.35, 1803.0], [100.23, 4.35, 1672.0]]
+    assert(data == expected_data)
 
 def test_handle_missing_data():
     # test case where missing data is subsituted correctly
@@ -164,3 +173,4 @@ if __name__ == "__main__":
     test_normalize_data()
     test_add_offset_feature()
     test_generate_param_indices()
+    test_read_data_as_lists()
