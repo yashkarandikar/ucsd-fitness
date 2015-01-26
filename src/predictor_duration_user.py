@@ -5,7 +5,6 @@ import math
 import matplotlib.pyplot as plt
 from prepare_data_set import prepare_data_set, read_data_as_lists
 from plot_data import DataForPlot
-#from linear_reg import compute_stats, predictor_plots, residual_plots
 import sys
 from unit import Unit
 import scipy.optimize
@@ -72,38 +71,11 @@ def E(theta, data):
     print "E = %f, time taken = %f" % (e, t2 - t1)
     return e
 
-"""
-def E_vec(theta, data, workout_count_for_user):
-    # error function to be minimized
-    # assumes data has 4 columns : user_id, user_number, distance, duration and that it is sorted
-    
-    # append column of alpha and scale distances column by alphas
-    n_users = len(workout_count_for_user)
-    n_workouts = data.shape[0]
-    alpha_temp = theta[:n_users]
-    alpha = []
-    for i in range(0, n_users):
-        alpha = alpha + [alpha_temp[i]] * workout_count_for_user[i]
-    alpha = np.matrix([alpha]).T
-    data_aug = np.concatenate((alpha, data), axis = 1)
-    temp = np.concatenate((np.ones((n_workouts, 3)), alpha, np.ones((n_workouts, 1))), axis = 1)
-    data_aug = np.multiply(data_aug, temp)
-
-    theta_0 = theta[-2]
-    theta_1 = theta[-1]
-    theta_vec = np.matrix([[theta_0], [0.0], [0.0], [1.0], [0.0]])
-    diff = data_aug.dot(theta_vec) - data_aug[:, -1]
-    assert(diff.shape[0] == n_workouts)
-    assert(diff.shape[1] == 1)
-    e = ((diff.T).dot(diff))[0, 0]
-    return e
-"""
-
-def Eprime_fast(theta, data):
+def Eprime(theta, data):
     t1 = time.time()
-    N = len(data)
-    n_users = int(data[-1, 0])
-    assert(len(theta) == n_users + 2)
+    N = data.shape[0]
+    n_users = int(data[-1, 0]) + 1
+    assert(theta.shape[0] == n_users + 2)
     theta_0 = theta[-2]
     theta_1 = theta[-1]
     #dE = np.array([0.0] * len(theta))
@@ -143,7 +115,7 @@ def Eprime_fast(theta, data):
     return np.array(dE)
 
 
-def Eprime(theta, data):
+def Eprime_slow(theta, data):
     t1 = time.time()
     N = len(data)
     n_users = data[-1, 0]
@@ -169,6 +141,43 @@ def Eprime(theta, data):
     t2 = time.time()
     print "E prime : time taken = ", t2 - t1
     return dE
+
+def shuffle_and_split_data_by_user(data, fraction = 0.5):
+    # assumes data is numpy matrix form
+    # assumes 0th column is the user number
+    assert(type(data).__name__ == "matrix")
+    i = 0
+    N = len(data)
+    randomState = np.random.RandomState(seed = 12345)
+    n_users = int(data[-1, 0]) + 1
+    uins = np.array(range(0, n_users))
+    col0 = data[:, 0].A1
+    u_indices = list(np.searchsorted(col0, uins))
+    u_indices.append(N)
+    mask = [0] * N
+    for i in range(0, n_users):
+        start_u = u_indices[i]
+        end_u = u_indices[i+1]
+        n_u = end_u - start_u
+        if (n_u > 1):
+            #perm = range(start_u, end_u)
+            #random.shuffle(perm)
+            perm = randomState.permutation(range(start_u, end_u))
+            end1 = int(math.ceil((fraction * float(n_u))))
+            for p in perm[:end1]: mask[p] = 1
+            for p in perm[end1:]: mask[p] = 2
+            #d1_indices = d1_indices + perm[:end1]
+            #d2_indices = d2_indices + perm[end1:]
+        if (i % 10000 == 0):
+            print "Done with %d users " % (i)
+
+    d1_indices = [i for i in range(0, N) if mask[i] == 1]
+    d2_indices = [i for i in range(0, N) if mask[i] == 2]
+    d1 = data[d1_indices, :]
+    d2 = data[d2_indices, :]
+    print len(d1_indices)
+    print len(d2_indices)
+    return [d1, d2]
 
 def add_user_number_column(data):
     data.sort(key=lambda x: x[0])
@@ -213,45 +222,7 @@ def compute_stats(data, theta):
     r2 = 1 - fvu
     return [mse, var,fvu, r2]
 
-def shuffle_and_split_data_by_user_fast(data, fraction = 0.5):
-    # assumes data is numpy matrix form
-    # assumes 0th column is the user number
-    assert(type(data).__name__ == "matrix")
-    #d1_indices = []; d2_indices = [];
-    i = 0
-    N = len(data)
-    randomState = np.random.RandomState(seed = 12345)
-    n_users = int(data[-1, 0]) + 1
-    uins = np.array(range(0, n_users))
-    col0 = data[:, 0].A1
-    u_indices = list(np.searchsorted(col0, uins))
-    u_indices.append(N)
-    mask = [0] * N
-    for i in range(0, n_users):
-        start_u = u_indices[i]
-        end_u = u_indices[i+1]
-        n_u = end_u - start_u
-        if (n_u > 1):
-            #perm = range(start_u, end_u)
-            #random.shuffle(perm)
-            perm = randomState.permutation(range(start_u, end_u))
-            end1 = int(math.ceil((fraction * float(n_u))))
-            for p in perm[:end1]: mask[p] = 1
-            for p in perm[end1:]: mask[p] = 2
-            #d1_indices = d1_indices + perm[:end1]
-            #d2_indices = d2_indices + perm[end1:]
-        if (i % 10000 == 0):
-            print "Done with %d users " % (i)
-
-    d1_indices = [i for i in range(0, N) if mask[i] == 1]
-    d2_indices = [i for i in range(0, N) if mask[i] == 2]
-    d1 = data[d1_indices, :]
-    d2 = data[d2_indices, :]
-    print len(d1_indices)
-    print len(d2_indices)
-    return [d1, d2]
-
-def shuffle_and_split_data_by_user(data, fraction = 0.5):
+def shuffle_and_split_data_by_user_slow(data, fraction = 0.5):
     # assumes data is numpy matrix form
     # assumes 0th column is the user number
     assert(type(data).__name__ == "matrix")
@@ -298,7 +269,7 @@ def prepare(infile, outfile):
     print "Converting data matrix to numpy format"
     data = np.matrix(data)
     print "Splitting data into training and validation"
-    [d1, d2] = shuffle_and_split_data_by_user_fast(data)
+    [d1, d2] = shuffle_and_split_data_by_user(data)
     print "Saving data to disk"
     np.savez(outfile, d1 = d1, d2 = d2)
 
@@ -311,10 +282,10 @@ if __name__ == "__main__":
     data = np.load(outfile)
     train = data["d1"]
     val = data["d2"]
-    n_users = train[-1, 0]
+    n_users = train[-1, 0] + 1
     print "Number of users = ", n_users
     theta = [1.0] * (n_users + 2)
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime_fast, args = (train, ), maxfun=100)
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=100)
     print "length of theta vector = ", len(theta)
     print info
     [mse, var, fvu, r2] = compute_stats(train, theta)
