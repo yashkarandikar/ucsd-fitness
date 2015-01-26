@@ -10,6 +10,7 @@ import sys
 from unit import Unit
 import scipy.optimize
 import time
+import random
 
 def remove_outliers(X, y, x_params, y_param, missing_data_mode, param_indices):
     print "Removing outliers.."
@@ -66,7 +67,7 @@ def E(theta, data):
             t = data[i, 3]
             e += math.pow(alpha * (theta_0 + theta_1 * d) - t, 2)
             i += 1
-    print "E = ", e
+    #print "E = ", e
     return e
 
 """
@@ -135,9 +136,10 @@ def add_user_number_column(data):
             i += 1
             #workout_count_for_user[uin] += 1
         uin += 1
+    print "Number of users = ", (uin + 1)
     #return workout_count_for_user
 
-def convert_to_strings(data):
+def convert_to_numbers(data):
     for d in data:
         assert(len(d) == 3)
         d[0] = int(d[0])
@@ -163,8 +165,42 @@ def compute_stats(data, theta):
     r2 = 1 - fvu
     return [mse, var,fvu, r2]
 
-def split_data_by_user(data, fraction = 0.5):
+def shuffle_and_split_data_by_user_222(data, fraction = 0.5):
     # assumes data is numpy matrix form
+    # assumes 0th column is the user number
+    assert(type(data).__name__ == "matrix")
+    d1_indices = []; d2_indices = [];
+    i = 0
+    N = len(data)
+    randomState = np.random.RandomState(seed = 12345)
+    while i < N:
+        u = data[i, 0]
+        Nu = 0
+        start_u = i
+        # get all rows for this user
+        while i < N and data[i, 0] == u:
+            Nu += 1
+            i += 1
+        if Nu > 1:    # discard users with only 1 workout
+            #data_u = data[start_u:i, :]
+            perm = range(start_u,i)
+            random.shuffle(perm)
+            #perm = list(randomState.permutation(range(start_u, i)))
+            end1 = int(math.ceil((fraction * float(Nu))))
+            d1_indices = d1_indices + perm[:end1]
+            d2_indices = d2_indices + perm[end1:]
+        if (u % 10000 == 0):
+            print "Done with %d users " % (u)
+    #print len(d1)
+    #print len(d2)
+    d1 = data[d1_indices, :]
+    d2 = data[d2_indices, :]
+    return [d1, d2]
+
+
+def shuffle_and_split_data_by_user(data, fraction = 0.5):
+    # assumes data is numpy matrix form
+    # assumes 0th column is the user number
     assert(type(data).__name__ == "matrix")
     d1 = None; d2 = None;
     i = 0
@@ -190,6 +226,8 @@ def split_data_by_user(data, fraction = 0.5):
                 d2 = np.concatenate((d2, m2), axis = 0)
             #d1 = d1 + m1
             #d2 = d2 + m2
+        if (u % 10000 == 0):
+            print "Done with %d users " % (u)
     print len(d1)
     print len(d2)
     return [d1, d2]
@@ -199,7 +237,7 @@ def prepare(infile, outfile):
     params = ["user_id","Distance", "Duration"]
     data = read_data_as_lists(infile, sport, params)
     print "Converting strings to numbers.."
-    convert_to_strings(data)   # convert from strings to numbers
+    convert_to_numbers(data)   # convert from strings to numbers
     print "Sorting data by users.."
     data.sort(key=lambda x: x[0])   # sort by user ID
     print "Adding user numbers.."
@@ -207,15 +245,15 @@ def prepare(infile, outfile):
     print "Converting data matrix to numpy format"
     data = np.matrix(data)
     print "Splitting data into training and validation"
-    [d1, d2] = split_data_by_user(data)
+    [d1, d2] = shuffle_and_split_data_by_user_222(data)
     print "Saving data to disk"
     np.savez(outfile, d1 = d1, d2 = d2)
 
 if __name__ == "__main__":
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    infile = "endoMondo5000_workouts_condensed.gz"
-    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    outfile = "train_val_distance_user.npz"
+    #infile = "endoMondo5000_workouts_condensed.gz"
+    infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    outfile = "train_val_distance_user2.npz"
     prepare(infile, outfile)
     data = np.load(outfile)
     train = data["d1"]
