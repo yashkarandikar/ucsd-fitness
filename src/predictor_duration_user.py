@@ -67,7 +67,7 @@ def E(theta, data):
             t = data[i, 3]
             e += math.pow(alpha * (theta_0 + theta_1 * d) - t, 2)
             i += 1
-    #print "E = ", e
+    print "E = ", e
     return e
 
 """
@@ -165,6 +165,45 @@ def compute_stats(data, theta):
     r2 = 1 - fvu
     return [mse, var,fvu, r2]
 
+def shuffle_and_split_data_by_user_333(data, fraction = 0.5):
+    # assumes data is numpy matrix form
+    # assumes 0th column is the user number
+    assert(type(data).__name__ == "matrix")
+    #d1_indices = []; d2_indices = [];
+    i = 0
+    N = len(data)
+    randomState = np.random.RandomState(seed = 12345)
+    n_users = int(data[-1, 0]) + 1
+    uins = np.array(range(0, n_users))
+    col0 = data[:, 0].A1
+    u_indices = list(np.searchsorted(col0, uins))
+    u_indices.append(N)
+    mask = [0] * N
+    for i in range(0, n_users):
+        start_u = u_indices[i]
+        end_u = u_indices[i+1]
+        n_u = end_u - start_u
+        if (n_u > 1):
+            #perm = range(start_u, end_u)
+            #random.shuffle(perm)
+            perm = randomState.permutation(range(start_u, end_u))
+            end1 = int(math.ceil((fraction * float(n_u))))
+            for p in perm[:end1]: mask[p] = 1
+            for p in perm[end1:]: mask[p] = 2
+            #d1_indices = d1_indices + perm[:end1]
+            #d2_indices = d2_indices + perm[end1:]
+        if (i % 10000 == 0):
+            print "Done with %d users " % (i)
+
+    d1_indices = [i for i in range(0, N) if mask[i] == 1]
+    d2_indices = [i for i in range(0, N) if mask[i] == 2]
+    d1 = data[d1_indices, :]
+    d2 = data[d2_indices, :]
+    print len(d1_indices)
+    print len(d2_indices)
+    return [d1, d2]
+
+
 def shuffle_and_split_data_by_user_222(data, fraction = 0.5):
     # assumes data is numpy matrix form
     # assumes 0th column is the user number
@@ -245,7 +284,7 @@ def prepare(infile, outfile):
     print "Converting data matrix to numpy format"
     data = np.matrix(data)
     print "Splitting data into training and validation"
-    [d1, d2] = shuffle_and_split_data_by_user_222(data)
+    [d1, d2] = shuffle_and_split_data_by_user_333(data)
     print "Saving data to disk"
     np.savez(outfile, d1 = d1, d2 = d2)
 
@@ -253,7 +292,7 @@ if __name__ == "__main__":
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     #infile = "endoMondo5000_workouts_condensed.gz"
     infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    outfile = "train_val_distance_user2.npz"
+    outfile = "train_val_distance_user.npz"
     prepare(infile, outfile)
     data = np.load(outfile)
     train = data["d1"]
