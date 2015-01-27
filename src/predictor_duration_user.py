@@ -11,6 +11,13 @@ import scipy.optimize
 import time
 import random
 
+def get_user_count(data):
+    assert(type(data).__name__ == "list" or type(data).__name__ == "matrix" or type(data).__name__ == "ndarray")
+    if (type(data).__name__ == "matrix" or type(data).__name__ == "ndarray"):
+        return int(data[-1,0] + 1)   # since user numbers start from 0
+    elif (type(data).__name__ == "list"):
+        return int(data[-1][0] + 1)
+
 def remove_outliers(X, y, x_params, y_param, missing_data_mode, param_indices):
     print "Removing outliers.."
     N1 = X.shape[0]
@@ -68,13 +75,14 @@ def E(theta, data):
             e += math.pow(alpha * (theta_0 + theta_1 * d) - t, 2)
             i += 1
     t2 = time.time()
-    print "E = %f, time taken = %f" % (e, t2 - t1)
+    #print "E = %f, time taken = %f" % (e, t2 - t1)
     return e
 
 def Eprime(theta, data):
     t1 = time.time()
     N = data.shape[0]
-    n_users = int(data[-1, 0]) + 1
+    #n_users = int(data[-1, 0]) + 1
+    n_users = get_user_count(data)
     assert(theta.shape[0] == n_users + 2)
     theta_0 = theta[-2]
     theta_1 = theta[-1]
@@ -111,14 +119,15 @@ def Eprime(theta, data):
     dE[-2] = dE_theta0
     dE[-1] = dE_theta1
     t2 = time.time()
-    print "E prime : time taken = ", t2 - t1
+    #print "E prime : time taken = ", t2 - t1
     return np.array(dE)
 
 
 def Eprime_slow(theta, data):
     t1 = time.time()
-    N = len(data)
-    n_users = data[-1, 0]
+    N = data.shape[0]
+    #n_users = data[-1, 0] + 1
+    n_users = get_user_count(data)
     assert(len(theta) == n_users + 2)
     theta_0 = theta[-2]
     theta_1 = theta[-1]
@@ -139,7 +148,7 @@ def Eprime_slow(theta, data):
             
             i += 1
     t2 = time.time()
-    print "E prime : time taken = ", t2 - t1
+    #print "E prime : time taken = ", t2 - t1
     return dE
 
 def shuffle_and_split_data_by_user(data, fraction = 0.5):
@@ -149,7 +158,8 @@ def shuffle_and_split_data_by_user(data, fraction = 0.5):
     i = 0
     N = len(data)
     randomState = np.random.RandomState(seed = 12345)
-    n_users = int(data[-1, 0]) + 1
+    #n_users = int(data[-1, 0]) + 1
+    n_users = get_user_count(data)
     uins = np.array(range(0, n_users))
     col0 = data[:, 0].A1
     u_indices = list(np.searchsorted(col0, uins))
@@ -193,7 +203,7 @@ def add_user_number_column(data):
             i += 1
             #workout_count_for_user[uin] += 1
         uin += 1
-    print "Number of users = ", (uin + 1)
+    print "Number of users = ", get_user_count(data)
     #return workout_count_for_user
 
 def convert_to_numbers(data):
@@ -274,6 +284,7 @@ def prepare(infile, outfile):
     np.savez(outfile, d1 = d1, d2 = d2)
 
 if __name__ == "__main__":
+    t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     infile = "endoMondo5000_workouts_condensed.gz"
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
@@ -282,7 +293,8 @@ if __name__ == "__main__":
     data = np.load(outfile)
     train = data["d1"]
     val = data["d2"]
-    n_users = train[-1, 0] + 1
+    print train.shape
+    n_users = get_user_count(train)
     print "Number of users = ", n_users
     theta = [1.0] * (n_users + 2)
     [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=100)
@@ -292,6 +304,8 @@ if __name__ == "__main__":
     print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2] = compute_stats(val, theta)
     print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
+    t2 = time.time()
+    print "Total time taken = ", t2 - t1
 
     #y_param = "Duration"
     #missing_data_mode = "substitute"

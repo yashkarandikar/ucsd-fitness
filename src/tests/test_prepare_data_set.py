@@ -3,7 +3,7 @@ import sys
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(myPath,'..'))
 import utils
-from prepare_data_set import read_data, handle_missing_data, FeatureAbsentException, prepare_data_set, normalize_data, add_offset_feature, generate_param_indices, read_data_as_lists, shuffle_and_split_data_by_user
+from prepare_data_set import read_data, handle_missing_data, FeatureAbsentException, prepare_data_set, normalize_data, add_offset_feature, generate_param_indices, read_data_as_lists
 import numpy as np
 
 def create_tmp_folder():
