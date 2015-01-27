@@ -36,14 +36,14 @@ def test_Eprime():
 
 def test_shuffle_and_split_data_by_user():
     data = np.matrix([[0, 1000021, 20.0, 1000.0], [1, 3213223, 15.0, 1000.0], [1, 3213223, 10.0, 800.0], [1, 3213223, 12.0, 900.0]])
-    expected_d1 = data[1:3, :]
+    expected_d1 = data[0:3, :]
     expected_d2 = data[3, :]
     [d1, d2] = p.shuffle_and_split_data_by_user(data)
     assert(np.array_equal(d1, expected_d1))
     assert(np.array_equal(d2, expected_d2))
-    [d1, d2] = p.shuffle_and_split_data_by_user_slow(data)
-    assert(np.array_equal(d1, expected_d1))
-    assert(np.array_equal(d2, expected_d2))
+    #[d1, d2] = p.shuffle_and_split_data_by_user_slow(data)
+    #assert(np.array_equal(d1, expected_d1))
+    #assert(np.array_equal(d2, expected_d2))
 
 
 def test_get_user_count():
@@ -55,10 +55,17 @@ def test_get_user_count():
     assert(p.get_user_count(data) == 2)
 
 def test_add_user_number_column():
-    data = [[3213223, 15.0, 1000.0], [9999993, 10.0, 800.0], [3213223, 12.0, 900.0], [1000021, 20.0, 1000.0]]
-    p.add_user_number_column(data)
-    expected_data = [[0, 1000021, 20.0, 1000.0], [1, 3213223, 15.0, 1000.0], [1, 3213223, 12.0, 900.0],  [2, 9999993, 10.0, 800.0]]
-    assert(data == expected_data)
+    # with threshold 0
+    data = np.matrix([[3213223, 15.0, 1000.0], [9999993, 10.0, 800.0], [3213223, 12.0, 900.0], [1000021, 20.0, 1000.0], [1000021, 40.0, 10000.0]])
+    data = p.add_user_number_column(data, rare_user_threshold = 0)
+    expected_data = np.matrix([[0, 1000021, 20.0, 1000.0], [0, 1000021, 40.0, 10000.0], [1, 3213223, 15.0, 1000.0], [1, 3213223, 12.0, 900.0],  [2, 9999993, 10.0, 800.0]])
+    assert(np.array_equal(data, expected_data))
+
+    # with threshold 1
+    data = np.matrix([[3213223, 15.0, 1000.0], [9999993, 10.0, 800.0], [3213223, 12.0, 900.0], [1000021, 20.0, 1000.0], [1000021, 40.0, 10000.0]])
+    data = p.add_user_number_column(data, rare_user_threshold = 1)
+    expected_data = np.matrix([[0, 1000021, 20.0, 1000.0], [0, 1000021, 40.0, 10000.0], [1, 3213223, 15.0, 1000.0], [1, 3213223, 12.0, 900.0]])
+    assert(np.array_equal(data, expected_data))
 
 def test_compute_stats():
     data = np.matrix([[0, 1000000, 20.0, 2010.0], [0, 1000000, 15, 1510], [1, 7000000, 10, 2020.0], [1, 7000000, 12.0, 2420.0]])

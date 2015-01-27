@@ -20,37 +20,33 @@ def get_user_count(data):
     else:
         raise Exception("invalid type of data..")
 
-def remove_outliers(X, y, x_params, y_param, missing_data_mode, param_indices):
-    print "Removing outliers.."
-    N1 = X.shape[0]
-    Xy = utils.combine_Xy(X, y)
-    params = x_params + [y_param]
-    assert(missing_data_mode == "ignore" or missing_data_mode == "substitute")
-    if (missing_data_mode == "ignore"):
-        assert(len(params) == Xy.shape[1])
-    else:
-        assert(2.0 * len(params) - 1 == Xy.shape[1])
+def remove_outliers(data, params, param_indices):
+    assert(type(data).__name__ == "matrix")
+    N1 = data.shape[0]
+    #assert(missing_data_mode == "ignore" or missing_data_mode == "substitute")
+    #if (missing_data_mode == "ignore"):
+    #    assert(len(params) == Xy.shape[1])
+    #else:
+    #    assert(2.0 * len(params) - 1 == Xy.shape[1])
     
     cols = []; lower_bounds = []; upper_bounds = []
 
     # remove rows distance < 0.1 mi and > 80 mi
-    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(80.0)
+    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
 
     # remove rows with duration < 0.1 and > 36000
-    cols.append(Xy.shape[1] - 1)    # Duration
-    lower_bounds.append(0.1); upper_bounds.append(36000.0)
+    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
 
     # remove rows with other parameters < 0.1
     #c = param_indices["pace(avg)"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
-    c = param_indices["Total Ascent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
-    c = param_indices["Total Descent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
-    c = param_indices["alt(avg)"]; cols.append(c); lower_bounds.append(-1000); upper_bounds.append(30000)
+    #c = param_indices["Total Ascent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
+    #c = param_indices["Total Descent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
+    #c = param_indices["alt(avg)"]; cols.append(c); lower_bounds.append(-1000); upper_bounds.append(30000)
 
-    Xy = utils.remove_rows_by_condition(Xy, cols, lower_bounds, upper_bounds)
-    [X, y] = utils.separate_Xy(Xy)
-    N2 = X.shape[0]
+    data = utils.remove_rows_by_condition(data, cols, lower_bounds, upper_bounds)
+    N2 = data.shape[0]
     print "%d rows removed during outlier removal.." % (N1 - N2)
-    return [X, y]
+    return data
 
 def is_sorted(data):
     N = len(data)
@@ -170,15 +166,15 @@ def shuffle_and_split_data_by_user(data, fraction = 0.5):
         start_u = u_indices[i]
         end_u = u_indices[i+1]
         n_u = end_u - start_u
-        if (n_u > 1):
-            #perm = range(start_u, end_u)
-            #random.shuffle(perm)
-            perm = randomState.permutation(range(start_u, end_u))
-            end1 = int(math.ceil((fraction * float(n_u))))
-            for p in perm[:end1]: mask[p] = 1
-            for p in perm[end1:]: mask[p] = 2
-            #d1_indices = d1_indices + perm[:end1]
-            #d2_indices = d2_indices + perm[end1:]
+        assert(n_u > 0)
+        #perm = range(start_u, end_u)
+        #random.shuffle(perm)
+        perm = randomState.permutation(range(start_u, end_u))
+        end1 = int(math.ceil((fraction * float(n_u))))
+        for p in perm[:end1]: mask[p] = 1
+        for p in perm[end1:]: mask[p] = 2
+        #d1_indices = d1_indices + perm[:end1]
+        #d2_indices = d2_indices + perm[end1:]
         if (i % 10000 == 0):
             print "Done with %d users " % (i)
 
@@ -188,23 +184,42 @@ def shuffle_and_split_data_by_user(data, fraction = 0.5):
     d2 = data[d2_indices, :]
     return [d1, d2]
 
-def add_user_number_column(data):
-    assert(type(data).__name__ == "list")
-    data.sort(key=lambda x: x[0])
-    n = len(data)
+def add_user_number_column(data, rare_user_threshold = 1):
+    assert(type(data).__name__ == "matrix")
+    #data.sort(key=lambda x: x[0])
+    data = utils.sort_matrix_by_col(data, 0)
+    n = data.shape[0]
     uin = 0
     i = 0
-    #workout_count_for_user = [0]
+    uin_col = np.array([0] * n)
+    delete_mask = [False] * n
     while i < n:
-        u = data[i][0]
-        #workout_count_for_user.append(0)
-        while i < n and data[i][0] == u:
-            data[i] = [uin] + data[i]
+        u = data[i, 0]
+        start_u = i
+        while i < n and data[i, 0] == u:
+            #data[i] = [uin] + data[i]
+            uin_col[i] = uin
             i += 1
-            #workout_count_for_user[uin] += 1
-        uin += 1
+        end_u = i
+        n_u = end_u - start_u
+        if (n_u > rare_user_threshold):
+            # consider only if more than threshold
+            uin += 1
+        else:
+            # mark for deletion
+            for j in range(start_u, end_u):
+                delete_mask[j] = True
+
+    # append col of uins
+    uin_col = np.matrix(uin_col).T
+    data = np.concatenate((uin_col, data), axis = 1)
+
+    # actually extract only those rows which are not marked for deletion
+    delete_indices = [i for i in range(0, n) if delete_mask[i] == True]
+    data = np.delete(data, delete_indices, axis = 0)
+
     print "Number of users = ", get_user_count(data)
-    #return workout_count_for_user
+    return data
 
 def convert_to_numbers(data):
     assert(type(data).__name__ == "list")
@@ -233,60 +248,44 @@ def compute_stats(data, theta):
     r2 = 1 - fvu
     return [mse, var,fvu, r2]
 
-def shuffle_and_split_data_by_user_slow(data, fraction = 0.5):
-    # assumes data is numpy matrix form
-    # assumes 0th column is the user number
-    assert(type(data).__name__ == "matrix")
-    d1 = None; d2 = None;
-    i = 0
-    N = len(data)
-    randomState = np.random.RandomState(seed = 12345)
-    while i < N:
-        u = data[i, 0]
-        data_u = data[i, :]
-        i += 1
-        # get all rows for this user
-        while i < N and data[i, 0] == u:
-            data_u = np.concatenate((data_u, data[i]), axis = 0)
-            #data_u = data_u + data[i]
-            i += 1
-        if len(data_u) > 1:    # discard users with only 1 workout
-            # shuffle and split
-            [m1, m2] = utils.shuffle_and_split_mat_rows(data_u, fraction = fraction, randomState = randomState)
-            #[m1, m2] = utils.shuffle_and_split_lists(data_u, fraction = fraction, seed = 12345)
-            if (d1 is None and d2 is None):
-                d1 = m1; d2 = m2
-            else:
-                d1 = np.concatenate((d1, m1), axis = 0)
-                d2 = np.concatenate((d2, m2), axis = 0)
-            #d1 = d1 + m1
-            #d2 = d2 + m2
-        if (u % 10000 == 0):
-            print "Done with %d users " % (u)
-    return [d1, d2]
+def string_list_to_dict(str_list):
+    d = {}
+    for p in str_list:
+        d[p] = len(d.keys())
+    return d
 
 def prepare(infile, outfile):
     sport = "Running"
     params = ["user_id","Distance", "Duration"]
+    
+    print "Reading data.."
     data = read_data_as_lists(infile, sport, params)
-    print "Converting strings to numbers.."
     convert_to_numbers(data)   # convert from strings to numbers
-    print "Sorting data by users.."
-    data.sort(key=lambda x: x[0])   # sort by user ID
-    print "Adding user numbers.."
-    add_user_number_column(data)    # add a user number 
+    
+    #print "Sorting data by users.."
+    #data.sort(key=lambda x: x[0])   # sort by user ID
+    
     print "Converting data matrix to numpy format"
     data = np.matrix(data)
+
+    print "Removing outliers.."
+    #param_indices = string_list_to_dict(["user_number"] + params)
+    #data = remove_outliers(data, params, param_indices)
+    
+    print "Adding user numbers.."
+    data = add_user_number_column(data, rare_user_threshold = 1)    # add a user number
+        
     print "Splitting data into training and validation"
     [d1, d2] = shuffle_and_split_data_by_user(data)
+    
     print "Saving data to disk"
     np.savez(outfile, d1 = d1, d2 = d2)
 
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    #infile = "endoMondo5000_workouts_condensed.gz"
-    infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    infile = "endoMondo5000_workouts_condensed.gz"
+    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     outfile = "train_val_distance_user.npz"
     prepare(infile, outfile)
     data = np.load(outfile)
