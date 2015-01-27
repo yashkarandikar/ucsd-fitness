@@ -17,6 +17,8 @@ def get_user_count(data):
         return int(data[-1,0] + 1)   # since user numbers start from 0
     elif (type(data).__name__ == "list"):
         return int(data[-1][0] + 1)
+    else:
+        raise Exception("invalid type of data..")
 
 def remove_outliers(X, y, x_params, y_param, missing_data_mode, param_indices):
     print "Removing outliers.."
@@ -75,7 +77,7 @@ def E(theta, data):
             e += math.pow(alpha * (theta_0 + theta_1 * d) - t, 2)
             i += 1
     t2 = time.time()
-    #print "E = %f, time taken = %f" % (e, t2 - t1)
+    print "E = %f, time taken = %f" % (e, t2 - t1)
     return e
 
 def Eprime(theta, data):
@@ -89,8 +91,8 @@ def Eprime(theta, data):
     #dE = np.array([0.0] * len(theta))
     dE = [0.0] * len(theta)
     i = 0
+    col0 = np.ravel(data[:, 0])
     uins = np.array(range(0, n_users))
-    col0 = data[:, 0]
     u_indices = list(np.searchsorted(col0, uins))
     u_indices.append(N)
     
@@ -119,14 +121,13 @@ def Eprime(theta, data):
     dE[-2] = dE_theta0
     dE[-1] = dE_theta1
     t2 = time.time()
-    #print "E prime : time taken = ", t2 - t1
+    print "E prime : time taken = ", t2 - t1
     return np.array(dE)
 
 
 def Eprime_slow(theta, data):
     t1 = time.time()
     N = data.shape[0]
-    #n_users = data[-1, 0] + 1
     n_users = get_user_count(data)
     assert(len(theta) == n_users + 2)
     theta_0 = theta[-2]
@@ -185,11 +186,10 @@ def shuffle_and_split_data_by_user(data, fraction = 0.5):
     d2_indices = [i for i in range(0, N) if mask[i] == 2]
     d1 = data[d1_indices, :]
     d2 = data[d2_indices, :]
-    print len(d1_indices)
-    print len(d2_indices)
     return [d1, d2]
 
 def add_user_number_column(data):
+    assert(type(data).__name__ == "list")
     data.sort(key=lambda x: x[0])
     n = len(data)
     uin = 0
@@ -207,6 +207,7 @@ def add_user_number_column(data):
     #return workout_count_for_user
 
 def convert_to_numbers(data):
+    assert(type(data).__name__ == "list")
     for d in data:
         assert(len(d) == 3)
         d[0] = int(d[0])
@@ -262,8 +263,6 @@ def shuffle_and_split_data_by_user_slow(data, fraction = 0.5):
             #d2 = d2 + m2
         if (u % 10000 == 0):
             print "Done with %d users " % (u)
-    print len(d1)
-    print len(d2)
     return [d1, d2]
 
 def prepare(infile, outfile):
@@ -286,14 +285,13 @@ def prepare(infile, outfile):
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    infile = "endoMondo5000_workouts_condensed.gz"
-    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    #infile = "endoMondo5000_workouts_condensed.gz"
+    infile = "../../data/all_workouts_train_and_val_condensed.gz"
     outfile = "train_val_distance_user.npz"
     prepare(infile, outfile)
     data = np.load(outfile)
     train = data["d1"]
     val = data["d2"]
-    print train.shape
     n_users = get_user_count(train)
     print "Number of users = ", n_users
     theta = [1.0] * (n_users + 2)
@@ -306,32 +304,3 @@ if __name__ == "__main__":
     print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
     t2 = time.time()
     print "Total time taken = ", t2 - t1
-
-    #y_param = "Duration"
-    #missing_data_mode = "substitute"
-    #normalize = False
-    #split_fraction = 0.75
-    #outlier_remover = remove_outliers
-    #randomState = np.random.RandomState(seed = 12345)
-    #prepare_data_set(infile = infile, sport = sport, x_params = x_params, y_param = y_param, outfile = outfile, missing_data_mode = missing_data_mode, normalize = normalize, outlier_remover = outlier_remover, split_fraction = split_fraction)
-   
-    # load data from file
-    #data = np.load(outfile)
-    #X_train = data["X1"]
-    #y_train = data["y1"]
-    #X_val = data["X2"]
-    #y_val = data["y2"]
-    #param_indices = data["param_indices"][()]   # [()] is required to convert numpy ndarray back to dictionary
-    
-    # extract relevant columns if not all columns need to be used - useful if you want to use certain features for training and then plot the residual errors against other features and train model
-    #predictor_params = ["intercept","Distance"]   
-    #X_train_distance = utils.extract_columns_by_names(X_train, predictor_params, param_indices)
-    #X_val_distance = utils.extract_columns_by_names(X_val, predictor_params, param_indices)
-    
-    #print "theta = ", theta
-
-    # compute statistics on training set and validation set
-    #[mse, var, fvu, r2] = compute_stats(data, theta)
-    #print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (data.shape[0],mse, var, fvu, r2)
-    #[mse, var, fvu, r2] = compute_stats(X_val_distance, y_val, theta)
-    #print "Stats for validation data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (X_val.shape[0], mse, var, fvu, r2)
