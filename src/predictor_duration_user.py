@@ -10,6 +10,8 @@ from unit import Unit
 import scipy.optimize
 import time
 import random
+#import pyximport; pyximport.install()
+#import e_prime
 
 def get_user_count(data):
     assert(type(data).__name__ == "list" or type(data).__name__ == "matrix" or type(data).__name__ == "ndarray")
@@ -32,10 +34,10 @@ def remove_outliers(data, params, param_indices):
     cols = []; lower_bounds = []; upper_bounds = []
 
     # remove rows distance < 0.1 mi and > 80 mi
-    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
+    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01); upper_bounds.append(80.0)
 
     # remove rows with duration < 0.1 and > 36000
-    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
+    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(1); upper_bounds.append(36000.0)
 
     # remove rows with other parameters < 0.1
     #c = param_indices["pace(avg)"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
@@ -95,22 +97,20 @@ def Eprime(theta, data):
     dE_theta0 = 0.0
     dE_theta1 = 0.0
 
-    for i in range(0, n_users):
+    for i in xrange(0, n_users):
         start_u = u_indices[i]
         end_u = u_indices[i+1]
         alpha_u = theta[i]
-        for j in range(start_u, end_u):
+        for j in xrange(start_u, end_u):
             t = data[j, -1]
             d = data[j, 2]
+            
             t0_t1_d = theta_0 + theta_1 * d
             a_t0_t1_d = alpha_u * t0_t1_d
-            #dE[i] += 2 * (a_t0_t1_d - t) * t0_t1_d
             dE[i] = dE[i] + 2 * (a_t0_t1_d - t) * t0_t1_d
 
             # dE / d_theta_0 and 1
             dE0 = 2 * alpha_u * (a_t0_t1_d - t)
-            #dE[-2] += dE0 
-            #dE[-1] += dE0 * d
             dE_theta0 += dE0
             dE_theta1 += dE0 * d
         
@@ -175,8 +175,8 @@ def shuffle_and_split_data_by_user(data, fraction = 0.5):
         for p in perm[end1:]: mask[p] = 2
         #d1_indices = d1_indices + perm[:end1]
         #d2_indices = d2_indices + perm[end1:]
-        if (i % 10000 == 0):
-            print "Done with %d users " % (i)
+        #if (i % 10000 == 0):
+            #print "Done with %d users " % (i)
 
     d1_indices = [i for i in range(0, N) if mask[i] == 1]
     d2_indices = [i for i in range(0, N) if mask[i] == 2]
@@ -254,9 +254,14 @@ def string_list_to_dict(str_list):
         d[p] = len(d.keys())
     return d
 
+def convert_sec_to_hours(data, param_indices):
+    c = param_indices["Duration"]
+    data[:, c] = data[:, c] / 3600.0
+    
 def prepare(infile, outfile):
     sport = "Running"
     params = ["user_id","Distance", "Duration"]
+    param_indices = string_list_to_dict(params)
     
     print "Reading data.."
     data = read_data_as_lists(infile, sport, params)
@@ -267,10 +272,10 @@ def prepare(infile, outfile):
     
     print "Converting data matrix to numpy format"
     data = np.matrix(data)
+    convert_sec_to_hours(data, param_indices)
 
     print "Removing outliers.."
-    #param_indices = string_list_to_dict(["user_number"] + params)
-    #data = remove_outliers(data, params, param_indices)
+    data = remove_outliers(data, params, param_indices)
     
     print "Adding user numbers.."
     data = add_user_number_column(data, rare_user_threshold = 1)    # add a user number
@@ -281,22 +286,37 @@ def prepare(infile, outfile):
     print "Saving data to disk"
     np.savez(outfile, d1 = d1, d2 = d2)
 
+#def call_cython(theta, data):
+#    t1 = time.time()
+#    theta = e_prime.Eprime_cython(theta, data)
+#    t2 = time.time()
+#    print "E prime (cython) : time = ", t2 - t1
+#    return  theta
+
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    infile = "endoMondo5000_workouts_condensed.gz"
-    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    #infile = "endoMondo5000_workouts_condensed.gz"
+    infile = "../../data/all_workouts_train_and_val_condensed.gz"
     outfile = "train_val_distance_user.npz"
     prepare(infile, outfile)
     data = np.load(outfile)
     train = data["d1"]
     val = data["d2"]
     n_users = get_user_count(train)
+    assert(get_user_count(train) == get_user_count(val))
+    print "Number of workouts (train) = ", train.shape[0]
+    print "Number of workouts (val) = ", val.shape[0]
     print "Number of users = ", n_users
+    #theta = [4.0] * (n_users) + [1000.0, -153.0]
     theta = [1.0] * (n_users + 2)
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=100)
-    print "length of theta vector = ", len(theta)
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=1000)
     print info
+    #[theta, E_min, info] = scipy.optimize.fmin_cg(E, theta, Eprime, args = (train, ))
+    print "theta vector = ", theta
+    print "average alpha for users = ", np.mean(theta[:n_users])
+    print "theta0 = ", theta[-2]
+    print "theta1 = ", theta[-1]
     [mse, var, fvu, r2] = compute_stats(train, theta)
     print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2] = compute_stats(val, theta)
