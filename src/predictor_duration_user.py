@@ -10,8 +10,8 @@ from unit import Unit
 import scipy.optimize
 import time
 import random
-#import pyximport; pyximport.install()
-#import e_prime
+import pyximport; pyximport.install()
+from predictor_duration_user_pyx import Eprime_pyx, E_pyx
 
 def get_user_count(data):
     assert(type(data).__name__ == "list" or type(data).__name__ == "matrix" or type(data).__name__ == "ndarray")
@@ -307,7 +307,11 @@ if __name__ == "__main__":
     infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth1.gz"
     outfile = infile + ".npz"
-    prepare(infile, outfile)
+    e_fn = E_pyx
+    eprime_fn = Eprime_pyx
+
+    #prepare(infile, outfile)
+
     data = np.load(outfile)
     train = data["d1"]
     val = data["d2"]
@@ -319,10 +323,10 @@ if __name__ == "__main__":
     #theta = [4.0] * (n_users) + [1000.0, -153.0]
     theta = [1.0] * (n_users + 2)
     lam = 0.0     # regularization
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, lam), maxfun=100)
-    print info
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam), maxfun=100)
+    #print info
     #[theta, E_min, info] = scipy.optimize.fmin_cg(E, theta, Eprime, args = (train, ))
-    print "theta vector = ", theta
+    #print "theta vector = ", theta
     print "average alpha for users = ", np.mean(theta[:n_users])
     print "theta0 = ", theta[-2]
     print "theta1 = ", theta[-1]

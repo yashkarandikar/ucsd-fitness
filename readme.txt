@@ -8,6 +8,7 @@ Dependencies
 simplejson
 numpy
 matplotlib
+cython
 
 Data processing pipeline
 ------------------------
