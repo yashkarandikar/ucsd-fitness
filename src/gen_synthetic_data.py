@@ -29,7 +29,7 @@ def for_user_model():
     sport = "Running"
     
     randomState = np.random.RandomState(12345)
-    f = gzip.open("synth1.gz", "w")
+    f = gzip.open("synth_user_model.gz", "w")
 
     theta = randomState.rand(U + 2)    
     theta_0 = theta[-2]
@@ -48,5 +48,30 @@ def for_user_model():
     
     f.close()
 
+def for_baseline_model():
+    U = 4
+    Nu = [10, 21, 4, 32]
+    uids = [20000, 40000, 10000, 30000]
+    sport = "Running"
+    
+    randomState = np.random.RandomState(12345)
+    f = gzip.open("synth_baseline_model.gz", "w")
+
+    theta = randomState.randint(low = 100, high = 10000, size = U)
+    print theta
+    data = []
+    for u in xrange(0, U):
+        nu = Nu[u]
+        v = theta[u]
+        uid = uids[u]
+        for i in xrange(0, nu):
+            d = randomState.randint(low = 1, high = 10)
+            t = v * d
+            w = {"Distance" : d, "Duration" : t, "user_id" : str(uid), "sport" : sport}
+            w_json = utils.dict_to_json(w)
+            f.write(w_json + "\n")
+    
+    f.close()
+
 if __name__ == "__main__":
-    for_user_model()
+    for_baseline_model()
