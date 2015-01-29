@@ -57,7 +57,7 @@ def is_sorted(data):
             return False
     return True
 
-def E(theta, data):
+def E(theta, data, lam):
     # error function to be minimized
     # assumes data has 4 columns : user_id, user_number, distance, duration and that it is sorted
     t1 = time.time()
@@ -74,11 +74,14 @@ def E(theta, data):
             t = data[i, 3]
             e += math.pow(alpha * (theta_0 + theta_1 * d) - t, 2)
             i += 1
+    # add regularization norm
+    e += lam * theta.dot(theta)
+    
     t2 = time.time()
     print "E = %f, time taken = %f" % (e, t2 - t1)
     return e
 
-def Eprime(theta, data):
+def Eprime(theta, data, lam):
     t1 = time.time()
     N = data.shape[0]
     #n_users = int(data[-1, 0]) + 1
@@ -116,6 +119,10 @@ def Eprime(theta, data):
         
     dE[-2] = dE_theta0
     dE[-1] = dE_theta1
+
+    # regularization
+    dE = dE + lam * np.multiply(dE, (2 * theta))
+
     t2 = time.time()
     print "E prime : time taken = ", t2 - t1
     return np.array(dE)
@@ -193,6 +200,7 @@ def add_user_number_column(data, rare_user_threshold = 1):
     i = 0
     uin_col = np.array([0] * n)
     delete_mask = [False] * n
+    n_deleted = 0
     while i < n:
         u = data[i, 0]
         start_u = i
@@ -209,6 +217,7 @@ def add_user_number_column(data, rare_user_threshold = 1):
             # mark for deletion
             for j in range(start_u, end_u):
                 delete_mask[j] = True
+            n_deleted += n_u
 
     # append col of uins
     uin_col = np.matrix(uin_col).T
@@ -218,7 +227,8 @@ def add_user_number_column(data, rare_user_threshold = 1):
     delete_indices = [i for i in range(0, n) if delete_mask[i] == True]
     data = np.delete(data, delete_indices, axis = 0)
 
-    print "Number of users = ", get_user_count(data)
+    #print "Number of users = ", get_user_count(data)
+    print "Number of workouts discarded because very less data for that user : ", n_deleted
     return data
 
 def convert_to_numbers(data):
@@ -295,7 +305,8 @@ if __name__ == "__main__":
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     #infile = "endoMondo5000_workouts_condensed.gz"
     infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    outfile = "train_val_distance_user.npz"
+    #infile = "synth1.gz"
+    outfile = infile + ".npz"
     prepare(infile, outfile)
     data = np.load(outfile)
     train = data["d1"]
@@ -307,7 +318,8 @@ if __name__ == "__main__":
     print "Number of users = ", n_users
     #theta = [4.0] * (n_users) + [1000.0, -153.0]
     theta = [1.0] * (n_users + 2)
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=100)
+    lam = 0.0015     # regularization
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, lam), maxfun=100)
     print info
     #[theta, E_min, info] = scipy.optimize.fmin_cg(E, theta, Eprime, args = (train, ))
     print "theta vector = ", theta
