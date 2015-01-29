@@ -22,18 +22,18 @@ def remove_outliers(X, y, x_params, y_param, missing_data_mode, param_indices):
     
     cols = []; lower_bounds = []; upper_bounds = []
 
-    # remove rows distance < 0.1 mi and > 80 mi
-    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(80.0)
+    # remove rows distance < 0.01 mi 
+    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01); upper_bounds.append(float("inf"))
 
-    # remove rows with duration < 0.1 and > 36000
+    # remove rows with duration < 0.01 hours
     cols.append(Xy.shape[1] - 1)    # Duration
-    lower_bounds.append(0.1); upper_bounds.append(36000.0)
+    lower_bounds.append(0.01 * 3600); upper_bounds.append(float("inf"))
 
     # remove rows with other parameters < 0.1
     #c = param_indices["pace(avg)"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
-    c = param_indices["Total Ascent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
-    c = param_indices["Total Descent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
-    c = param_indices["alt(avg)"]; cols.append(c); lower_bounds.append(-1000); upper_bounds.append(30000)
+    #c = param_indices["Total Ascent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
+    #c = param_indices["Total Descent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
+    #c = param_indices["alt(avg)"]; cols.append(c); lower_bounds.append(-1000); upper_bounds.append(30000)
 
     Xy = utils.remove_rows_by_condition(Xy, cols, lower_bounds, upper_bounds)
     [X, y] = utils.separate_Xy(Xy)
@@ -47,11 +47,11 @@ if __name__ == "__main__":
     #infile = "endoMondo5000_workouts_condensed.gz"
     outfile = "train_val_duration_distance.npz"
     sport = "Running"
-    x_params = ["Distance","alt(avg)","Total Ascent","Total Descent"]
+    x_params = ["Distance"]
     y_param = "Duration"
-    missing_data_mode = "substitute"
+    missing_data_mode = "ignore"
     normalize = False
-    split_fraction = 0.75
+    split_fraction = 0.5
     outlier_remover = remove_outliers
     #randomState = np.random.RandomState(seed = 12345)
     prepare_data_set(infile = infile, sport = sport, x_params = x_params, y_param = y_param, outfile = outfile, missing_data_mode = missing_data_mode, normalize = normalize, outlier_remover = outlier_remover, split_fraction = split_fraction)
