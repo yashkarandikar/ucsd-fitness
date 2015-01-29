@@ -22,7 +22,7 @@ def get_user_count(data):
     else:
         raise Exception("invalid type of data..")
 
-def remove_outliers(data, params, param_indices):
+def remove_outliers(data, params, param_indices, scale_factors):
     assert(type(data).__name__ == "matrix")
     N1 = data.shape[0]
     #assert(missing_data_mode == "ignore" or missing_data_mode == "substitute")
@@ -34,10 +34,10 @@ def remove_outliers(data, params, param_indices):
     cols = []; lower_bounds = []; upper_bounds = []
 
     # remove rows distance < 0.01 mi
-    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01); upper_bounds.append(float("inf"))
+    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(float("inf"))
 
     # remove rows with duration < 0.01 hours
-    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01); upper_bounds.append(float("inf"))    # Hours
+    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01 * 3600 / scale_factors[c]); upper_bounds.append(float("inf"))
 
     # remove rows with other parameters < 0.1
     #c = param_indices["pace(avg)"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
@@ -267,6 +267,14 @@ def string_list_to_dict(str_list):
 def convert_sec_to_hours(data, param_indices):
     c = param_indices["Duration"]
     data[:, c] = data[:, c] / 3600.0
+
+def normalize(data, cols):
+    F = data.shape[1]
+    scale_factors = [1.0] * F
+    for c in cols:
+        scale_factors[c] = np.max(data[:, c])
+        data[:, c] /= scale_factors[c]
+    return scale_factors
     
 def prepare(infile, outfile):
     sport = "Running"
@@ -279,10 +287,15 @@ def prepare(infile, outfile):
     
     print "Converting data matrix to numpy format"
     data = np.matrix(data)
-    convert_sec_to_hours(data, param_indices)
+    #convert_sec_to_hours(data, param_indices)
+    cols = []
+    cols.append(param_indices["Duration"])
+    cols.append(param_indices["Distance"])
+    scale_factors = normalize(data, cols)
+    print scale_factors
 
     print "Removing outliers.."
-    data = remove_outliers(data, params, param_indices)
+    data = remove_outliers(data, params, param_indices, scale_factors)
     
     print "Adding user numbers.."
     data = add_user_number_column(data, rare_user_threshold = 1)    # add a user number
@@ -320,11 +333,11 @@ if __name__ == "__main__":
     print "Number of workouts (train) = ", train.shape[0]
     print "Number of workouts (val) = ", val.shape[0]
     print "Number of users = ", n_users
-    #theta = [4.0] * (n_users) + [1000.0, -153.0]
+    #theta = [4.0] * (n_users) + [1000.0, 1000.0]
     theta = [1.0] * (n_users + 2)
-    lam = 0.0     # regularization
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam), maxfun=100)
-    #print info
+    lam = 0.0000001     # regularization
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam), maxfun=1000, factr = 10)
+    print info
     #[theta, E_min, info] = scipy.optimize.fmin_cg(E, theta, Eprime, args = (train, ))
     #print "theta vector = ", theta
     print "average alpha for users = ", np.mean(theta[:n_users])
