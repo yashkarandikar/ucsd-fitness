@@ -267,9 +267,6 @@ def prepare(infile, outfile):
     data = read_data_as_lists(infile, sport, params)
     convert_to_numbers(data)   # convert from strings to numbers
     
-    #print "Sorting data by users.."
-    #data.sort(key=lambda x: x[0])   # sort by user ID
-    
     print "Converting data matrix to numpy format"
     data = np.matrix(data)
     convert_sec_to_hours(data, param_indices)
@@ -299,7 +296,7 @@ if __name__ == "__main__":
     #infile = "endoMondo5000_workouts_condensed.gz"
     infile = "../../data/all_workouts_train_and_val_condensed.gz"
     outfile = "train_val_distance_user.npz"
-    #prepare(infile, outfile)
+    prepare(infile, outfile)
     data = np.load(outfile)
     train = data["d1"]
     val = data["d2"]
@@ -310,7 +307,7 @@ if __name__ == "__main__":
     print "Number of users = ", n_users
     #theta = [4.0] * (n_users) + [1000.0, -153.0]
     theta = [1.0] * (n_users + 2)
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=10)
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=100)
     print info
     #[theta, E_min, info] = scipy.optimize.fmin_cg(E, theta, Eprime, args = (train, ))
     print "theta vector = ", theta
