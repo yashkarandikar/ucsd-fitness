@@ -33,10 +33,10 @@ def remove_outliers(data, params, param_indices):
     
     cols = []; lower_bounds = []; upper_bounds = []
 
-    # remove rows distance < 0.1 mi and > 80 mi
+    # remove rows distance < 0.01 mi
     c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01); upper_bounds.append(float("inf"))
 
-    # remove rows with duration < 0.01 hours and > 80 hours
+    # remove rows with duration < 0.01 hours
     c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01); upper_bounds.append(float("inf"))    # Hours
 
     # remove rows with other parameters < 0.1
@@ -318,7 +318,7 @@ if __name__ == "__main__":
     print "Number of users = ", n_users
     #theta = [4.0] * (n_users) + [1000.0, -153.0]
     theta = [1.0] * (n_users + 2)
-    lam = 0.0015     # regularization
+    lam = 0.0     # regularization
     [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, lam), maxfun=100)
     print info
     #[theta, E_min, info] = scipy.optimize.fmin_cg(E, theta, Eprime, args = (train, ))
