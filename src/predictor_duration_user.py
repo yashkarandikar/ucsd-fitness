@@ -34,10 +34,10 @@ def remove_outliers(data, params, param_indices):
     cols = []; lower_bounds = []; upper_bounds = []
 
     # remove rows distance < 0.1 mi and > 80 mi
-    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01); upper_bounds.append(80.0)
+    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01); upper_bounds.append(float("inf"))
 
-    # remove rows with duration < 0.1 and > 36000
-    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(1); upper_bounds.append(36000.0)
+    # remove rows with duration < 0.01 hours and > 80 hours
+    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01); upper_bounds.append(float("inf"))    # Hours
 
     # remove rows with other parameters < 0.1
     #c = param_indices["pace(avg)"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
@@ -299,7 +299,7 @@ if __name__ == "__main__":
     #infile = "endoMondo5000_workouts_condensed.gz"
     infile = "../../data/all_workouts_train_and_val_condensed.gz"
     outfile = "train_val_distance_user.npz"
-    prepare(infile, outfile)
+    #prepare(infile, outfile)
     data = np.load(outfile)
     train = data["d1"]
     val = data["d2"]
@@ -310,7 +310,7 @@ if __name__ == "__main__":
     print "Number of users = ", n_users
     #theta = [4.0] * (n_users) + [1000.0, -153.0]
     theta = [1.0] * (n_users + 2)
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=1000)
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(E, theta, Eprime, args = (train, ), maxfun=10)
     print info
     #[theta, E_min, info] = scipy.optimize.fmin_cg(E, theta, Eprime, args = (train, ))
     print "theta vector = ", theta
