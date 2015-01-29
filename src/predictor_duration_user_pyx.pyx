@@ -28,7 +28,7 @@ def E_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, n
     e += lam * theta.dot(theta)
     
     cdef double t2 = time.time()
-    print "E = %f, time taken = %f" % (e, t2 - t1)
+    #print "E = %f, time taken = %f" % (e, t2 - t1)
     return e
 
 def Eprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.float64_t lam):
@@ -78,7 +78,7 @@ def Eprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
     dE = dE + lam * np.multiply(dE, (2 * theta))
 
     cdef double t2 = time.time()
-    print "E prime : time taken = ", t2 - t1
+    #print "E prime : time taken = ", t2 - t1
     #return np.array(dE)
     return dE
 

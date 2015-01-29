@@ -10,6 +10,7 @@ from unit import Unit
 import scipy.optimize
 import time
 import random
+import sys
 import pyximport; pyximport.install()
 from predictor_duration_user_pyx import Eprime_pyx, E_pyx
 
@@ -37,7 +38,7 @@ def remove_outliers(data, params, param_indices, scale_factors):
     c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(float("inf"))
 
     # remove rows with duration < 0.01 hours
-    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01 * 3600 / scale_factors[c]); upper_bounds.append(float("inf"))
+    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(float("inf"))
 
     # remove rows with other parameters < 0.1
     #c = param_indices["pace(avg)"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
@@ -287,12 +288,12 @@ def prepare(infile, outfile):
     
     print "Converting data matrix to numpy format"
     data = np.matrix(data)
-    #convert_sec_to_hours(data, param_indices)
+    convert_sec_to_hours(data, param_indices)
     cols = []
-    cols.append(param_indices["Duration"])
-    cols.append(param_indices["Distance"])
+    #cols.append(param_indices["Duration"])
+    #cols.append(param_indices["Distance"])
     scale_factors = normalize(data, cols)
-    print scale_factors
+    print "Scale factors : ", scale_factors
 
     print "Removing outliers.."
     data = remove_outliers(data, params, param_indices, scale_factors)
@@ -323,29 +324,52 @@ if __name__ == "__main__":
     e_fn = E_pyx
     eprime_fn = Eprime_pyx
 
-    #prepare(infile, outfile)
+    prepare(infile, outfile)
 
+    print "Loading data from file.."
     data = np.load(outfile)
     train = data["d1"]
     val = data["d2"]
     n_users = get_user_count(train)
     assert(get_user_count(train) == get_user_count(val))
-    print "Number of workouts (train) = ", train.shape[0]
-    print "Number of workouts (val) = ", val.shape[0]
-    print "Number of users = ", n_users
-    #theta = [4.0] * (n_users) + [1000.0, 1000.0]
     theta = [1.0] * (n_users + 2)
-    lam = 0.0000001     # regularization
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam), maxfun=1000, factr = 10)
-    print info
-    #[theta, E_min, info] = scipy.optimize.fmin_cg(E, theta, Eprime, args = (train, ))
-    #print "theta vector = ", theta
-    print "average alpha for users = ", np.mean(theta[:n_users])
-    print "theta0 = ", theta[-2]
-    print "theta1 = ", theta[-1]
+    lam = 0.0    # regularization
+
+    print "Training.."
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam), maxfun=100)
+
+    print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta)
     print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2] = compute_stats(val, theta)
     print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
+
     t2 = time.time()
     print "Total time taken = ", t2 - t1
+    sys.exit(0)
+
+    # plots for regularization
+    all_lam = []
+    all_r2_train = []
+    all_r2_val = []
+    while lam > 1e-7:
+        all_lam.append(lam)
+        theta = [1.0] * (n_users + 2)
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam), maxfun=100)
+        [mse, var, fvu, r2] = compute_stats(train, theta)
+        all_r2_train.append(r2)
+        print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
+        [mse, var, fvu, r2] = compute_stats(val, theta)
+        all_r2_val.append(r2)
+        lam = lam / 2.0
+        print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
+
+    print "all_lam =", all_lam
+    print "all_r2_train = ", all_r2_train
+    print "all_r2_val = ", all_r2_val
+
+    plt.figure()
+    plt.plot(all_lam, all_r2_train, label="Training R2")
+    plt.plot(all_lam, all_r2_val, label="Validation R2")
+    plt.legend()
+    plt.show()
