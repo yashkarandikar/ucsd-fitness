@@ -205,12 +205,18 @@ def Fprime_slow(theta, data, lam, E, sigma):
             i += 1
 
     # regularization
-    # a_0 and a_u0
-    [a_0, a_0_index] = get_alpha_e(theta, 0, E, U)
-
+    # a_k 
+    for k in range(0, E):
+            [a_k, a_k_index] = get_alpha_e(theta, k, E, U)
+        if (k < E - 1)
+            a_k_1 = get_alpha_e(theta, k + 1, E, U)[0]
+            dE[a_k_index] +=  2 * (a_k - a_k_1)
+        if (k > 0):
+            a_k_1 = get_alpha_e(theta, k - 1, E, U)[0]
+            dE[a_k_index] -=  2 * (a_k_1 - a_k)
 
     t2 = time.time()
-    #print "E prime : time taken = ", t2 - t1
+    print "E prime : time taken = ", t2 - t1
     return dE
 
 def shuffle_and_split_data_by_user(data, fraction = 0.5):
@@ -363,13 +369,6 @@ def prepare(infile, outfile):
     
     print "Saving data to disk"
     np.savez(outfile, d1 = d1, d2 = d2)
-
-#def call_cython(theta, data):
-#    t1 = time.time()
-#    theta = e_prime.Eprime_cython(theta, data)
-#    t2 = time.time()
-#    print "E prime (cython) : time = ", t2 - t1
-#    return  theta
 
 if __name__ == "__main__":
     t1 = time.time()
