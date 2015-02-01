@@ -289,6 +289,46 @@ def normalize(data, cols):
         data[:, c] /= scale_factors[c]
     return scale_factors
 
+def find_best_path_DP(M):
+    E = M.shape[0]
+    Nu = M.shape[1]
+
+    # base case
+    D = np.zeros((E, Nu))
+    decision = np.zeros((E, Nu))
+    for i in range(0, E):
+        D[i, 0] = M[i, 0]
+
+    # fill up remaining matrix
+    for n in range(1, Nu):
+        for m in range(0, E):
+            o1 = float("inf")
+            if (m > 0):
+                o1 = D[m-1, n-1]
+            o2 = D[m, n-1]
+            if (o1 < o2):
+                D[m, n] = M[m, n] + o1
+                decision[m, n] = m - 1
+            else:
+                D[m, n] = M[m, n] + o2
+                decision[m, n] = m
+            #print "at (%d, %d): o1 = %f, o2 = %f, D[%d, %d] = %f, decision[%d, %d] = %d" % (m, n, o1, o2, m, n, D[m, n], m, n, decision[m, n])
+
+    # trace path
+    leastError = float("inf")
+    bestExp = 0
+    # first compute for last workout
+    for i in range(0, E):
+        if (D[i, Nu-1] < leastError):
+            leastError = D[i, Nu-1]
+            bestExp = i
+    path = [bestExp]
+    # now trace for remaining workouts backwards
+    for i in range(Nu - 2, -1, -1):
+        bestExp = decision[path[0], i+1]
+        path = [bestExp] + path
+    return [leastError, path]
+
 def fit_experience_for_all_users(theta, data, E, sigma):
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
     U = get_user_count(data)
@@ -301,7 +341,8 @@ def fit_experience_for_all_users(theta, data, E, sigma):
         Nu = 0
         row_u = row
         while (row < N and data[row, 0] == u):
-            Nu += 1; row += 1;
+            Nu += 1
+            row += 1
 
         # populate M
         M = np.zeros((E, Nu))
@@ -314,46 +355,32 @@ def fit_experience_for_all_users(theta, data, E, sigma):
                 tprime = (a_e + a_ue) * (theta_0 + theta_1 * d)
                 diff = t - tprime
                 M[i, j] = diff * diff
-        
-        # base case
-        D = np.zeros((E, Nu))
-        decision = np.zeros((E, Nu))
-        for i in range(0, E):
-            D[i, 0] = M[i, 0]
 
-        # fill up remaining matrix
-        for n in range(1, Nu):
-            for m in range(0, E):
-                o1 = float("inf")
-                if (m > 0):
-                    o1 = M[m-1, n] + D[m-1, n-1]
-                o2 = M[m, n] + D[m, n-1]
-                if (o1 < o2):
-                    D[m, n] = o1
-                    decision[m, n] = m - 1
-                else:
-                    D[m, n] = o2
-                    decision[m, n] = m
-
-        # trace path
-        leastError = float("inf")
-        bestExp = 0
-        # first compute for last workout
-        for i in range(0, E):
-            if (D[i, Nu-1] < leastError):
-                leastError = D[i, Nu-1]
-                bestExp = i
-        if (sigma[u, Nu - 1] != bestExp):
-            sigma[u, Nu - 1] = bestExp
-            changed = True
-        # now trace for remaining workouts backwards
-        for i in range(Nu - 2, -1, -1):
-            bestExp = decision[sigma[u, i+1], i+1]
-            if (sigma[u, i] != bestExp):
-                sigma[u, i] = bestExp
+        [minError, bestPath] = find_best_path_DP(M)
+        # update sigma matrix using bestPath
+        for i in range(0, Nu):
+            if (sigma[u, i] != bestPath[i]):
+                sigma[u, i] = bestPath[i]
                 changed = True
-
+        
     return changed
+
+def experience_check(theta, data, E):
+    # intuitively, given the same distance, the predicted duration must be lower with increasing experience. This functions tries to test this.
+    d = 12.32
+    U = get_user_count(data)
+    theta0 = get_theta_0(theta)
+    theta1 = get_theta_0(theta)
+    for u in range(0, U):
+        predictions = [0.0] * E
+        for i in range(0, E):
+            a_e = get_alpha_e(theta, i, E, U)[0]
+            a_ue = get_alpha_ue(theta, u, i, E)[0]
+            predictions[i] = (a_e + a_ue) * (theta0 + theta1 * d)
+        # check if predictions is monotonically decreasing
+        print predictions
+        for i in range(0, E-1):
+            assert(predictions[i] > predictions[i+1])
 
 def learn(data):
     U = get_user_count(data)
@@ -364,24 +391,32 @@ def learn(data):
     lam = 0.0
 
     # check grad first
-    print "Checking gradient.."
-    error = scipy.optimize.check_grad(F, Fprime_slow, theta, data, lam, E, sigma)
-    print "Error = ", error
-    our_grad = Fprime_slow(theta, data, lam, E, sigma)
-    print "Gradient = ", np.linalg.norm(our_grad, ord = 2)
-    print "Ours = ",our_grad[:10]
-    print "Numerical = ", scipy.optimize.approx_fprime(theta, F, np.sqrt(np.finfo(np.float).eps), data, lam, E, sigma)[:10]
-    assert(error < 0.0001)
+    #print "Checking gradient.."
+    #error = scipy.optimize.check_grad(F, Fprime_slow, theta, data, lam, E, sigma)
+    #print "Error = ", error
+    #our_grad = Fprime_slow(theta, data, lam, E, sigma)
+    #print "Gradient = ", np.linalg.norm(our_grad, ord = 2)
+    #print "Ours = ",our_grad[:10]
+    #print "Numerical = ", scipy.optimize.approx_fprime(theta, F, np.sqrt(np.finfo(np.float).eps), data, lam, E, sigma)[:10]
+    #assert(error < 0.0001)
 
-    changed = False
+    n_iter = 0
+
     while changed:
+        print "Iteration %d.." % (n_iter)
         # 1. optimize theta
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=1, factr=10)
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=1000, maxiter=1000, iprint=1, disp=0)
         print info
 
         # 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, data, E, sigma)
 
+        #if (n_iter > 10):
+        #experience_check(theta, data, E)
+
+        n_iter += 1
+
+    #experience_check(theta, data, E)
     return theta
 
 def prepare(infile, outfile):
