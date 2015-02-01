@@ -188,7 +188,8 @@ def shuffle_and_split_data_by_user(data):
         end_u = u_indices[i+1]
         n_u = end_u - start_u
         assert(n_u > 0)
-        perm = randomState.permutation(range(start_u, end_u))
+        perm = range(start_u, end_u)
+        #perm = randomState.permutation(range(start_u, end_u))
         #end1 = int(math.ceil((fraction * float(n_u))))
         end1 = n_u - 1      # only 1 workout for validation 
         for p in perm[:end1]: mask[p] = 1
@@ -257,20 +258,33 @@ def convert_to_numbers(data):
             n_invalid_date += 1
     print "%d rows had invalid date/time.." % (n_invalid_date)
 
-def compute_stats(data, theta):
+def compute_stats(data, theta, E, sigma):
     N = data.shape[0]
-    theta_0 = theta[-2]
-    theta_1 = theta[-1]
+    U = get_user_count(data)
+    theta_0 = get_theta_0(theta)
+    theta_1 = get_theta_1(theta)
     t = np.array([0.0] * N)
-    tprime = np.array([0.0] * N)
+    tpred = np.array([0.0] * N)
     mse = 0.0
-    for i in range(0, N):
-        u = data[i, 0]
-        alpha = theta[u]
-        d = data[i, 2]
-        t[i] = data[i, 3]
-        tprime[i] = alpha * (theta_0 + theta_1 * d)
-    mse = (np.square(t - tprime)).mean()
+    w = 0
+    np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
+    while w < N:
+        u = data[w, 0]
+        i = 0
+        while w < N and data[w, 0] == u:
+            e = sigma[u, i]
+            #print "e = ", e
+            a_ue = get_alpha_ue(theta, u, e, E)[0]
+            #print "u = %d, e = %d, alpha_ue = %f" % (u, e, a_ue)
+            a_e = get_alpha_e(theta, e, E, U)[0]
+            d = data[w, 2]
+            t[w] = data[w, 3]
+            #print "a term = " + str(a_e + a_ue) + " theta term = " + str(theta_0 + theta_1 * d)
+            tpred[w] = (a_e + a_ue) * (theta_0 + theta_1 * d)
+            #print "t = %f, tpred = %f" % (t[w], tpred[w])
+            w += 1
+            i += 1
+    mse = (np.square(t - tpred)).mean()
     var = np.var(t)
     fvu = mse / var
     r2 = 1 - fvu
@@ -391,9 +405,9 @@ def experience_check(theta, data, E):
         for i in range(0, E-1):
             assert(predictions[i] > predictions[i+1])
 
-def learn(data):
+def learn(data, E):
     U = get_user_count(data)
-    E = 3
+    #E = 3
     theta = np.array([1.0] * (U * E + E + 2))
     sigma = np.zeros((U, 400))
     changed = True
@@ -462,10 +476,10 @@ def prepare(infile, outfile):
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    infile = "endoMondo5000_workouts_condensed.gz"
+    #infile = "endoMondo5000_workouts_condensed.gz"
     #infile = "temp.gz"
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    #infile = "synth1.gz"
+    infile = "synth_evolving_user_model.gz"
     outfile = infile + ".npz"
     #e_fn = E_pyx
     #eprime_fn = Eprime_pyx
@@ -480,6 +494,7 @@ if __name__ == "__main__":
     assert(get_user_count(train) == get_user_count(val))
     theta = [1.0] * (n_users + 2)
     lam = 0.0    # regularization
+    E = 3
 
     #np.set_printoptions(precision=3)
     #np.set_printoptions(suppress=True)
@@ -487,17 +502,18 @@ if __name__ == "__main__":
 
     print "Training.."
 
-    theta = learn(train)
+    #theta = learn(train, E)
+    theta = np.array([0.96451451973562163, 0.65317709687157088, 0.59554470297925155, 0.89508952805392117, 0.72826618032711732, 0.051957545102533587, 0.64963192021428617, 0.078259283502214005, 0.055636826892558, 0.94882882127333745, 0.88444907726612965, 0.34477392966453912, 0.56772502908168665, 0.20456027855303971, 0.18391881167709445, 0.9296160928171479, 0.3163755545817859])
+    sigma = np.matrix([[0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]])
 
     print "Computing predictions and statistics"
-    [mse, var, fvu, r2] = compute_stats(train, theta)
+    [mse, var, fvu, r2] = compute_stats(train, theta, E, sigma)
     print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
-    [mse, var, fvu, r2] = compute_stats(val, theta)
+    [mse, var, fvu, r2] = compute_stats(val, theta, E, sigma)
     print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
 
     t2 = time.time()
     print "Total time taken = ", t2 - t1
-    sys.exit(0)
 
     # plots for regularization
     """
