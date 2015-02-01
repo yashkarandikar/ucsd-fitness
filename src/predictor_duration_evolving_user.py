@@ -92,10 +92,10 @@ def F(theta, data, lam, E, sigma):
             e = sigma[u, i] 
             a_ue = get_alpha_ue(theta, u, e, E)[0]
             a_e = get_alpha_e(theta, e, E, U)[0]
-            d = data[i, 2]
-            t = data[i, 3]
+            d = data[w, 2]
+            t = data[w, 3]
             diff = (a_e + a_ue) * (theta_0 + theta_1*d) - t
-            f = diff * diff
+            f += diff * diff
             w += 1
             i += 1
 
@@ -112,56 +112,8 @@ def F(theta, data, lam, E, sigma):
     f += lam * reg
     
     t2 = time.time()
-    print "E = %f, time taken = %f" % (e, t2 - t1)
-    return e
-
-"""
-def Fprime(theta, data, lam):
-    t1 = time.time()
-    N = data.shape[0]
-    #n_users = int(data[-1, 0]) + 1
-    n_users = get_user_count(data)
-    assert(theta.shape[0] == n_users + 2)
-    theta_0 = theta[-2]
-    theta_1 = theta[-1]
-    #dE = np.array([0.0] * len(theta))
-    dE = [0.0] * len(theta)
-    i = 0
-    col0 = np.ravel(data[:, 0])
-    uins = np.array(range(0, n_users))
-    u_indices = list(np.searchsorted(col0, uins))
-    u_indices.append(N)
-    
-    dE_theta0 = 0.0
-    dE_theta1 = 0.0
-
-    for i in xrange(0, n_users):
-        start_u = u_indices[i]
-        end_u = u_indices[i+1]
-        alpha_u = theta[i]
-        for j in xrange(start_u, end_u):
-            t = data[j, -1]
-            d = data[j, 2]
-            
-            t0_t1_d = theta_0 + theta_1 * d
-            a_t0_t1_d = alpha_u * t0_t1_d
-            dE[i] = dE[i] + 2 * (a_t0_t1_d - t) * t0_t1_d
-
-            # dE / d_theta_0 and 1
-            dE0 = 2 * alpha_u * (a_t0_t1_d - t)
-            dE_theta0 += dE0
-            dE_theta1 += dE0 * d
-        
-    dE[-2] = dE_theta0
-    dE[-1] = dE_theta1
-
-    # regularization
-    dE = dE + lam * np.multiply(dE, (2 * theta))
-
-    t2 = time.time()
-    print "E prime : time taken = ", t2 - t1
-    return np.array(dE)
-"""
+    #print "E = %f, time taken = %f" % (e, t2 - t1)
+    return f
 
 def Fprime_slow(theta, data, lam, E, sigma):
     # theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
@@ -216,7 +168,7 @@ def Fprime_slow(theta, data, lam, E, sigma):
             dE[a_k_index] -=  2 * (a_k_1 - a_k)
 
     t2 = time.time()
-    print "E prime : time taken = ", t2 - t1
+    #print "E prime : time taken = ", t2 - t1
     return dE
 
 def shuffle_and_split_data_by_user(data):
@@ -406,13 +358,22 @@ def fit_experience_for_all_users(theta, data, E, sigma):
 def learn(data):
     U = get_user_count(data)
     E = 5
-    theta = [1.0] * (U * E + E + 2)
+    theta = np.array([1.0] * (U * E + E + 2))
     sigma = np.zeros((U, 400))
     changed = True
     lam = 0.0
+
+    # check grad first
+    print "Checking gradient.."
+    error = scipy.optimize.check_grad(F, Fprime_slow, theta, data, lam, E, sigma)
+    print "Error = ", error
+    assert(error < 0.01)
+
+    changed = False
     while changed:
         # 1. optimize theta
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=10, maxiter=10, iprint=1, disp=1, factr=10)
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=1, factr=10)
+        print info
 
         # 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, data, E, sigma)
@@ -471,9 +432,11 @@ if __name__ == "__main__":
     theta = [1.0] * (n_users + 2)
     lam = 0.0    # regularization
 
+    #np.set_printoptions(precision=3)
+    #np.set_printoptions(suppress=True)
+    #print train[:10, :]
+
     print "Training.."
-    #[theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam),  maxfun=100000, maxiter=100000, iprint=1, disp=1, factr=10)
-    #print info
 
     theta = learn(train)
 
