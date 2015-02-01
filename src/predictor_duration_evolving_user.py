@@ -142,10 +142,10 @@ def Fprime_slow(theta, data, lam, E, sigma):
             t_prime = (a_k + a_uk) * (theta_0 + theta_1*d)
 
             # dE / d_alpha_k
-            dE[a_k_index] += 2 * (t_prime - t) + a_k*theta_0 + a_k*theta_1*d;
+            dE[a_k_index] += 2 * (t_prime - t) * (a_k*theta_0 + a_k*theta_1*d);
             
             # dE / d_alpha_uk
-            dE[a_uk_index] += 2 * (t_prime - t) + a_uk*theta_0 + a_uk*theta_1*d;
+            dE[a_uk_index] += 2 * (t_prime - t) * (a_uk*theta_0 + a_uk*theta_1*d);
 
             # dE / d_theta_0 and 1
             dE[-2] += 2 * (t_prime - t) * (a_k + a_uk)
@@ -367,7 +367,10 @@ def learn(data):
     print "Checking gradient.."
     error = scipy.optimize.check_grad(F, Fprime_slow, theta, data, lam, E, sigma)
     print "Error = ", error
-    print "Gradient = ", np.linalg.norm(Fprime_slow(theta, data, lam, E, sigma), ord = 2)
+    our_grad = Fprime_slow(theta, data, lam, E, sigma)
+    print "Gradient = ", np.linalg.norm(our_grad, ord = 2)
+    print "Ours = ",our_grad[:10]
+    print "Numerical = ", scipy.optimize.approx_fprime(theta, F, np.sqrt(np.finfo(np.float).eps), data, lam, E, sigma)[:10]
     assert(error < 0.0001)
 
     changed = False
@@ -403,7 +406,7 @@ def prepare(infile, outfile):
     data = remove_outliers(data, params, param_indices, scale_factors)
     
     print "Adding user numbers.."
-    data = add_user_number_column(data, param_indices, rare_user_threshold = 3)    # add a user number
+    data = add_user_number_column(data, param_indices, rare_user_threshold = 1)    # add a user number
         
     print "Splitting data into training and validation"
     [d1, d2] = shuffle_and_split_data_by_user(data)
@@ -416,6 +419,7 @@ if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     infile = "endoMondo5000_workouts_condensed.gz"
+    #infile = "temp.gz"
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth1.gz"
     outfile = infile + ".npz"
