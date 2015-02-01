@@ -184,7 +184,7 @@ def Fprime_slow(theta, data, lam, E, sigma):
         i = 0 
         while w < N and data[w, 0] == u:        # over all workouts for the current user
             k = sigma[u, i] 
-            a_uk, a_uk_index = get_alpha_ue(theta, u, k, E)[0]
+            a_uk, a_uk_index = get_alpha_ue(theta, u, k, E)
             a_k, a_k_index = get_alpha_e(theta, k, E, U)
             
             d = data[i, 2]
@@ -207,8 +207,8 @@ def Fprime_slow(theta, data, lam, E, sigma):
     # regularization
     # a_k 
     for k in range(0, E):
-            [a_k, a_k_index] = get_alpha_e(theta, k, E, U)
-        if (k < E - 1)
+        [a_k, a_k_index] = get_alpha_e(theta, k, E, U)
+        if (k < E - 1):
             a_k_1 = get_alpha_e(theta, k + 1, E, U)[0]
             dE[a_k_index] +=  2 * (a_k - a_k_1)
         if (k > 0):
@@ -226,7 +226,6 @@ def shuffle_and_split_data_by_user(data):
     i = 0
     N = len(data)
     randomState = np.random.RandomState(seed = 12345)
-    #n_users = int(data[-1, 0]) + 1
     n_users = get_user_count(data)
     uins = np.array(range(0, n_users))
     col0 = data[:, 0].A1
@@ -238,16 +237,11 @@ def shuffle_and_split_data_by_user(data):
         end_u = u_indices[i+1]
         n_u = end_u - start_u
         assert(n_u > 0)
-        #perm = range(start_u, end_u)
-        #random.shuffle(perm)
         perm = randomState.permutation(range(start_u, end_u))
-        end1 = int(math.ceil((fraction * float(n_u))))
+        #end1 = int(math.ceil((fraction * float(n_u))))
+        end1 = n_u - 1      # only 1 workout for validation 
         for p in perm[:end1]: mask[p] = 1
         for p in perm[end1:]: mask[p] = 2
-        #d1_indices = d1_indices + perm[:end1]
-        #d2_indices = d2_indices + perm[end1:]
-        #if (i % 10000 == 0):
-            #print "Done with %d users " % (i)
 
     d1_indices = [i for i in range(0, N) if mask[i] == 1]
     d2_indices = [i for i in range(0, N) if mask[i] == 2]
@@ -255,10 +249,12 @@ def shuffle_and_split_data_by_user(data):
     d2 = data[d2_indices, :]
     return [d1, d2]
 
-def add_user_number_column(data, rare_user_threshold = 1):
+def add_user_number_column(data, param_indices, rare_user_threshold = 1):
     assert(type(data).__name__ == "matrix")
     #data.sort(key=lambda x: x[0])
-    data = utils.sort_matrix_by_col(data, 0)
+    #data = utils.sort_matrix_by_col(data, 0)
+    # sort first by user id and then date-time
+    data = utils.sort_matrix_by_2_cols(data, param_indices["user_id"], param_indices["date-time"])
     n = data.shape[0]
     uin = 0
     i = 0
@@ -298,10 +294,11 @@ def add_user_number_column(data, rare_user_threshold = 1):
 def convert_to_numbers(data):
     assert(type(data).__name__ == "list")
     for d in data:
-        assert(len(d) == 3)
+        assert(len(d) == 4)
         d[0] = int(d[0])
         d[1] = float(d[1])
         d[2] = float(d[2])
+        d[3] = utils.parse_date_time(d[3]) 
 
 def compute_stats(data, theta):
     N = data.shape[0]
@@ -340,7 +337,7 @@ def normalize(data, cols):
         data[:, c] /= scale_factors[c]
     return scale_factors
 
-def fit_experience_for_all_users(theta, data, sigma):
+def fit_experience_for_all_users(theta, data, E, sigma):
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
     U = get_user_count(data)
     N = data.shape[0]
@@ -350,22 +347,25 @@ def fit_experience_for_all_users(theta, data, sigma):
     changed = False
     for u in range(0, U):
         Nu = 0
+        row_u = row
         while (row < N and data[row, 0] == u):
             Nu += 1; row += 1;
 
         # populate M
         M = np.zeros((E, Nu))
         for j in range(0, Nu):  # over all workouts for this user
-            t = data[row + j, 3]    # actual time for that workout
+            t = data[row_u + j, 3]    # actual time for that workout
+            d = data[row_u + j, 2]
             for i in range(0, E):       # over all experience levels
-                a_ue = get_alpha_ue(theta, u, i, E)
-                a_e = get_alpha_e(theta, i, E, U)
+                a_ue = get_alpha_ue(theta, u, i, E)[0]
+                a_e = get_alpha_e(theta, i, E, U)[0]
                 tprime = (a_e + a_ue) * (theta_0 + theta_1 * d)
                 diff = t - tprime
                 M[i, j] = diff * diff
         
         # base case
         D = np.zeros((E, Nu))
+        decision = np.zeros((E, Nu))
         for i in range(0, E):
             D[i, 0] = M[i, 0]
 
@@ -395,7 +395,7 @@ def fit_experience_for_all_users(theta, data, sigma):
             sigma[u, Nu - 1] = bestExp
             changed = True
         # now trace for remaining workouts backwards
-        for i in range(Nu - 2, -1, -1)
+        for i in range(Nu - 2, -1, -1):
             bestExp = decision[sigma[u, i+1], i+1]
             if (sigma[u, i] != bestExp):
                 sigma[u, i] = bestExp
@@ -407,15 +407,15 @@ def learn(data):
     U = get_user_count(data)
     E = 5
     theta = [1.0] * (U * E + E + 2)
-    sigma = np.zeros((E, 400))
+    sigma = np.zeros((U, 400))
     changed = True
     lam = 0.0
     while changed:
         # 1. optimize theta
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (train, lam, E, sigma),  maxfun=10, maxiter=10, iprint=1, disp=1, factr=10)
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=10, maxiter=10, iprint=1, disp=1, factr=10)
 
         # 2. use DP to fit experience levels
-        changed = fit_experience_for_all_users(theta, data, sigma)
+        changed = fit_experience_for_all_users(theta, data, E, sigma)
 
     return theta
 
@@ -441,7 +441,7 @@ def prepare(infile, outfile):
     data = remove_outliers(data, params, param_indices, scale_factors)
     
     print "Adding user numbers.."
-    data = add_user_number_column(data, rare_user_threshold = 3)    # add a user number
+    data = add_user_number_column(data, param_indices, rare_user_threshold = 3)    # add a user number
         
     print "Splitting data into training and validation"
     [d1, d2] = shuffle_and_split_data_by_user(data)
@@ -453,12 +453,12 @@ def prepare(infile, outfile):
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    #infile = "endoMondo5000_workouts_condensed.gz"
+    infile = "endoMondo5000_workouts_condensed.gz"
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth1.gz"
     outfile = infile + ".npz"
-    e_fn = E_pyx
-    eprime_fn = Eprime_pyx
+    #e_fn = E_pyx
+    #eprime_fn = Eprime_pyx
 
     prepare(infile, outfile)
 

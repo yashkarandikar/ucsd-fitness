@@ -4,6 +4,10 @@ import gzip
 import numpy as np
 import math
 import random
+from datetime import datetime
+
+def parse_date_time(s):
+    return int(datetime.strptime(s, '%b %d, %Y %I:%M %p').strftime("%s"))
 
 def get_workouts(infile):
     # assumes each line of the input file is a json structure
@@ -86,6 +90,10 @@ def sort_data_by_col(X, y, i):
     Xy = sort_matrix_by_col(Xy, i)
     [X, y] = separate_Xy(Xy)
     return [X, y]
+
+def sort_matrix_by_2_cols(m, col1, col2):
+    key_cols = (m[:, col2].A1, m[:, col1].A1)
+    return m[np.lexsort(key_cols)]
 
 def remove_rows_by_condition(m, cols, lower_bounds, upper_bounds):
     assert(len(cols) == len(lower_bounds) and len(lower_bounds) == len(upper_bounds))
@@ -175,3 +183,7 @@ def extract_columns_by_names(m, params, param_indices):
     return m_new
     """
 
+if __name__ == "__main__":
+    print parse_date_time("Apr 21, 2014 8:41 AM")
+    print parse_date_time("Apr 21, 2014 8:51 AM")
+    print parse_date_time("Apr 21, 2014 8:52 AM")
