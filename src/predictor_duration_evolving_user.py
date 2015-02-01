@@ -122,13 +122,11 @@ def Fprime_slow(theta, data, lam, E, sigma):
     N = data.shape[0]
     U = get_user_count(data)
     assert(theta.shape[0] == U * E + E + 2)
-    w = 0
     N = data.shape[0]
-    f = 0
     theta_0 = get_theta_0(theta)
     theta_1 = get_theta_1(theta)
 
-    dE = np.array([0.0] * len(theta))
+    dE = np.array([0.0] * theta.shape[0])
 
     w = 0
     while w < N:    #
@@ -139,12 +137,12 @@ def Fprime_slow(theta, data, lam, E, sigma):
             a_uk, a_uk_index = get_alpha_ue(theta, u, k, E)
             a_k, a_k_index = get_alpha_e(theta, k, E, U)
             
-            d = data[i, 2]
-            t = data[i, 3]
+            d = data[w, 2]
+            t = data[w, 3]
             t_prime = (a_k + a_uk) * (theta_0 + theta_1*d)
 
             # dE / d_alpha_k
-            dE[a_k_index] += 2 * (t_prime - t) + a_k*theta_0 + a_k*theta_1+d;
+            dE[a_k_index] += 2 * (t_prime - t) + a_k*theta_0 + a_k*theta_1*d;
             
             # dE / d_alpha_uk
             dE[a_uk_index] += 2 * (t_prime - t) + a_uk*theta_0 + a_uk*theta_1*d;
@@ -157,15 +155,17 @@ def Fprime_slow(theta, data, lam, E, sigma):
             i += 1
 
     # regularization
-    # a_k 
     for k in range(0, E):
         [a_k, a_k_index] = get_alpha_e(theta, k, E, U)
+        delta = 0
         if (k < E - 1):
             a_k_1 = get_alpha_e(theta, k + 1, E, U)[0]
-            dE[a_k_index] +=  2 * (a_k - a_k_1)
+            delta +=  2 * (a_k - a_k_1)
         if (k > 0):
             a_k_1 = get_alpha_e(theta, k - 1, E, U)[0]
-            dE[a_k_index] -=  2 * (a_k_1 - a_k)
+            delta -=  2 * (a_k_1 - a_k)
+        delta = lam * delta
+        dE[a_k_index] += delta;
 
     t2 = time.time()
     #print "E prime : time taken = ", t2 - t1
@@ -367,7 +367,8 @@ def learn(data):
     print "Checking gradient.."
     error = scipy.optimize.check_grad(F, Fprime_slow, theta, data, lam, E, sigma)
     print "Error = ", error
-    assert(error < 0.01)
+    print "Gradient = ", np.linalg.norm(Fprime_slow(theta, data, lam, E, sigma), ord = 2)
+    assert(error < 0.0001)
 
     changed = False
     while changed:
