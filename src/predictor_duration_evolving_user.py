@@ -86,7 +86,8 @@ def F(theta, data, lam, E, sigma):
         u = int(data[w, 0])
         i = 0   # ith workout of user u
         while w < N and data[w, 0] == u:
-            e = sigma[u, i]
+            #e = sigma[u, i]
+            e = sigma[u][i]
             #if (e != 0):
             #    print "Experience not 0 !!!! - user = %d, workout = %d, experience = %d\n" % (u, i, e)
             a_ue = get_alpha_ue(theta, u, e, E)[0]
@@ -132,7 +133,7 @@ def Fprime_slow(theta, data, lam, E, sigma):
         u = int(data[w, 0])
         i = 0 
         while w < N and data[w, 0] == u:        # over all workouts for the current user
-            k = sigma[u, i] 
+            k = sigma[u][i] 
             a_uk, a_uk_index = get_alpha_ue(theta, u, k, E)
             a_k, a_k_index = get_alpha_e(theta, k, E, U)
             
@@ -267,12 +268,42 @@ def compute_stats(data, theta, E, sigma):
     tpred = np.array([0.0] * N)
     mse = 0.0
     w = 0
-    np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
     while w < N:
-        u = data[w, 0]
+        u = int(data[w, 0])
         i = 0
         while w < N and data[w, 0] == u:
-            e = sigma[u, i]
+            e = sigma[u][i]
+            #print "e = ", e
+            a_ue = get_alpha_ue(theta, u, e, E)[0]
+            #print "u = %d, e = %d, alpha_ue = %f" % (u, e, a_ue)
+            a_e = get_alpha_e(theta, e, E, U)[0]
+            d = data[w, 2]
+            t[w] = data[w, 3]
+            #print "a term = " + str(a_e + a_ue) + " theta term = " + str(theta_0 + theta_1 * d)
+            tpred[w] = (a_e + a_ue) * (theta_0 + theta_1 * d)
+            #print "t = %f, tpred = %f" % (t[w], tpred[w])
+            w += 1
+            i += 1
+    mse = (np.square(t - tpred)).mean()
+    var = np.var(t)
+    fvu = mse / var
+    r2 = 1 - fvu
+    return [mse, var,fvu, r2]
+
+def compute_stats_validation(data, theta, E, sigma):
+    N = data.shape[0]
+    U = get_user_count(data)
+    theta_0 = get_theta_0(theta)
+    theta_1 = get_theta_1(theta)
+    t = np.array([0.0] * N)
+    tpred = np.array([0.0] * N)
+    mse = 0.0
+    w = 0
+    while w < N:
+        u = int(data[w, 0])
+        i = 0
+        while w < N and data[w, 0] == u:
+            e = sigma[u][-1] # consider experience of last workout
             #print "e = ", e
             a_ue = get_alpha_ue(theta, u, e, E)[0]
             #print "u = %d, e = %d, alpha_ue = %f" % (u, e, a_ue)
@@ -347,6 +378,11 @@ def find_best_path_DP(M):
     for i in range(Nu - 2, -1, -1):
         bestExp = decision[path[0], i+1]
         path = [bestExp] + path
+
+    # check that path is monotonically increasing
+    for i in range(0, len(path) - 1):
+        assert(path[i] <= path[i+1])
+
     return [leastError, path]
 
 def fit_experience_for_all_users(theta, data, E, sigma):
@@ -377,11 +413,13 @@ def fit_experience_for_all_users(theta, data, E, sigma):
                 diff = t - tprime
                 M[i, j] = diff * diff
 
+
         [minError, bestPath] = find_best_path_DP(M)
+        #print minError, bestPath
         # update sigma matrix using bestPath
         for i in range(0, Nu):
-            if (sigma[u, i] != bestPath[i]):
-                sigma[u, i] = bestPath[i]
+            if (sigma[u][i] != bestPath[i]):
+                sigma[u][i] = bestPath[i]
                 changed = True
                 #print "Updated sigma[%d, %d].." % (u, i)
                 #print sigma[u, :]
@@ -401,7 +439,6 @@ def experience_check(theta, data, E):
             a_ue = get_alpha_ue(theta, u, i, E)[0]
             predictions[i] = (a_e + a_ue) * (theta0 + theta1 * d)
         # check if predictions is monotonically decreasing
-        print predictions
         for i in range(0, E-1):
             assert(predictions[i] > predictions[i+1])
 
@@ -409,7 +446,11 @@ def learn(data):
     E = 3
     U = get_user_count(data)
     theta = np.array([1.0] * (U * E + E + 2))
-    sigma = np.zeros((U, 400))
+    workouts_per_user = get_workouts_per_user(data)
+    sigma = []
+    for u in range(0, U):
+        sigma.append([1.0] * workouts_per_user[u])
+    #print sigma
     changed = True
     lam = 0.0
 
@@ -421,27 +462,42 @@ def learn(data):
     #print "Gradient = ", np.linalg.norm(our_grad, ord = 2)
     #print "Ours = ",our_grad[:10]
     #print "Numerical = ", scipy.optimize.approx_fprime(theta, F, np.sqrt(np.finfo(np.float).eps), data, lam, E, sigma)[:10]
-    assert(error < 0.001)
+    assert(error < 0.01)
 
     n_iter = 0
 
     while changed:
+    #while n_iter < 10:
         print "Iteration %d.." % (n_iter)
 
         # 1. optimize theta
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=1000, maxiter=1000, iprint=1, disp=1, factr = 10)
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=1000, maxiter=1000, iprint=1, disp=0, factr = 10)
         print info
 
         # 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, data, E, sigma)
         
-        #if (n_iter > 10):
         #experience_check(theta, data, E)
 
         n_iter += 1
 
     #experience_check(theta, data, E)
     return theta, sigma, E
+
+def get_workouts_per_user(data):
+    assert(type(data).__name__ == "matrix" or type(data).__name__ == "ndarray")
+    N = data.shape[0]
+    U = get_user_count(data)
+    uins = np.array(range(0, U))
+    col0 = data[:, 0]
+    u_indices = list(np.searchsorted(col0, uins))
+    u_indices.append(N)
+    workouts_per_user = [0] * U
+    for i in range(0, U):
+        start_u = u_indices[i]
+        end_u = u_indices[i+1]
+        workouts_per_user[i] = end_u - start_u
+    return workouts_per_user
 
 def prepare(infile, outfile):
     sport = "Running"
@@ -477,10 +533,10 @@ def prepare(infile, outfile):
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    #infile = "endoMondo5000_workouts_condensed.gz"
+    infile = "endoMondo5000_workouts_condensed.gz"
     #infile = "temp.gz"
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    infile = "synth_evolving_user_model.gz"
+    #infile = "synth_evolving_user_model.gz"
     outfile = infile + ".npz"
     #e_fn = E_pyx
     #eprime_fn = Eprime_pyx
@@ -496,8 +552,6 @@ if __name__ == "__main__":
     theta = [1.0] * (n_users + 2)
     lam = 0.0    # regularization
 
-    #np.set_printoptions(precision=3)
-    #np.set_printoptions(suppress=True)
     #print train[:10, :]
 
     print "Training.."
@@ -508,7 +562,7 @@ if __name__ == "__main__":
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta, E, sigma)
     print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
-    [mse, var, fvu, r2] = compute_stats(val, theta, E, sigma)
+    [mse, var, fvu, r2] = compute_stats_validation(val, theta, E, sigma)
     print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
 
     t2 = time.time()
