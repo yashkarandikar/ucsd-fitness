@@ -219,7 +219,7 @@ def Fprime_slow(theta, data, lam, E, sigma):
     print "E prime : time taken = ", t2 - t1
     return dE
 
-def shuffle_and_split_data_by_user(data, fraction = 0.5):
+def shuffle_and_split_data_by_user(data):
     # assumes data is numpy matrix form
     # assumes 0th column is the user number
     assert(type(data).__name__ == "matrix")
@@ -339,10 +339,89 @@ def normalize(data, cols):
         scale_factors[c] = np.max(data[:, c])
         data[:, c] /= scale_factors[c]
     return scale_factors
-    
+
+def fit_experience_for_all_users(theta, data, sigma):
+    # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
+    U = get_user_count(data)
+    N = data.shape[0]
+    row = 0
+    theta_0 = get_theta_0(theta)
+    theta_1 = get_theta_1(theta)
+    changed = False
+    for u in range(0, U):
+        Nu = 0
+        while (row < N and data[row, 0] == u):
+            Nu += 1; row += 1;
+
+        # populate M
+        M = np.zeros((E, Nu))
+        for j in range(0, Nu):  # over all workouts for this user
+            t = data[row + j, 3]    # actual time for that workout
+            for i in range(0, E):       # over all experience levels
+                a_ue = get_alpha_ue(theta, u, i, E)
+                a_e = get_alpha_e(theta, i, E, U)
+                tprime = (a_e + a_ue) * (theta_0 + theta_1 * d)
+                diff = t - tprime
+                M[i, j] = diff * diff
+        
+        # base case
+        D = np.zeros((E, Nu))
+        for i in range(0, E):
+            D[i, 0] = M[i, 0]
+
+        # fill up remaining matrix
+        for n in range(1, Nu):
+            for m in range(0, E):
+                o1 = float("inf")
+                if (m > 0):
+                    o1 = M[m-1, n] + D[m-1, n-1]
+                o2 = M[m, n] + D[m, n-1]
+                if (o1 < o2):
+                    D[m, n] = o1
+                    decision[m, n] = m - 1
+                else:
+                    D[m, n] = o2
+                    decision[m, n] = m
+
+        # trace path
+        leastError = float("inf")
+        bestExp = 0
+        # first compute for last workout
+        for i in range(0, E):
+            if (D[i, Nu-1] < leastError):
+                leastError = D[i, Nu-1]
+                bestExp = i
+        if (sigma[u, Nu - 1] != bestExp):
+            sigma[u, Nu - 1] = bestExp
+            changed = True
+        # now trace for remaining workouts backwards
+        for i in range(Nu - 2, -1, -1)
+            bestExp = decision[sigma[u, i+1], i+1]
+            if (sigma[u, i] != bestExp):
+                sigma[u, i] = bestExp
+                changed = True
+
+    return changed
+
+def learn(data):
+    U = get_user_count(data)
+    E = 5
+    theta = [1.0] * (U * E + E + 2)
+    sigma = np.zeros((E, 400))
+    changed = True
+    lam = 0.0
+    while changed:
+        # 1. optimize theta
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (train, lam, E, sigma),  maxfun=10, maxiter=10, iprint=1, disp=1, factr=10)
+
+        # 2. use DP to fit experience levels
+        changed = fit_experience_for_all_users(theta, data, sigma)
+
+    return theta
+
 def prepare(infile, outfile):
     sport = "Running"
-    params = ["user_id","Distance", "Duration"]
+    params = ["user_id","Distance", "Duration", "date-time"]
     param_indices = string_list_to_dict(params)
     
     print "Reading data.."
@@ -370,11 +449,12 @@ def prepare(infile, outfile):
     print "Saving data to disk"
     np.savez(outfile, d1 = d1, d2 = d2)
 
+
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     #infile = "endoMondo5000_workouts_condensed.gz"
-    infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth1.gz"
     outfile = infile + ".npz"
     e_fn = E_pyx
@@ -392,8 +472,10 @@ if __name__ == "__main__":
     lam = 0.0    # regularization
 
     print "Training.."
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam),  maxfun=100000, maxiter=100000, iprint=1, disp=1, factr=10)
-    print info
+    #[theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam),  maxfun=100000, maxiter=100000, iprint=1, disp=1, factr=10)
+    #print info
+
+    theta = learn(train)
 
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta)
@@ -406,6 +488,7 @@ if __name__ == "__main__":
     sys.exit(0)
 
     # plots for regularization
+    """
     all_lam = []
     all_r2_train = []
     all_r2_val = []
@@ -429,4 +512,5 @@ if __name__ == "__main__":
     plt.plot(all_lam, all_r2_train, label="Training R2")
     plt.plot(all_lam, all_r2_val, label="Validation R2")
     plt.legend()
-    plt.show()
+    plt.show() 
+    """
