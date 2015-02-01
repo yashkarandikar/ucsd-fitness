@@ -34,18 +34,15 @@ def remove_outliers(data, params, param_indices, scale_factors):
     
     cols = []; lower_bounds = []; upper_bounds = []
 
+    # remove rows with invalid date (0)
+    c = param_indices["date-time"]; cols.append(c); lower_bounds.append(1.0); upper_bounds.append(float("inf"))
+
     # remove rows distance < 0.01 mi
     c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(float("inf"))
 
     # remove rows with duration < 0.01 hours
     c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(float("inf"))
-
-    # remove rows with other parameters < 0.1
-    #c = param_indices["pace(avg)"]; cols.append(c); lower_bounds.append(0.1); upper_bounds.append(float("inf"))
-    #c = param_indices["Total Ascent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
-    #c = param_indices["Total Descent"]; cols.append(c); lower_bounds.append(float("-inf")); upper_bounds.append(15000)
-    #c = param_indices["alt(avg)"]; cols.append(c); lower_bounds.append(-1000); upper_bounds.append(30000)
-
+    
     data = utils.remove_rows_by_condition(data, cols, lower_bounds, upper_bounds)
     N2 = data.shape[0]
     print "%d rows removed during outlier removal.." % (N1 - N2)
@@ -89,7 +86,9 @@ def F(theta, data, lam, E, sigma):
         u = int(data[w, 0])
         i = 0   # ith workout of user u
         while w < N and data[w, 0] == u:
-            e = sigma[u, i] 
+            e = sigma[u, i]
+            #if (e != 0):
+            #    print "Experience not 0 !!!! - user = %d, workout = %d, experience = %d\n" % (u, i, e)
             a_ue = get_alpha_ue(theta, u, e, E)[0]
             a_e = get_alpha_e(theta, e, E, U)[0]
             d = data[w, 2]
@@ -245,12 +244,18 @@ def add_user_number_column(data, param_indices, rare_user_threshold = 1):
 
 def convert_to_numbers(data):
     assert(type(data).__name__ == "list")
+    n_invalid_date = 0
     for d in data:
         assert(len(d) == 4)
         d[0] = int(d[0])
         d[1] = float(d[1])
         d[2] = float(d[2])
-        d[3] = utils.parse_date_time(d[3]) 
+        try:
+            d[3] = utils.parse_date_time(d[3]) 
+        except ValueError:
+            d[3] = 0        # this row will be removed later in remove_outliers
+            n_invalid_date += 1
+    print "%d rows had invalid date/time.." % (n_invalid_date)
 
 def compute_stats(data, theta):
     N = data.shape[0]
@@ -292,6 +297,7 @@ def normalize(data, cols):
 def find_best_path_DP(M):
     E = M.shape[0]
     Nu = M.shape[1]
+    #print "Size of M matrix : ", M.shape
 
     # base case
     D = np.zeros((E, Nu))
@@ -343,6 +349,7 @@ def fit_experience_for_all_users(theta, data, E, sigma):
         while (row < N and data[row, 0] == u):
             Nu += 1
             row += 1
+        #print "Number of workouts for this user : ", Nu
 
         # populate M
         M = np.zeros((E, Nu))
@@ -362,6 +369,8 @@ def fit_experience_for_all_users(theta, data, E, sigma):
             if (sigma[u, i] != bestPath[i]):
                 sigma[u, i] = bestPath[i]
                 changed = True
+                #print "Updated sigma[%d, %d].." % (u, i)
+                #print sigma[u, :]
         
     return changed
 
@@ -384,7 +393,7 @@ def experience_check(theta, data, E):
 
 def learn(data):
     U = get_user_count(data)
-    E = 5
+    E = 3
     theta = np.array([1.0] * (U * E + E + 2))
     sigma = np.zeros((U, 400))
     changed = True
@@ -404,13 +413,13 @@ def learn(data):
 
     while changed:
         print "Iteration %d.." % (n_iter)
+
         # 1. optimize theta
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=1000, maxiter=1000, iprint=1, disp=0)
-        print info
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
 
         # 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, data, E, sigma)
-
+        
         #if (n_iter > 10):
         #experience_check(theta, data, E)
 
@@ -441,7 +450,7 @@ def prepare(infile, outfile):
     data = remove_outliers(data, params, param_indices, scale_factors)
     
     print "Adding user numbers.."
-    data = add_user_number_column(data, param_indices, rare_user_threshold = 1)    # add a user number
+    data = add_user_number_column(data, param_indices, rare_user_threshold = 5)    # add a user number
         
     print "Splitting data into training and validation"
     [d1, d2] = shuffle_and_split_data_by_user(data)
