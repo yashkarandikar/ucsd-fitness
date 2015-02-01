@@ -405,23 +405,23 @@ def experience_check(theta, data, E):
         for i in range(0, E-1):
             assert(predictions[i] > predictions[i+1])
 
-def learn(data, E):
+def learn(data):
+    E = 3
     U = get_user_count(data)
-    #E = 3
     theta = np.array([1.0] * (U * E + E + 2))
     sigma = np.zeros((U, 400))
     changed = True
     lam = 0.0
 
     # check grad first
-    #print "Checking gradient.."
-    #error = scipy.optimize.check_grad(F, Fprime_slow, theta, data, lam, E, sigma)
-    #print "Error = ", error
+    print "Checking gradient.."
+    error = scipy.optimize.check_grad(F, Fprime_slow, theta, data, lam, E, sigma)
+    print "Error = ", error
     #our_grad = Fprime_slow(theta, data, lam, E, sigma)
     #print "Gradient = ", np.linalg.norm(our_grad, ord = 2)
     #print "Ours = ",our_grad[:10]
     #print "Numerical = ", scipy.optimize.approx_fprime(theta, F, np.sqrt(np.finfo(np.float).eps), data, lam, E, sigma)[:10]
-    #assert(error < 0.0001)
+    assert(error < 0.001)
 
     n_iter = 0
 
@@ -429,7 +429,8 @@ def learn(data, E):
         print "Iteration %d.." % (n_iter)
 
         # 1. optimize theta
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=1000, maxiter=1000, iprint=1, disp=1, factr = 10)
+        print info
 
         # 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, data, E, sigma)
@@ -440,7 +441,7 @@ def learn(data, E):
         n_iter += 1
 
     #experience_check(theta, data, E)
-    return theta
+    return theta, sigma, E
 
 def prepare(infile, outfile):
     sport = "Running"
@@ -494,17 +495,15 @@ if __name__ == "__main__":
     assert(get_user_count(train) == get_user_count(val))
     theta = [1.0] * (n_users + 2)
     lam = 0.0    # regularization
-    E = 3
 
     #np.set_printoptions(precision=3)
     #np.set_printoptions(suppress=True)
     #print train[:10, :]
 
     print "Training.."
-
-    #theta = learn(train, E)
-    theta = np.array([0.96451451973562163, 0.65317709687157088, 0.59554470297925155, 0.89508952805392117, 0.72826618032711732, 0.051957545102533587, 0.64963192021428617, 0.078259283502214005, 0.055636826892558, 0.94882882127333745, 0.88444907726612965, 0.34477392966453912, 0.56772502908168665, 0.20456027855303971, 0.18391881167709445, 0.9296160928171479, 0.3163755545817859])
-    sigma = np.matrix([[0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]])
+    theta, sigma, E = learn(train)
+    #theta = np.array([0.96451451973562163, 0.65317709687157088, 0.59554470297925155, 0.89508952805392117, 0.72826618032711732, 0.051957545102533587, 0.64963192021428617, 0.078259283502214005, 0.055636826892558, 0.94882882127333745, 0.88444907726612965, 0.34477392966453912, 0.56772502908168665, 0.20456027855303971, 0.18391881167709445, 0.9296160928171479, 0.3163755545817859])
+    #sigma = np.matrix([[0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]])
 
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta, E, sigma)
