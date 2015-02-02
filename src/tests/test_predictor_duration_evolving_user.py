@@ -24,7 +24,6 @@ def test_Fprime():
     randomState = np.random.RandomState(12345)
     Nu = 2
     sigma = [[0, 1], [1, 2]]
-    print sigma
     lam = 0.221
     #theta = np.array(randomState.rand(U * E + E + 2))
     theta = np.array(np.ones(U * E + E + 2) * 100)
@@ -45,7 +44,7 @@ def test_Fprime_pyx():
     Nu = 2
     sigma = [[0, 1], [1, 2]]
     print sigma
-    lam = 0.221
+    lam = 2232.221
     #theta = np.array(randomState.rand(U * E + E + 2))
     theta = np.array(np.ones(U * E + E + 2) * 100)
     print theta

@@ -442,7 +442,7 @@ def experience_check(theta, data, E):
 
 def learn(data):
     E = 3
-    lam = 0
+    lam = 0.0
     check_grad = False
     F_fn = F_pyx
     Fprime_fn = Fprime_pyx
@@ -456,6 +456,7 @@ def learn(data):
     for u in range(0, U):
         sigma.append(list(np.sort(randomState.randint(low = 0, high = E, size = (workouts_per_user[u])))))
         #sigma.append([0.0] * workouts_per_user[u])
+    #sigma = np.array(sigma)
 
     # check grad first
     if (check_grad == True):
@@ -535,9 +536,9 @@ def prepare(infile, outfile):
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    infile = "endoMondo5000_workouts_condensed.gz"
+    #infile = "endoMondo5000_workouts_condensed.gz"
     #infile = "temp.gz"
-    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
     outfile = infile + ".npz"
     #e_fn = E_pyx

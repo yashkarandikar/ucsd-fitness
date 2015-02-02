@@ -11,6 +11,7 @@ def F_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, n
     # assumes data has 4 columns : user_id, user_number, distance, duration and that it is sorted
     # theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
+
     cdef double t1 = time.time()
     cdef int U = get_user_count(data)
     assert(theta.shape[0] == U * E + E + 2)
@@ -48,7 +49,7 @@ def F_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, n
     f += lam * reg
     
     cdef double t2 = time.time()
-    print "F = %f, time taken = %f" % (f, t2 - t1)
+    #print "F = %f, time taken = %f" % (f, t2 - t1)
     return f
 
 def Fprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.float64_t lam, np.int_t E, sigma):
@@ -62,7 +63,7 @@ def Fprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
     cdef double theta_0 = get_theta_0(theta)
     cdef double theta_1 = get_theta_1(theta)
 
-    dE = np.array([0.0] * theta.shape[0])
+    cdef np.ndarray[DTYPE_t, ndim=1] dE = np.array([0.0] * theta.shape[0])
 
     cdef int w = 0, u, i, k, a_uk_index, a_k_index
     cdef double a_uk, a_k, d, t, t_prime, delta
@@ -105,6 +106,6 @@ def Fprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
         dE[a_k_index] += delta;
 
     cdef double t2 = time.time()
-    print "F prime : time taken = ", t2 - t1
+    #print "F prime : time taken = ", t2 - t1
     return dE
 
