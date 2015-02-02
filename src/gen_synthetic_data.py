@@ -25,14 +25,15 @@ def for_linear_model():
 
 def for_user_model():
     U = 4
-    Nu = [10, 21, 4, 32]
+    Nu = [10, 21, 14, 32]
     uids = [20000, 40000, 10000, 30000]
     sport = "Running"
     
     randomState = np.random.RandomState(12345)
     f = gzip.open("synth_user_model.gz", "w")
 
-    theta = randomState.rand(U + 2)    
+    theta = randomState.rand(U + 3)    
+    alpha_all = theta[-3]
     theta_0 = theta[-2]
     theta_1 = theta[-1]
     data = []
@@ -42,10 +43,11 @@ def for_user_model():
         uid = uids[u]
         for i in xrange(0, nu):
             d = randomState.randint(low = 1, high = 10)
-            t = alpha * (theta_0 + theta_1 * d) * 3600.0
+            t = (alpha + alpha_all) * (theta_0 + theta_1 * d) * 3600.0
             w = {"Distance" : d, "Duration" : t, "user_id" : str(uid), "sport" : sport}
             w_json = utils.dict_to_json(w)
             f.write(w_json + "\n")
+    print theta
     
     f.close()
 
@@ -132,4 +134,5 @@ def for_baseline_model():
     f.close()
 
 if __name__ == "__main__":
-    for_evolving_user_model()
+    #for_evolving_user_model()
+    for_user_model()
