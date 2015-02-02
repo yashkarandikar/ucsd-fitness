@@ -11,8 +11,8 @@ import scipy.optimize
 import time
 import random
 import sys
-#import pyximport; pyximport.install()
-#from predictor_duration_evolving_user_pyx import Fprime_pyx, F_pyx
+import pyximport; pyximport.install()
+from predictor_duration_evolving_user_pyx import F_pyx, Fprime_pyx
 
 def get_user_count(data):
     assert(type(data).__name__ == "list" or type(data).__name__ == "matrix" or type(data).__name__ == "ndarray")
@@ -110,10 +110,10 @@ def F(theta, data, lam, E, sigma):
     f += lam * reg
     
     t2 = time.time()
-    #print "E = %f, time taken = %f" % (e, t2 - t1)
+    print "F = %f, time taken = %f" % (f, t2 - t1)
     return f
 
-def Fprime_slow(theta, data, lam, E, sigma):
+def Fprime(theta, data, lam, E, sigma):
     # theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
     t1 = time.time()
@@ -166,7 +166,7 @@ def Fprime_slow(theta, data, lam, E, sigma):
         dE[a_k_index] += delta;
 
     t2 = time.time()
-    #print "E prime : time taken = ", t2 - t1
+    print "F prime : time taken = ", t2 - t1
     return dE
 
 def shuffle_and_split_data_by_user(data):
@@ -442,6 +442,11 @@ def experience_check(theta, data, E):
 
 def learn(data):
     E = 3
+    lam = 0
+    check_grad = False
+    F_fn = F_pyx
+    Fprime_fn = Fprime_pyx
+
     U = get_user_count(data)
     randomState = np.random.RandomState(12345)
     #theta = np.array([1.0] * (U * E + E + 2))
@@ -451,30 +456,25 @@ def learn(data):
     for u in range(0, U):
         sigma.append(list(np.sort(randomState.randint(low = 0, high = E, size = (workouts_per_user[u])))))
         #sigma.append([0.0] * workouts_per_user[u])
-    #print sigma
-    changed = True
-    lam = 0
 
     # check grad first
-    print "Checking gradient.."
-    #error = scipy.optimize.check_grad(F, Fprime_slow, theta, data, lam, E, sigma)
-    #print "Error = ", error
-    our_grad = np.linalg.norm(Fprime_slow(theta, data, lam, E, sigma), ord = 2)
-    #print "Gradient = ", np.linalg.norm(our_grad, ord = 2)
-    #print "Ours = ",our_grad[:10]
-    numerical = np.linalg.norm(scipy.optimize.approx_fprime(theta, F, np.sqrt(np.finfo(np.float).eps), data, lam, E, sigma), ord = 2)
-    ratio = our_grad / numerical
-    print "Ratio = ", ratio
-    #assert(abs(1.0 - ratio) < 1e-4)
+    if (check_grad == True):
+        print "Checking gradient.."
+        our_grad = np.linalg.norm(Fprime_fn(theta, data, lam, E, sigma), ord = 2)
+        numerical = np.linalg.norm(scipy.optimize.approx_fprime(theta, F_fn, np.sqrt(np.finfo(np.float).eps), data, lam, E, sigma), ord = 2)
+        ratio = our_grad / numerical
+        print "Ratio = ", ratio
+        assert(abs(1.0 - ratio) < 1e-4)
 
     n_iter = 0
 
+    changed = True
     while changed:
     #while n_iter < 10:
         print "Iteration %d.." % (n_iter)
 
         # 1. optimize theta
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=1000, maxiter=1000, iprint=1, disp=0)
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam, E, sigma),  maxfun=1000, maxiter=1000, iprint=1, disp=0)
 
         # 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, data, E, sigma)
@@ -543,7 +543,7 @@ if __name__ == "__main__":
     #e_fn = E_pyx
     #eprime_fn = Eprime_pyx
 
-    prepare(infile, outfile)
+    #prepare(infile, outfile)
 
     print "Loading data from file.."
     data = np.load(outfile)
