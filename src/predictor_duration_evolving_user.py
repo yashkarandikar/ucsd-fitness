@@ -88,8 +88,6 @@ def F(theta, data, lam, E, sigma):
         while w < N and data[w, 0] == u:
             #e = sigma[u, i]
             e = sigma[u][i]
-            #if (e != 0):
-            #    print "Experience not 0 !!!! - user = %d, workout = %d, experience = %d\n" % (u, i, e)
             a_ue = get_alpha_ue(theta, u, e, E)[0]
             a_e = get_alpha_e(theta, e, E, U)[0]
             d = data[w, 2]
@@ -142,10 +140,10 @@ def Fprime_slow(theta, data, lam, E, sigma):
             t_prime = (a_k + a_uk) * (theta_0 + theta_1*d)
 
             # dE / d_alpha_k
-            dE[a_k_index] += 2 * (t_prime - t) * (a_k*theta_0 + a_k*theta_1*d);
+            dE[a_k_index] += 2 * (t_prime - t) * (theta_0 + theta_1*d);
             
             # dE / d_alpha_uk
-            dE[a_uk_index] += 2 * (t_prime - t) * (a_uk*theta_0 + a_uk*theta_1*d);
+            dE[a_uk_index] += 2 * (t_prime - t) * (theta_0 + theta_1*d);
 
             # dE / d_theta_0 and 1
             dE[-2] += 2 * (t_prime - t) * (a_k + a_uk)
@@ -449,20 +447,22 @@ def learn(data):
     workouts_per_user = get_workouts_per_user(data)
     sigma = []
     for u in range(0, U):
-        sigma.append([1.0] * workouts_per_user[u])
+        sigma.append([0.0] * workouts_per_user[u])
     #print sigma
     changed = True
     lam = 0.0
 
     # check grad first
     print "Checking gradient.."
-    error = scipy.optimize.check_grad(F, Fprime_slow, theta, data, lam, E, sigma)
-    print "Error = ", error
-    #our_grad = Fprime_slow(theta, data, lam, E, sigma)
+    #error = scipy.optimize.check_grad(F, Fprime_slow, theta, data, lam, E, sigma)
+    #print "Error = ", error
+    our_grad = np.linalg.norm(Fprime_slow(theta, data, lam, E, sigma), ord = 2)
     #print "Gradient = ", np.linalg.norm(our_grad, ord = 2)
     #print "Ours = ",our_grad[:10]
-    #print "Numerical = ", scipy.optimize.approx_fprime(theta, F, np.sqrt(np.finfo(np.float).eps), data, lam, E, sigma)[:10]
-    assert(error < 0.01)
+    numerical = np.linalg.norm(scipy.optimize.approx_fprime(theta, F, np.sqrt(np.finfo(np.float).eps), data, lam, E, sigma), ord = 2)
+    ratio = our_grad / numerical
+    print "Ratio = ", ratio
+    assert(abs(1.0 - ratio) < 1e-5)
 
     n_iter = 0
 
@@ -471,8 +471,7 @@ def learn(data):
         print "Iteration %d.." % (n_iter)
 
         # 1. optimize theta
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=1000, maxiter=1000, iprint=1, disp=0, factr = 10)
-        print info
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F, theta, Fprime_slow, args = (data, lam, E, sigma),  maxfun=1000, maxiter=1000, iprint=1, disp=1)
 
         # 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, data, E, sigma)
@@ -533,10 +532,10 @@ def prepare(infile, outfile):
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    infile = "endoMondo5000_workouts_condensed.gz"
+    #infile = "endoMondo5000_workouts_condensed.gz"
     #infile = "temp.gz"
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    #infile = "synth_evolving_user_model.gz"
+    infile = "synth_evolving_user_model.gz"
     outfile = infile + ".npz"
     #e_fn = E_pyx
     #eprime_fn = Eprime_pyx
@@ -550,14 +549,9 @@ if __name__ == "__main__":
     n_users = get_user_count(train)
     assert(get_user_count(train) == get_user_count(val))
     theta = [1.0] * (n_users + 2)
-    lam = 0.0    # regularization
-
-    #print train[:10, :]
 
     print "Training.."
     theta, sigma, E = learn(train)
-    #theta = np.array([0.96451451973562163, 0.65317709687157088, 0.59554470297925155, 0.89508952805392117, 0.72826618032711732, 0.051957545102533587, 0.64963192021428617, 0.078259283502214005, 0.055636826892558, 0.94882882127333745, 0.88444907726612965, 0.34477392966453912, 0.56772502908168665, 0.20456027855303971, 0.18391881167709445, 0.9296160928171479, 0.3163755545817859])
-    #sigma = np.matrix([[0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]])
 
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta, E, sigma)
