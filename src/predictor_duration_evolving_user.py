@@ -445,9 +445,11 @@ def learn(data):
     U = get_user_count(data)
     theta = np.array([1.0] * (U * E + E + 2))
     workouts_per_user = get_workouts_per_user(data)
+    randomState = np.random.RandomState(12345)
     sigma = []
     for u in range(0, U):
-        sigma.append([0.0] * workouts_per_user[u])
+        sigma.append(list(np.sort(randomState.randint(low = 0, high = E, size = (workouts_per_user[u])))))
+        #sigma.append([0.0] * workouts_per_user[u])
     #print sigma
     changed = True
     lam = 0.0
@@ -552,6 +554,7 @@ if __name__ == "__main__":
 
     print "Training.."
     theta, sigma, E = learn(train)
+    print "Sigma learned = ", sigma
 
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta, E, sigma)
