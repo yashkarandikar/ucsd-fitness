@@ -11,6 +11,7 @@ def E_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, n
     cdef int i = 0
     cdef int N = data.shape[0]
     cdef double e = 0, alpha, d, t, temp
+    cdef double alpha_all = theta[-3]
     cdef double theta_0 = theta[-2]
     cdef double theta_1 = theta[-1]
     cdef int u
@@ -21,11 +22,11 @@ def E_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, n
             d = data[i, 2]
             t = data[i, 3]
             #e += math.pow(alpha * (theta_0 + theta_1 * d) - t, 2)
-            temp = alpha * (theta_0 + theta_1 * d) - t 
+            temp = (alpha + alpha_all) * (theta_0 + theta_1 * d) - t 
             e += temp * temp
             i += 1
     # add regularization norm
-    e += lam * theta.dot(theta)
+    e += lam * theta[:-3].dot(theta[:-3])
     
     cdef double t2 = time.time()
     #print "E = %f, time taken = %f" % (e, t2 - t1)
@@ -37,7 +38,8 @@ def Eprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
     cdef int N = data.shape[0]
     #n_users = int(data[-1, 0]) + 1
     cdef int n_users = get_user_count(data)
-    assert(theta.shape[0] == n_users + 2)
+    assert(theta.shape[0] == n_users + 3)
+    cdef double alpha = theta[-3]
     cdef double theta_0 = theta[-2]
     cdef double theta_1 = theta[-1]
     #dE = np.array([0.0] * len(theta))
@@ -63,11 +65,16 @@ def Eprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
             d = data[j, 2]
             
             t0_t1_d = theta_0 + theta_1 * d
-            a_t0_t1_d = alpha_u * t0_t1_d
-            dE[i] = dE[i] + 2 * (a_t0_t1_d - t) * t0_t1_d
+
+            tpred = (alpha_u + alpha) * t0_t1_d
+            dE[i] += 2 * (tpred - t) * t0_t1_d 
+            dE[-3] += 2 * (tpred - t) * t0_t1_d
+            
+            #a_t0_t1_d = alpha_u * t0_t1_d
+            #dE[i] = dE[i] + 2 * (a_t0_t1_d - t) * t0_t1_d
 
             # dE / d_theta_0 and 1
-            dE0 = 2 * alpha_u * (a_t0_t1_d - t)
+            dE0 = 2 * (alpha_u + alpha) * (tpred - t)
             dE_theta0 += dE0
             dE_theta1 += dE0 * d
         
@@ -75,10 +82,12 @@ def Eprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
     dE[-1] = dE_theta1
 
     # regularization
-    dE = dE + lam * np.multiply(dE, (2 * theta))
+    #dE = dE + lam * np.multiply(dE, (2 * theta))
+    for u in xrange(0, n_users):
+        dE[u] += 2 * lam * theta[u]
 
     cdef double t2 = time.time()
     #print "E prime : time taken = ", t2 - t1
-    #return np.array(dE)
-    return dE
+    return np.array(dE)
+    #return dE
 

@@ -58,6 +58,7 @@ def is_sorted(data):
             return False
     return True
 
+"""
 def E(theta, data, lam):
     # error function to be minimized
     # assumes data has 4 columns : user_id, user_number, distance, duration and that it is sorted
@@ -155,6 +156,7 @@ def Eprime_slow(theta, data):
     t2 = time.time()
     #print "E prime : time taken = ", t2 - t1
     return dE
+"""
 
 def shuffle_and_split_data_by_user(data, fraction = 0.5):
     # assumes data is numpy matrix form
@@ -241,7 +243,10 @@ def convert_to_numbers(data):
         d[2] = float(d[2])
 
 def compute_stats(data, theta):
+    U = get_user_count(data)
+    assert(theta.shape[0] == 3 + U)
     N = data.shape[0]
+    alpha_all = theta[-3]
     theta_0 = theta[-2]
     theta_1 = theta[-1]
     t = np.array([0.0] * N)
@@ -252,7 +257,7 @@ def compute_stats(data, theta):
         alpha = theta[u]
         d = data[i, 2]
         t[i] = data[i, 3]
-        tprime[i] = alpha * (theta_0 + theta_1 * d)
+        tprime[i] = (alpha + alpha_all) * (theta_0 + theta_1 * d)
     mse = (np.square(t - tprime)).mean()
     var = np.var(t)
     fvu = mse / var
@@ -299,7 +304,7 @@ def prepare(infile, outfile):
     data = remove_outliers(data, params, param_indices, scale_factors)
     
     print "Adding user numbers.."
-    data = add_user_number_column(data, rare_user_threshold = 1)    # add a user number
+    data = add_user_number_column(data, rare_user_threshold = 3)    # add a user number
         
     print "Splitting data into training and validation"
     [d1, d2] = shuffle_and_split_data_by_user(data)
@@ -319,12 +324,12 @@ if __name__ == "__main__":
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     #infile = "endoMondo5000_workouts_condensed.gz"
     infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    #infile = "synth1.gz"
+    #infile = "synth_user_model.gz"
     outfile = infile + ".npz"
     e_fn = E_pyx
     eprime_fn = Eprime_pyx
 
-    prepare(infile, outfile)
+    #prepare(infile, outfile)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -332,11 +337,21 @@ if __name__ == "__main__":
     val = data["d2"]
     n_users = get_user_count(train)
     assert(get_user_count(train) == get_user_count(val))
-    theta = [1.0] * (n_users + 2)
+    theta = [1.0] * (n_users + 3)   # 1 alpha per user, 1 global alpha, theta0, theta1
     lam = 0.0    # regularization
 
+    #print "Checking gradient before training.."
+    #error = scipy.optimize.check_grad(e_fn, eprime_fn, np.array(theta), train, lam)
+    #print "error :", error
+    #ourgrad = np.linalg.norm(eprime_fn(np.array(theta), train, lam), ord = 2)
+    #print "gradient = ", ourgrad
+    #print "numerical = ", np.linalg.norm(scipy.optimize.approx_fprime(np.array(theta), e_fn, np.sqrt(np.finfo(np.float).eps), train, lam), ord = 2)
+    #print eprime_fn(np.array(theta), train, lam)
+    #assert(error < 0.01)
+
     print "Training.."
-    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam), maxfun=100)
+    [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam),  maxfun=100000, maxiter=100000, iprint=1, disp=1)
+    #print info
 
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta)
@@ -349,6 +364,7 @@ if __name__ == "__main__":
     sys.exit(0)
 
     # plots for regularization
+    """
     all_lam = []
     all_r2_train = []
     all_r2_val = []
@@ -373,3 +389,4 @@ if __name__ == "__main__":
     plt.plot(all_lam, all_r2_val, label="Validation R2")
     plt.legend()
     plt.show()
+    """
