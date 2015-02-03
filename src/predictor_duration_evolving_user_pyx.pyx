@@ -66,7 +66,7 @@ def Fprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
     cdef np.ndarray[DTYPE_t, ndim=1] dE = np.array([0.0] * theta.shape[0])
 
     cdef int w = 0, u, i, k, a_uk_index, a_k_index
-    cdef double a_uk, a_k, d, t, t_prime, delta
+    cdef double a_uk, a_k, d, t, t_prime, delta, t0_t1_d, dEda, dE0
     while w < N:    #
         u = int(data[w, 0])
         i = 0 
@@ -74,36 +74,53 @@ def Fprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
             k = sigma[u][i] 
             a_uk, a_uk_index = get_alpha_ue(theta, u, k, E)
             a_k, a_k_index = get_alpha_e(theta, k, E, U)
-            
+
             d = data[w, 2]
             t = data[w, 3]
-            t_prime = (a_k + a_uk) * (theta_0 + theta_1*d)
+            
+            t0_t1_d = (theta_0 + theta_1*d)
+            #t_prime = (a_k + a_uk) * (theta_0 + theta_1*d)
+            t_prime = (a_k + a_uk) * t0_t1_d
+
+            dEda = 2 * (t_prime - t) * t0_t1_d
 
             # dE / d_alpha_k
-            dE[a_k_index] += 2 * (t_prime - t) * (theta_0 + theta_1*d);
+            #dE[a_k_index] += 2 * (t_prime - t) * (theta_0 + theta_1*d);
+            dE[a_k_index] += dEda
             
             # dE / d_alpha_uk
-            dE[a_uk_index] += 2 * (t_prime - t) * (theta_0 + theta_1*d);
+            #dE[a_uk_index] += 2 * (t_prime - t) * (theta_0 + theta_1*d);
+            dE[a_uk_index] += dEda
 
             # dE / d_theta_0 and 1
-            dE[-2] += 2 * (t_prime - t) * (a_k + a_uk)
-            dE[-1] += 2 * (t_prime - t) * d * (a_k + a_uk)
+            dE0 = 2 * (t_prime - t) * (a_k + a_uk)
+            #dE[-2] += 2 * (t_prime - t) * (a_k + a_uk)
+            #dE[-1] += 2 * (t_prime - t) * d * (a_k + a_uk)
+            dE[-2] += dE0
+            dE[-1] += dE0 * d
             
             w += 1
             i += 1
 
     # regularization
+    cdef double a_k_1, a_uk_1
     for k in range(0, E):
         [a_k, a_k_index] = get_alpha_e(theta, k, E, U)
-        delta = 0
         if (k < E - 1):
             a_k_1 = get_alpha_e(theta, k + 1, E, U)[0]
-            delta +=  2 * (a_k - a_k_1)
+            dE[a_k_index] +=  2 * lam * (a_k - a_k_1)
         if (k > 0):
             a_k_1 = get_alpha_e(theta, k - 1, E, U)[0]
-            delta -=  2 * (a_k_1 - a_k)
-        delta = lam * delta
-        dE[a_k_index] += delta;
+            dE[a_k_index] -=  2 * lam * (a_k_1 - a_k)
+
+        for u in range(0, U):
+            [a_uk, a_uk_index] = get_alpha_ue(theta, u, k, E)
+            if (k < E - 1):
+                a_uk_1 = get_alpha_ue(theta, u, k+1, E)[0]
+                dE[a_uk_index] +=  2 * lam * (a_uk - a_uk_1)
+            if (k > 0):
+                a_uk_1 = get_alpha_ue(theta, u, k-1, E)[0]
+                dE[a_uk_index] -= 2 * lam * (a_uk_1 - a_uk)
 
     cdef double t2 = time.time()
     #print "F prime : time taken = ", t2 - t1

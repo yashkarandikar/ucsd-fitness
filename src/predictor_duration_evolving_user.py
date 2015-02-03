@@ -113,6 +113,7 @@ def F(theta, data, lam, E, sigma):
     print "F = %f, time taken = %f" % (f, t2 - t1)
     return f
 
+"""
 def Fprime(theta, data, lam, E, sigma):
     # theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
@@ -168,6 +169,7 @@ def Fprime(theta, data, lam, E, sigma):
     t2 = time.time()
     print "F prime : time taken = ", t2 - t1
     return dE
+"""
 
 def shuffle_and_split_data_by_user(data):
     # assumes data is numpy matrix form
@@ -442,11 +444,12 @@ def experience_check(theta, data, E):
 
 def learn(data):
     E = 3
-    lam = 0.0
+    lam = 48.0
     check_grad = False
     F_fn = F_pyx
     Fprime_fn = Fprime_pyx
 
+    print "lambda = ", lam
     U = get_user_count(data)
     randomState = np.random.RandomState(12345)
     #theta = np.array([1.0] * (U * E + E + 2))
@@ -470,12 +473,12 @@ def learn(data):
     n_iter = 0
 
     changed = True
-    while changed:
+    while changed and n_iter < 200:
     #while n_iter < 10:
         print "Iteration %d.." % (n_iter)
 
         # 1. optimize theta
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam, E, sigma),  maxfun=1000, maxiter=1000, iprint=1, disp=0)
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
 
         # 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, data, E, sigma)
@@ -550,11 +553,13 @@ if __name__ == "__main__":
     data = np.load(outfile)
     train = data["d1"]
     val = data["d2"]
-    assert(get_user_count(train) == get_user_count(val))
+    assert(val.shape[0] == get_user_count(val))
+    print "Number of users = ", get_user_count(train)
+    print "Training set has %d examples" % (train.shape[0])
+    print "Validation set has %d examples" % (val.shape[0])
 
     print "Training.."
     theta, sigma, E = learn(train)
-    print "Sigma learned = ", sigma
 
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta, E, sigma)
