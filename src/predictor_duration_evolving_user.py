@@ -37,10 +37,10 @@ def remove_outliers(data, params, param_indices, scale_factors):
     # remove rows with invalid date (0)
     c = param_indices["date-time"]; cols.append(c); lower_bounds.append(1.0); upper_bounds.append(float("inf"))
 
-    # remove rows distance < 0.01 mi
-    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(100.0 / scale_factors[c])
+    # remove rows distance < 0.06 mi (roughly 100 m)
+    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.06 / scale_factors[c]); upper_bounds.append(100.0 / scale_factors[c])
 
-    # remove rows with duration < 0.01 hours
+    # remove rows with duration < 0.01 hour
     c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(float("inf"))
 
     data = utils.remove_rows_by_condition(data, cols, lower_bounds, upper_bounds)
@@ -53,7 +53,7 @@ def remove_outliers(data, params, param_indices, scale_factors):
         dur = data[d, dur_ind]
         pace = dur * 60.0 / dist;   # min/mi
         if (dur > 24.0 or dist > 100.0 or pace > 500.0):
-            print "Flagged workout : distance = %f, duration = %f, pace = %f" % (round(dist, 4), round(dur, 4), round(pace, 4))
+            print "Flagged workout : distance = %f, duration = %f, pace = %f, user = %s" % (round(dist, 4), round(dur, 4), round(pace, 4), data[d, 0])
         if (pace > 500.0): 
             delete_rows.append(d)
     print "Deleting %d outlier rows explicitly..", len(delete_rows)
@@ -460,7 +460,7 @@ def experience_check(theta, data, E):
 
 def learn(data):
     E = 3
-    lam = 1000.0
+    lam = 0.1
     check_grad = False
     F_fn = F_pyx
     Fprime_fn = Fprime_pyx
