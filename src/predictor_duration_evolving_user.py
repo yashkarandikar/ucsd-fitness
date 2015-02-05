@@ -289,21 +289,29 @@ def compute_stats(data, theta, E, sigma):
         i = 0
         while w < N and data[w, 0] == u:
             e = sigma[u][i]
-            #print "e = ", e
             a_ue = get_alpha_ue(theta, u, e, E)[0]
-            #print "u = %d, e = %d, alpha_ue = %f" % (u, e, a_ue)
             a_e = get_alpha_e(theta, e, E, U)[0]
             d = data[w, 2]
             t[w] = data[w, 3]
-            #print "a term = " + str(a_e + a_ue) + " theta term = " + str(theta_0 + theta_1 * d)
             tpred[w] = (a_e + a_ue) * (theta_0 + theta_1 * d)
-            #print "t = %f, tpred = %f" % (t[w], tpred[w])
             w += 1
             i += 1
     mse = (np.square(t - tpred)).mean()
     var = np.var(t)
     fvu = mse / var
     r2 = 1 - fvu
+
+    distances = data[:, 2]
+    mat = np.concatenate((np.matrix(distances).T, np.matrix(t).T, np.matrix(tpred).T), axis = 1)
+    print mat.shape
+    mat = utils.sort_matrix_by_col(mat, 0)
+    lim = data.shape[0]
+    plt.figure()
+    plt.plot(mat[:lim, 0], mat[:lim, 1], label="Actual", marker="o")
+    plt.plot(mat[:lim, 0], mat[:lim, 2], label="Predicted", marker="o")
+    plt.title("Training")
+    plt.legend()
+
     return [mse, var,fvu, r2]
 
 def compute_stats_validation(data, theta, E, sigma):
@@ -320,21 +328,30 @@ def compute_stats_validation(data, theta, E, sigma):
         i = 0
         while w < N and data[w, 0] == u:
             e = sigma[u][-1] # consider experience of last workout
-            #print "e = ", e
             a_ue = get_alpha_ue(theta, u, e, E)[0]
-            #print "u = %d, e = %d, alpha_ue = %f" % (u, e, a_ue)
             a_e = get_alpha_e(theta, e, E, U)[0]
             d = data[w, 2]
             t[w] = data[w, 3]
-            #print "a term = " + str(a_e + a_ue) + " theta term = " + str(theta_0 + theta_1 * d)
             tpred[w] = (a_e + a_ue) * (theta_0 + theta_1 * d)
-            #print "t = %f, tpred = %f" % (t[w], tpred[w])
             w += 1
             i += 1
     mse = (np.square(t - tpred)).mean()
     var = np.var(t)
     fvu = mse / var
     r2 = 1 - fvu
+
+    distances = data[:, 2]
+    mat = np.concatenate((np.matrix(distances).T, np.matrix(t).T, np.matrix(tpred).T), axis = 1)
+    print mat.shape
+    mat = utils.sort_matrix_by_col(mat, 0)
+    lim = data.shape[0]
+    plt.figure()
+    plt.plot(mat[:lim, 0], mat[:lim, 1], label="Actual", marker="o")
+    plt.plot(mat[:lim, 0], mat[:lim, 2], label="Predicted", marker="o")
+    plt.title("Validation")
+    plt.legend()
+
+
     return [mse, var,fvu, r2]
 
 def string_list_to_dict(str_list):
@@ -379,7 +396,6 @@ def find_best_path_DP(M):
             else:
                 D[m, n] = M[m, n] + o2
                 decision[m, n] = m
-            #print "at (%d, %d): o1 = %f, o2 = %f, D[%d, %d] = %f, decision[%d, %d] = %d" % (m, n, o1, o2, m, n, D[m, n], m, n, decision[m, n])
 
     # trace path
     leastError = float("inf")
@@ -460,7 +476,7 @@ def experience_check(theta, data, E):
 
 def learn(data):
     E = 3
-    lam = 0.1
+    lam = 1.0
     check_grad = False
     F_fn = F_pyx
     Fprime_fn = Fprime_pyx
@@ -568,10 +584,8 @@ if __name__ == "__main__":
     infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
     outfile = infile + ".npz"
-    #e_fn = E_pyx
-    #eprime_fn = Eprime_pyx
 
-    #prepare(infile, outfile)
+    prepare(infile, outfile)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -584,6 +598,12 @@ if __name__ == "__main__":
 
     print "Training.."
     theta, sigma, E = learn(train)
+    np.savez("model.npz", theta = theta, sigma = sigma, E = E)
+
+    model = np.load("model.npz")
+    theta = model["theta"]
+    sigma = model["sigma"]
+    E = model["E"]
 
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta, E, sigma)
@@ -594,30 +614,4 @@ if __name__ == "__main__":
     t2 = time.time()
     print "Total time taken = ", t2 - t1
 
-    # plots for regularization
-    """
-    all_lam = []
-    all_r2_train = []
-    all_r2_val = []
-    while lam > 1e-7:
-        all_lam.append(lam)
-        theta = [1.0] * (n_users + 2)
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam), maxfun=100)
-        [mse, var, fvu, r2] = compute_stats(train, theta)
-        all_r2_train.append(r2)
-        print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
-        [mse, var, fvu, r2] = compute_stats(val, theta)
-        all_r2_val.append(r2)
-        lam = lam / 2.0
-        print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
-
-    print "all_lam =", all_lam
-    print "all_r2_train = ", all_r2_train
-    print "all_r2_val = ", all_r2_val
-
-    plt.figure()
-    plt.plot(all_lam, all_r2_train, label="Training R2")
-    plt.plot(all_lam, all_r2_val, label="Validation R2")
-    plt.legend()
-    plt.show() 
-    """
+    plt.show()
