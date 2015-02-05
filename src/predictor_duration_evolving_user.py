@@ -38,14 +38,30 @@ def remove_outliers(data, params, param_indices, scale_factors):
     c = param_indices["date-time"]; cols.append(c); lower_bounds.append(1.0); upper_bounds.append(float("inf"))
 
     # remove rows distance < 0.01 mi
-    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(float("inf"))
+    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(100.0 / scale_factors[c])
 
     # remove rows with duration < 0.01 hours
     c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(float("inf"))
-    
+
     data = utils.remove_rows_by_condition(data, cols, lower_bounds, upper_bounds)
+    
+    delete_rows = []
+    dist_ind = param_indices["Distance"]
+    dur_ind = param_indices["Duration"]
+    for d in range(0, data.shape[0]):
+        dist = data[d, dist_ind]
+        dur = data[d, dur_ind]
+        pace = dur * 60.0 / dist;   # min/mi
+        if (dur > 24.0 or dist > 100.0 or pace > 500.0):
+            print "Flagged workout : distance = %f, duration = %f, pace = %f" % (round(dist, 4), round(dur, 4), round(pace, 4))
+        if (pace > 500.0): 
+            delete_rows.append(d)
+    print "Deleting %d outlier rows explicitly..", len(delete_rows)
+    data = np.delete(data, delete_rows, axis = 0)
+
     N2 = data.shape[0]
-    print "%d rows removed during outlier removal.." % (N1 - N2)
+    print "Total %d rows removed during outlier removal.." % (N1 - N2)
+    print "Rows remaining..", data.shape[0]
     return data
 
 def is_sorted(data):
@@ -444,7 +460,7 @@ def experience_check(theta, data, E):
 
 def learn(data):
     E = 3
-    lam = 48.0
+    lam = 1000.0
     check_grad = False
     F_fn = F_pyx
     Fprime_fn = Fprime_pyx
@@ -473,7 +489,7 @@ def learn(data):
     n_iter = 0
 
     changed = True
-    while changed and n_iter < 200:
+    while changed and n_iter < 100:
     #while n_iter < 10:
         print "Iteration %d.." % (n_iter)
 
@@ -487,7 +503,10 @@ def learn(data):
 
         n_iter += 1
 
-    #experience_check(theta, data, E)
+    print "norm of final theta = ", np.linalg.norm(theta, ord = 2)
+    print "final value of error function = ", F_pyx(theta, data, lam, E, sigma)
+    print "final value of norm of gradient function = ", np.linalg.norm(Fprime_pyx(theta, data, lam, E, sigma), ord = 2)
+
     return theta, sigma, E
 
 def get_workouts_per_user(data):
@@ -525,9 +544,14 @@ def prepare(infile, outfile):
 
     print "Removing outliers.."
     data = remove_outliers(data, params, param_indices, scale_factors)
+    print "Smallest distance = ", np.min(data[:, param_indices["Distance"]])
+    print "Smallest duration = ", np.min(data[:, param_indices["Duration"]])
+    print "Largest distance = ", np.max(data[:, param_indices["Distance"]])
+    print "Largest duration = ", np.max(data[:, param_indices["Duration"]])
+    print "Largest distance workout = ", data[(np.argmax(data[:, param_indices["Distance"]])), :]
     
     print "Adding user numbers.."
-    data = add_user_number_column(data, param_indices, rare_user_threshold = 5)    # add a user number
+    data = add_user_number_column(data, param_indices, rare_user_threshold = 10)    # add a user number
         
     print "Splitting data into training and validation"
     [d1, d2] = shuffle_and_split_data_by_user(data)
