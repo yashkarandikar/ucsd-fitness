@@ -132,6 +132,8 @@ class DataForPlot(object):
         plt.ylabel(self.ylabel + "(averaged over window size %d)" % (windowSize))
         plt.title(self.describe())
 
+    def plot_histogram_x(self, bins = 10, x_range = None):
+        plt.hist(self.xvals, bins = bins, range = x_range)
 
     def empty(self):
         return (len(self.xvals) == 0)
@@ -282,6 +284,11 @@ def plot_max_hr_vs_all(infile, use_saved):
     assert(len(x_params) == len(y_params) and len(x_params) == len(x_ranges) and len(x_ranges) == len(y_ranges))
     plot_data(infile, x_params, y_params, sports, x_ranges, y_ranges, use_saved = use_saved, windowSize = 100)
 
+def plot_duration_histogram(infile):
+    d = get_data(infile, x_params = ["Duration"], y_params = ["workout_id"], sport_types = ["Running"])
+    d[0].plot_histogram_x(bins = 500, x_range = [100, 15000])
+    plt.show()
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='See various plots over all workouts')
     parser.add_argument('--infile', type=str, help='.gz file or .txt containing all workouts', dest='infile')
@@ -293,5 +300,6 @@ if __name__ == "__main__":
     #plot_duration_vs_all(args.infile, args.use_saved)
     #plot_hr_vs_all(args.infile, args.use_saved)
     #plot_calories_vs_all(args.infile, args.use_saved)
-    plot_max_hr_vs_all(args.infile, args.use_saved)
+    #plot_max_hr_vs_all(args.infile, args.use_saved)
+    plot_duration_histogram(args.infile)
 
