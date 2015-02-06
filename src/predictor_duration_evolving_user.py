@@ -26,22 +26,17 @@ def get_user_count(data):
 def remove_outliers(data, params, param_indices, scale_factors):
     assert(type(data).__name__ == "matrix")
     N1 = data.shape[0]
-    #assert(missing_data_mode == "ignore" or missing_data_mode == "substitute")
-    #if (missing_data_mode == "ignore"):
-    #    assert(len(params) == Xy.shape[1])
-    #else:
-    #    assert(2.0 * len(params) - 1 == Xy.shape[1])
-    
+        
     cols = []; lower_bounds = []; upper_bounds = []
 
     # remove rows with invalid date (0)
     c = param_indices["date-time"]; cols.append(c); lower_bounds.append(1.0); upper_bounds.append(float("inf"))
 
     # remove rows distance < 0.06 mi (roughly 100 m)
-    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.06 / scale_factors[c]); upper_bounds.append(100.0 / scale_factors[c])
+    c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.1 / scale_factors[c]); upper_bounds.append(100.0 / scale_factors[c])
 
     # remove rows with duration < 0.01 hour
-    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(float("inf"))
+    c = param_indices["Duration"]; cols.append(c); lower_bounds.append(0.01 / scale_factors[c]); upper_bounds.append(72.0)
 
     data = utils.remove_rows_by_condition(data, cols, lower_bounds, upper_bounds)
     
@@ -52,9 +47,9 @@ def remove_outliers(data, params, param_indices, scale_factors):
         dist = data[d, dist_ind]
         dur = data[d, dur_ind]
         pace = dur * 60.0 / dist;   # min/mi
-        if (dur > 24.0 or dist > 100.0 or pace > 500.0):
-            print "Flagged workout : distance = %f, duration = %f, pace = %f, user = %s" % (round(dist, 4), round(dur, 4), round(pace, 4), data[d, 0])
-        if (pace > 500.0): 
+        #if ((dur > 24.0 or dist > 50.0) and pace <= 500.0):
+        #    print "Flagged workout : distance = %f, duration = %f, pace = %f, user = %s" % (round(dist, 4), round(dur, 4), round(pace, 4), data[d, 0])
+        if (pace > 200.0):
             delete_rows.append(d)
     print "Deleting %d outlier rows explicitly..", len(delete_rows)
     data = np.delete(data, delete_rows, axis = 0)
@@ -256,9 +251,14 @@ def add_user_number_column(data, param_indices, rare_user_threshold = 1):
     delete_indices = [i for i in range(0, n) if delete_mask[i] == True]
     data = np.delete(data, delete_indices, axis = 0)
 
-    #print "Number of users = ", get_user_count(data)
+    # update param_indices
+    param_names = [""] * len(param_indices.keys())
+    for k, v in param_indices.items():
+        param_names[v] = k
+    param_indices = string_list_to_dict(["user_number"] + param_names)
+    
     print "Number of workouts discarded because very less data for that user : ", n_deleted
-    return data
+    return data, param_indices
 
 def convert_to_numbers(data):
     assert(type(data).__name__ == "list")
@@ -301,6 +301,7 @@ def compute_stats(data, theta, E, sigma):
     fvu = mse / var
     r2 = 1 - fvu
 
+    """
     distances = data[:, 2]
     mat = np.concatenate((np.matrix(distances).T, np.matrix(t).T, np.matrix(tpred).T), axis = 1)
     print mat.shape
@@ -311,6 +312,7 @@ def compute_stats(data, theta, E, sigma):
     plt.plot(mat[:lim, 0], mat[:lim, 2], label="Predicted", marker="o")
     plt.title("Training")
     plt.legend()
+    """
 
     return [mse, var,fvu, r2]
 
@@ -340,6 +342,7 @@ def compute_stats_validation(data, theta, E, sigma):
     fvu = mse / var
     r2 = 1 - fvu
 
+    """
     distances = data[:, 2]
     mat = np.concatenate((np.matrix(distances).T, np.matrix(t).T, np.matrix(tpred).T), axis = 1)
     print mat.shape
@@ -350,7 +353,7 @@ def compute_stats_validation(data, theta, E, sigma):
     plt.plot(mat[:lim, 0], mat[:lim, 2], label="Predicted", marker="o")
     plt.title("Validation")
     plt.legend()
-
+    """
 
     return [mse, var,fvu, r2]
 
@@ -567,14 +570,19 @@ def prepare(infile, outfile):
     print "Largest distance workout = ", data[(np.argmax(data[:, param_indices["Distance"]])), :]
     
     print "Adding user numbers.."
-    data = add_user_number_column(data, param_indices, rare_user_threshold = 10)    # add a user number
+    data, param_indices = add_user_number_column(data, param_indices, rare_user_threshold = 10)    # add a user number
+    assert(param_indices == string_list_to_dict(["user_number"] + params))
         
-    print "Splitting data into training and validation"
-    [d1, d2] = shuffle_and_split_data_by_user(data)
+    print "Splitting data into training, validation and test"
+    [train_set, val_set] = shuffle_and_split_data_by_user(data)
     
     print "Saving data to disk"
-    np.savez(outfile, d1 = d1, d2 = d2)
+    np.savez(outfile, train_set = train_set, val_set = val_set, param_indices = param_indices)
 
+def plot_data(data, param_indices):
+    dur_ind = param_indices["Duration"]
+    x = list(data[:, dur_ind])
+    plt.hist(x, bins = 200, range = [0, 24])
 
 if __name__ == "__main__":
     t1 = time.time()
@@ -589,8 +597,12 @@ if __name__ == "__main__":
 
     print "Loading data from file.."
     data = np.load(outfile)
-    train = data["d1"]
-    val = data["d2"]
+    train = data["train_set"]
+    val = data["val_set"]
+    param_indices = data["param_indices"][()]
+
+    #plot_data(train, param_indices)
+    
     assert(val.shape[0] == get_user_count(val))
     print "Number of users = ", get_user_count(train)
     print "Training set has %d examples" % (train.shape[0])
