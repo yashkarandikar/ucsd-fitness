@@ -275,6 +275,41 @@ def convert_to_numbers(data):
             n_invalid_date += 1
     print "%d rows had invalid date/time.." % (n_invalid_date)
 
+def make_predictions(data, theta, E, param_indices):
+    # use experience levels stored in last column
+    N = data.shape[0]
+    U = get_user_count(data)
+    theta_0 = get_theta_0(theta)
+    theta_1 = get_theta_1(theta)
+    tpred = np.matrix([0.0] * N).T
+    mse = 0.0
+    w = 0
+    d_ind = param_indices["Distance"]
+    t_ind = param_indices["Duration"]
+    e_ind = param_indices["experience"]
+    while w < N:
+        u = int(data[w, 0])
+        i = 0
+        while w < N and data[w, 0] == u:
+            e = data[w, e_ind]
+            a_ue = get_alpha_ue(theta, u, e, E)[0]
+            a_e = get_alpha_e(theta, e, E, U)[0]
+            d = data[w, d_ind]
+            tpred[w] = (a_e + a_ue) * (theta_0 + theta_1 * d)
+            w += 1
+            i += 1
+    return tpred
+
+def compute_stats(t_actual, t_pred):
+    #assert(t_actual.shape[1] == 1 and t_pred.shape[1] == 1)
+    assert(t_actual.shape == t_pred.shape)
+    mse = (np.square(t_actual - t_pred)).mean()
+    var = np.var(t_actual)
+    fvu = mse / var
+    r2 = 1 - fvu
+    return [mse, var,fvu, r2]
+
+'''
 def compute_stats(data, theta, E, sigma):
     N = data.shape[0]
     U = get_user_count(data)
@@ -301,7 +336,7 @@ def compute_stats(data, theta, E, sigma):
     fvu = mse / var
     r2 = 1 - fvu
 
-    """
+    """i
     distances = data[:, 2]
     mat = np.concatenate((np.matrix(distances).T, np.matrix(t).T, np.matrix(tpred).T), axis = 1)
     print mat.shape
@@ -356,6 +391,7 @@ def compute_stats_validation(data, theta, E, sigma):
     """
 
     return [mse, var,fvu, r2]
+'''
 
 def string_list_to_dict(str_list):
     d = {}
@@ -543,6 +579,55 @@ def get_workouts_per_user(data):
         workouts_per_user[i] = end_u - start_u
     return workouts_per_user
 
+def add_experience_column_to_train_set(train_set, sigma, param_indices):
+    U = get_user_count(train_set)
+    assert(U == len(sigma))
+    N = train_set.shape[0]
+    exp_col = np.matrix([0] * N).T
+    w = 0
+    for u in range(0, U):
+        Nu = len(sigma[u])
+        for i in range(0, Nu):
+            exp_col[w] = sigma[u][i]
+            w += 1
+    train_set = np.concatenate((train_set, exp_col), axis = 1)
+    if (not param_indices.has_key("experience")):
+        param_indices["experience"] = train_set.shape[1] - 1    # last column
+    else:
+        assert(param_indices["experience"] == train_set.shape[1] - 1)
+    return train_set
+
+def add_experience_column_to_test_set(test_set, train_set, param_indices, mode = "final"):
+    # test_set can be validation set or test set 
+    # if mode is final, there must be only 1 workout per user in test_set. this will be assigned the experience of the last workout in the training set for that user
+    # if mode is random, every workout will be assigned the experience of the closest workout (closest in time) of that user
+    print "Mode : ", mode
+    N = train_set.shape[0]
+    exp_col = np.matrix([0] * test_set.shape[0]).T
+    exp_ind = param_indices["experience"]
+    if (mode == "final"):
+        U = get_user_count(train_set)
+        assert (U == get_user_count(test_set))
+        uins = np.array(range(0, U))
+        col0 = train_set[:, 0].A1
+        u_indices = list(np.searchsorted(col0, uins))
+        u_indices.append(N)
+        for u in range(0, U):
+            Nu = u_indices[u+1] - u_indices[u]
+            assert(test_set[u][0] == u)     # since we have exactly 1 workout per user in final mode
+            exp_col[u] = train_set[u_indices[u+1] - 1, exp_ind]
+    elif (mode == "random"):
+        raise Exception("Invalid mode of testing..")
+    else:
+        raise Exception("Invalid mode of testing..")
+
+    test_set = np.concatenate((test_set, exp_col), axis = 1)
+    if (not param_indices.has_key("experience")):
+        param_indices["experience"] = train_set.shape[1] - 1    # last column
+    else:
+        assert(param_indices["experience"] == train_set.shape[1] - 1)
+    return test_set
+
 def prepare(infile, outfile):
     sport = "Running"
     params = ["user_id","Distance", "Duration", "date-time"]
@@ -574,7 +659,8 @@ def prepare(infile, outfile):
     assert(param_indices == string_list_to_dict(["user_number"] + params))
         
     print "Splitting data into training, validation and test"
-    [train_set, val_set] = shuffle_and_split_data_by_user(data)
+    #[train_set, val_set] = shuffle_and_split_data_by_user(data)
+    [train_set]
     
     print "Saving data to disk"
     np.savez(outfile, train_set = train_set, val_set = val_set, param_indices = param_indices)
@@ -592,36 +678,45 @@ if __name__ == "__main__":
     infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
     outfile = infile + ".npz"
+    mode = "final"  # can be "final" or "review"
 
-    prepare(infile, outfile)
+    #prepare(infile, outfile)
 
     print "Loading data from file.."
     data = np.load(outfile)
-    train = data["train_set"]
-    val = data["val_set"]
+    train_set = data["train_set"]
+    val_set = data["val_set"]
     param_indices = data["param_indices"][()]
 
-    #plot_data(train, param_indices)
-    
-    assert(val.shape[0] == get_user_count(val))
-    print "Number of users = ", get_user_count(train)
-    print "Training set has %d examples" % (train.shape[0])
-    print "Validation set has %d examples" % (val.shape[0])
+    assert(val_set.shape[0] == get_user_count(val_set))
+    print "Number of users = ", get_user_count(train_set)
+    print "Training set has %d examples" % (train_set.shape[0])
+    print "Validation set has %d examples" % (val_set.shape[0])
 
     print "Training.."
-    theta, sigma, E = learn(train)
-    np.savez("model.npz", theta = theta, sigma = sigma, E = E)
-
+    #theta, sigma, E = learn(train)
+    #np.savez("model.npz", theta = theta, sigma = sigma, E = E)
+    
+    print "Loading model.."
     model = np.load("model.npz")
     theta = model["theta"]
     sigma = model["sigma"]
     E = model["E"]
 
-    print "Computing predictions and statistics"
-    [mse, var, fvu, r2] = compute_stats(train, theta, E, sigma)
-    print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
-    [mse, var, fvu, r2] = compute_stats_validation(val, theta, E, sigma)
-    print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
+    # add the experience level to each workout in train, validation and test set
+    train_set = add_experience_column_to_train_set(train_set, sigma, param_indices)
+    val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = "final")
+
+    print "Making predictions.."
+    train_pred = make_predictions(train_set, theta, E, param_indices)
+    val_pred = make_predictions(val_set, theta, E, param_indices)
+    print param_indices
+
+    print "Computing statistics"
+    [mse, var, fvu, r2] = compute_stats(train_set[:, param_indices["Duration"]], train_pred)
+    print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
+    [mse, var, fvu, r2] = compute_stats(val_set[:, param_indices["Duration"]], val_pred)
+    print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
 
     t2 = time.time()
     print "Total time taken = ", t2 - t1
