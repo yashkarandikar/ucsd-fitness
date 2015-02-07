@@ -182,10 +182,11 @@ def Fprime(theta, data, lam, E, sigma):
     return dE
 """
 
-def shuffle_and_split_data_by_user(data):
+def shuffle_and_split_data_by_user(data, mode, fraction = 0.5):
     # assumes data is numpy matrix form
     # assumes 0th column is the user number
     assert(type(data).__name__ == "matrix")
+    assert(mode == "final" or mode == "random")
     i = 0
     N = len(data)
     randomState = np.random.RandomState(seed = 12345)
@@ -200,10 +201,12 @@ def shuffle_and_split_data_by_user(data):
         end_u = u_indices[i+1]
         n_u = end_u - start_u
         assert(n_u > 0)
-        perm = range(start_u, end_u)
-        #perm = randomState.permutation(range(start_u, end_u))
-        #end1 = int(math.ceil((fraction * float(n_u))))
-        end1 = n_u - 1      # only 1 workout for validation 
+        if (mode == "random"):
+            perm = randomState.permutation(range(start_u, end_u))
+            end1 = int(math.ceil(fraction * float(n_u)))
+        else:   # mode is "final"
+            perm = range(start_u, end_u)
+            end1 = n_u - 1      # only 1 workout for validation 
         for p in perm[:end1]: mask[p] = 1
         for p in perm[end1:]: mask[p] = 2
 
@@ -580,8 +583,10 @@ def get_workouts_per_user(data):
     return workouts_per_user
 
 def add_experience_column_to_train_set(train_set, sigma, param_indices):
+    np.set_printoptions(suppress = True)
+    np.set_printoptions(precision = 2)
     U = get_user_count(train_set)
-    assert(U == len(sigma))
+    #assert(U == len(sigma))
     N = train_set.shape[0]
     exp_col = np.matrix([0] * N).T
     w = 0
@@ -602,22 +607,45 @@ def add_experience_column_to_test_set(test_set, train_set, param_indices, mode =
     # if mode is final, there must be only 1 workout per user in test_set. this will be assigned the experience of the last workout in the training set for that user
     # if mode is random, every workout will be assigned the experience of the closest workout (closest in time) of that user
     print "Mode : ", mode
-    N = train_set.shape[0]
+    N_train = train_set.shape[0]
+    N_test = test_set.shape[0]
+    U = get_user_count(train_set)
     exp_col = np.matrix([0] * test_set.shape[0]).T
     exp_ind = param_indices["experience"]
+    datetime_ind = param_indices["date-time"]
+    uins = np.array(range(0, U))
+    train_u_indices = list(np.searchsorted(np.matrix(train_set[:, 0]).A1, uins)); train_u_indices.append(N_train)
+    test_u_indices = list(np.searchsorted(np.matrix(test_set[:, 0]).A1, uins)); test_u_indices.append(N_test)
     if (mode == "final"):
-        U = get_user_count(train_set)
-        assert (U == get_user_count(test_set))
-        uins = np.array(range(0, U))
-        col0 = train_set[:, 0].A1
-        u_indices = list(np.searchsorted(col0, uins))
-        u_indices.append(N)
+        assert (U == get_user_count(test_set) and test_set.shape[0] == U)
         for u in range(0, U):
-            Nu = u_indices[u+1] - u_indices[u]
+            #Nu = train_u_indices[u+1] - train_u_indices[u]
             assert(test_set[u][0] == u)     # since we have exactly 1 workout per user in final mode
-            exp_col[u] = train_set[u_indices[u+1] - 1, exp_ind]
+            exp_col[u] = train_set[train_u_indices[u+1] - 1, exp_ind]
     elif (mode == "random"):
-        raise Exception("Invalid mode of testing..")
+        w = 0
+        N_test = test_set.shape[0]
+        for u in range(0, U):
+            train_start_u = train_u_indices[u];  train_end_u = train_u_indices[u+1]
+            train_Nu = train_end_u - train_start_u
+            train_date_times = train_set[train_start_u:train_end_u, datetime_ind].A1
+
+            test_start_u = test_u_indices[u];  test_end_u = test_u_indices[u+1]
+            test_Nu = test_end_u - test_start_u
+            for i in range(0, test_Nu):
+                curr_dt = test_set[test_start_u + i, datetime_ind]
+                j = np.searchsorted(train_date_times, curr_dt)
+                if j == train_Nu:
+                    j = j - 1   # closest will be last workout
+                elif j > 0:
+                    if (abs(train_set[train_start_u + j - 1, datetime_ind] - curr_dt) 
+                            < abs(train_set[train_start_u + j, datetime_ind] - curr_dt)):
+                        j = j - 1
+                else:   # if j == 0
+                    pass        # closest will be 0th workout
+                e = train_set[train_start_u + j, exp_ind]
+                exp_col[w] = e
+                w += 1
     else:
         raise Exception("Invalid mode of testing..")
 
@@ -628,7 +656,7 @@ def add_experience_column_to_test_set(test_set, train_set, param_indices, mode =
         assert(param_indices["experience"] == train_set.shape[1] - 1)
     return test_set
 
-def prepare(infile, outfile):
+def prepare(infile, outfile, mode):
     sport = "Running"
     params = ["user_id","Distance", "Duration", "date-time"]
     param_indices = string_list_to_dict(params)
@@ -659,8 +687,7 @@ def prepare(infile, outfile):
     assert(param_indices == string_list_to_dict(["user_number"] + params))
         
     print "Splitting data into training, validation and test"
-    #[train_set, val_set] = shuffle_and_split_data_by_user(data)
-    [train_set]
+    [train_set, val_set] = shuffle_and_split_data_by_user(data, mode)
     
     print "Saving data to disk"
     np.savez(outfile, train_set = train_set, val_set = val_set, param_indices = param_indices)
@@ -678,9 +705,9 @@ if __name__ == "__main__":
     infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
     outfile = infile + ".npz"
-    mode = "final"  # can be "final" or "review"
+    mode = "final"  # can be "final" or "random"
 
-    #prepare(infile, outfile)
+    prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -688,14 +715,13 @@ if __name__ == "__main__":
     val_set = data["val_set"]
     param_indices = data["param_indices"][()]
 
-    assert(val_set.shape[0] == get_user_count(val_set))
     print "Number of users = ", get_user_count(train_set)
     print "Training set has %d examples" % (train_set.shape[0])
     print "Validation set has %d examples" % (val_set.shape[0])
 
     print "Training.."
-    #theta, sigma, E = learn(train)
-    #np.savez("model.npz", theta = theta, sigma = sigma, E = E)
+    theta, sigma, E = learn(train_set)
+    np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
     model = np.load("model.npz")
@@ -704,8 +730,9 @@ if __name__ == "__main__":
     E = model["E"]
 
     # add the experience level to each workout in train, validation and test set
+    print "Adding experience levels to data matrices"
     train_set = add_experience_column_to_train_set(train_set, sigma, param_indices)
-    val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = "final")
+    val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = mode)
 
     print "Making predictions.."
     train_pred = make_predictions(train_set, theta, E, param_indices)
