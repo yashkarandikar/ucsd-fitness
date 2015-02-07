@@ -676,18 +676,20 @@ def prepare(infile, outfile, mode):
 
     print "Removing outliers.."
     data = remove_outliers(data, params, param_indices, scale_factors)
-    print "Smallest distance = ", np.min(data[:, param_indices["Distance"]])
-    print "Smallest duration = ", np.min(data[:, param_indices["Duration"]])
-    print "Largest distance = ", np.max(data[:, param_indices["Distance"]])
-    print "Largest duration = ", np.max(data[:, param_indices["Duration"]])
-    print "Largest distance workout = ", data[(np.argmax(data[:, param_indices["Distance"]])), :]
     
     print "Adding user numbers.."
     data, param_indices = add_user_number_column(data, param_indices, rare_user_threshold = 10)    # add a user number
     assert(param_indices == string_list_to_dict(["user_number"] + params))
         
     print "Splitting data into training, validation and test"
-    [train_set, val_set] = shuffle_and_split_data_by_user(data, mode)
+    #[train_set, val_set] = shuffle_and_split_data_by_user(data, mode)
+    print "Full data set contains %d workouts.." % (data.shape[0])
+    [d1, test_set] = shuffle_and_split_data_by_user(data, mode, fraction = 0.7)
+    [train_set, val_set] = shuffle_and_split_data_by_user(d1, mode, fraction = 0.57)    # train = 40 % of total, val = 30 % of total, test = 30 % of total.. For "final" mode, these values are ignored
+    print "Train set contains %d workouts\nValidation contains %d workouts\nTest set contains %d workouts" % (train_set.shape[0], val_set.shape[0], test_set.shape[0])
+    assert(not np.array_equal(train_set, test_set))
+    assert(not np.array_equal(val_set, test_set))
+    assert(get_user_count(train_set) == get_user_count(val_set) and get_user_count(val_set) == get_user_count(test_set))
     
     print "Saving data to disk"
     np.savez(outfile, train_set = train_set, val_set = val_set, param_indices = param_indices)
@@ -702,10 +704,11 @@ if __name__ == "__main__":
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     #infile = "endoMondo5000_workouts_condensed.gz"
     #infile = "temp.gz"
-    infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    infile = "../../data/all_workouts_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
-    outfile = infile + ".npz"
-    mode = "final"  # can be "final" or "random"
+    mode = "random"  # can be "final" or "random"
+    outfile = infile + mode + ".npz"
 
     prepare(infile, outfile, mode)
 
