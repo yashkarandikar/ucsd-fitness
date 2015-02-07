@@ -23,6 +23,31 @@ def for_linear_model():
             s = utils.dict_to_json(d)
             f.write(s + "\n")
 
+def for_baseline_model():
+    U = 4
+    Nu = [10, 21, 4, 32]
+    uids = [20000, 40000, 10000, 30000]
+    sport = "Running"
+    
+    randomState = np.random.RandomState(12345)
+    f = gzip.open("synth_baseline_model.gz", "w")
+
+    theta = randomState.randint(low = 100, high = 10000, size = U)
+    print theta
+    data = []
+    for u in xrange(0, U):
+        nu = Nu[u]
+        v = theta[u]
+        uid = uids[u]
+        for i in xrange(0, nu):
+            d = randomState.randint(low = 1, high = 10)
+            t = v * d
+            w = {"Distance" : d, "Duration" : t, "user_id" : str(uid), "sport" : sport}
+            w_json = utils.dict_to_json(w)
+            f.write(w_json + "\n")
+    
+    f.close()
+
 def for_user_model():
     U = 4
     Nu = [10, 21, 14, 32]
@@ -82,7 +107,6 @@ def for_evolving_user_model():
         for i in xrange(0, nu):
             d = randomState.randint(low = 1, high = 10)
             e = exp_levels[i]
-            #print "e = ", e
             sigma[u, i] = e
             a_e = alpha[e]
             a_ue = alpha_u[e]
@@ -108,31 +132,7 @@ def for_evolving_user_model():
     #print "Actual sigma : ", sigma_list
     #print "Data : ", data
 
-def for_baseline_model():
-    U = 4
-    Nu = [10, 21, 4, 32]
-    uids = [20000, 40000, 10000, 30000]
-    sport = "Running"
-    
-    randomState = np.random.RandomState(12345)
-    f = gzip.open("synth_baseline_model.gz", "w")
-
-    theta = randomState.randint(low = 100, high = 10000, size = U)
-    print theta
-    data = []
-    for u in xrange(0, U):
-        nu = Nu[u]
-        v = theta[u]
-        uid = uids[u]
-        for i in xrange(0, nu):
-            d = randomState.randint(low = 1, high = 10)
-            t = v * d
-            w = {"Distance" : d, "Duration" : t, "user_id" : str(uid), "sport" : sport}
-            w_json = utils.dict_to_json(w)
-            f.write(w_json + "\n")
-    
-    f.close()
 
 if __name__ == "__main__":
-    #for_evolving_user_model()
-    for_user_model()
+    for_evolving_user_model()
+    #for_user_model()
