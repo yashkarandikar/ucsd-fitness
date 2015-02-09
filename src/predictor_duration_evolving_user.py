@@ -694,10 +694,23 @@ def prepare(infile, outfile, mode):
     print "Saving data to disk"
     np.savez(outfile, train_set = train_set, val_set = val_set, param_indices = param_indices)
 
-def plot_data(data, param_indices):
-    dur_ind = param_indices["Duration"]
-    x = list(data[:, dur_ind])
-    plt.hist(x, bins = 200, range = [0, 24])
+def plot_data(data, predictions, param_indices, title = ""):
+    #dur_ind = param_indices["Duration"]
+    #x = list(data[:, dur_ind])
+    #plt.hist(x, bins = 200, range = [0, 24])
+
+    # plot distance on X axis, predicted and actual duration on Y axis
+    t_pred = predictions
+    t_actual = data[:, param_indices["Duration"]]
+    assert(t_actual.shape == t_pred.shape)
+    distances = data[:, param_indices["Distance"]]
+    mat = np.concatenate((distances, t_actual, t_pred), axis = 1)
+    mat = utils.sort_matrix_by_col(mat, 0)
+    lim = data.shape[0]
+    plt.plot(mat[:lim, 0], mat[:lim, 1], label="Actual", marker="o")
+    plt.plot(mat[:lim, 0], mat[:lim, 2], label="Predicted", marker="o")
+    plt.title(title)
+    plt.legend()
 
 if __name__ == "__main__":
     t1 = time.time()
@@ -707,7 +720,7 @@ if __name__ == "__main__":
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     infile = "../../data/all_workouts_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
-    mode = "random"  # can be "final" or "random"
+    mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
     prepare(infile, outfile, mode)
@@ -750,5 +763,12 @@ if __name__ == "__main__":
 
     t2 = time.time()
     print "Total time taken = ", t2 - t1
+
+    print "Plotting.."
+    plt.figure()
+    plt.subplot(1,2,0)
+    plot_data(train_set, train_pred, param_indices, title = "Training set")
+    plt.subplot(1,2,1)
+    plot_data(val_set, val_pred, param_indices, title = "Validation set")
 
     plt.show()
