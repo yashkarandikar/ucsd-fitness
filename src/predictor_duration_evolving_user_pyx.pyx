@@ -36,6 +36,9 @@ def F_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, n
             w += 1
             i += 1
 
+    # divide by denominator
+    f = f / (float(N))
+
     # add regularization norm
     cdef double reg = 0, a_i, a_i_plus_1
     for i in range(0, E - 1):
@@ -101,6 +104,9 @@ def Fprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
             
             w += 1
             i += 1
+
+    # divide by denominator
+    dE = dE / float(N)
 
     # regularization
     cdef double a_k_1, a_uk_1
