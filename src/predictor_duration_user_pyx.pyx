@@ -61,7 +61,7 @@ def Eprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
         end_u = u_indices[i+1]
         alpha_u = theta[i]
         for j in xrange(start_u, end_u):
-            t = data[j, -1]
+            t = data[j, 3]
             d = data[j, 2]
             
             t0_t1_d = theta_0 + theta_1 * d
