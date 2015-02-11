@@ -331,8 +331,6 @@ if __name__ == "__main__":
     data = np.load(outfile)
     train = data["train_set"]
     val = data["val_set"]
-    print train
-    print val
     n_users = get_user_count(train)
     assert(get_user_count(train) == get_user_count(val))
     theta = [1.0] * (n_users + 3)   # 1 alpha per user, 1 global alpha, theta0, theta1
@@ -350,6 +348,7 @@ if __name__ == "__main__":
         ratio = ourgrad / numerical
         print "ratio = ", ratio
         assert(abs(1 - ratio) < 0.00001)
+        sys.exit(0)
 
     print "Training.."
     [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam),  maxfun=100000, maxiter=100000, iprint=1, disp=1)
