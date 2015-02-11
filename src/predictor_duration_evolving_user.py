@@ -720,10 +720,10 @@ if __name__ == "__main__":
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     infile = "../../data/all_workouts_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
-    mode = "random"  # can be "final" or "random"
+    mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
-    prepare(infile, outfile, mode)
+    #prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
