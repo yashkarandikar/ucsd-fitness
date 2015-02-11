@@ -310,48 +310,51 @@ def prepare(infile, outfile):
     [d1, d2] = shuffle_and_split_data_by_user(data)
     
     print "Saving data to disk"
-    np.savez(outfile, d1 = d1, d2 = d2)
-
-#def call_cython(theta, data):
-#    t1 = time.time()
-#    theta = e_prime.Eprime_cython(theta, data)
-#    t2 = time.time()
-#    print "E prime (cython) : time = ", t2 - t1
-#    return  theta
+    np.savez(outfile, train_set = d1, val_set = d2)
 
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     #infile = "endoMondo5000_workouts_condensed.gz"
-    infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    infile = "../../data/all_workouts_condensed.gz"
     #infile = "synth_user_model.gz"
-    outfile = infile + ".npz"
+    outfile = infile + "final.npz"
+    #outfile = infile + ".npz"
     e_fn = E_pyx
     eprime_fn = Eprime_pyx
+    check_grad = False
 
     #prepare(infile, outfile)
 
-    print "Loading data from file.."
+    print "Loading data from file..", infile
     data = np.load(outfile)
-    train = data["d1"]
-    val = data["d2"]
+    train = data["train_set"]
+    val = data["val_set"]
+    print train
+    print val
     n_users = get_user_count(train)
     assert(get_user_count(train) == get_user_count(val))
     theta = [1.0] * (n_users + 3)   # 1 alpha per user, 1 global alpha, theta0, theta1
     lam = 0.0    # regularization
+    if (len(sys.argv) == 2):
+        lam = float(sys.argv[1])
+    print "lam = ", lam
 
-    #print "Checking gradient before training.."
-    #error = scipy.optimize.check_grad(e_fn, eprime_fn, np.array(theta), train, lam)
-    #print "error :", error
-    #ourgrad = np.linalg.norm(eprime_fn(np.array(theta), train, lam), ord = 2)
-    #print "gradient = ", ourgrad
-    #print "numerical = ", np.linalg.norm(scipy.optimize.approx_fprime(np.array(theta), e_fn, np.sqrt(np.finfo(np.float).eps), train, lam), ord = 2)
-    #print eprime_fn(np.array(theta), train, lam)
-    #assert(error < 0.01)
+    if (check_grad):
+        print "Checking gradient before training.."
+        ourgrad = np.linalg.norm(eprime_fn(np.array(theta), train, lam), ord = 2)
+        print "gradient = ", ourgrad
+        numerical = np.linalg.norm(scipy.optimize.approx_fprime(np.array(theta), e_fn, np.sqrt(np.finfo(np.float).eps), train, lam), ord = 2)
+        print "numerical = ", numerical
+        ratio = ourgrad / numerical
+        print "ratio = ", ratio
+        assert(abs(1 - ratio) < 0.00001)
 
     print "Training.."
     [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam),  maxfun=100000, maxiter=100000, iprint=1, disp=1)
     #print info
+    print theta
 
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta)
