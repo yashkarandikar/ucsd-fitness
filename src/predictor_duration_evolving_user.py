@@ -712,6 +712,20 @@ def plot_data(data, predictions, param_indices, title = ""):
     plt.title(title)
     plt.legend()
 
+def check_sorted(data, param_indices):
+    N = data.shape[0]
+    ind_u = param_indices["user_number"]
+    ind_t = param_indices["date-time"]
+    i = 0
+    while (i < N):
+        u = (data[i, ind_u])
+        i += 1
+        while i < N and data[i, ind_u] == u:
+            assert(data[i, ind_t] >= data[i - 1, ind_t])
+            i += 1
+        if (i < N):
+            assert(data[i - 1, ind_u] < data[i, ind_u])
+
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
@@ -723,13 +737,16 @@ if __name__ == "__main__":
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
-    #prepare(infile, outfile, mode)
+    prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
     train_set = data["train_set"]
     val_set = data["val_set"]
     param_indices = data["param_indices"][()]
+    print "Doing sorted check on train and val sets.."
+    check_sorted(train_set, param_indices)
+    check_sorted(val_set, param_indices)
 
     print "Number of users = ", get_user_count(train_set)
     print "Training set has %d examples" % (train_set.shape[0])
