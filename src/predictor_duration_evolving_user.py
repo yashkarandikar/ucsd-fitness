@@ -518,12 +518,13 @@ def experience_check(theta, data, E):
 
 def learn(data):
     E = 3
-    lam = 1.0
+    lam1 = 1.0
+    lam2 = 0.1
     check_grad = False
     F_fn = F_pyx
     Fprime_fn = Fprime_pyx
 
-    print "lambda = ", lam
+    print "lam1 = %f, lam2 = %f" % (lam1, lam2)
     U = get_user_count(data)
     randomState = np.random.RandomState(12345)
     #theta = np.array([1.0] * (U * E + E + 2))
@@ -538,32 +539,32 @@ def learn(data):
     # check grad first
     if (check_grad == True):
         print "Checking gradient.."
-        our_grad = np.linalg.norm(Fprime_fn(theta, data, lam, E, sigma), ord = 2)
-        numerical = np.linalg.norm(scipy.optimize.approx_fprime(theta, F_fn, np.sqrt(np.finfo(np.float).eps), data, lam, E, sigma), ord = 2)
+        our_grad = np.linalg.norm(Fprime_fn(theta, data, lam1, lam2, E, sigma), ord = 2)
+        numerical = np.linalg.norm(scipy.optimize.approx_fprime(theta, F_fn, np.sqrt(np.finfo(np.float).eps), data, lam1, lam2, E, sigma), ord = 2)
         ratio = our_grad / numerical
         print "Ratio = ", ratio
         assert(abs(1.0 - ratio) < 1e-4)
+        sys.exit(0)
 
     n_iter = 0
 
     changed = True
     while changed and n_iter < 100:
-    #while n_iter < 10:
         print "Iteration %d.." % (n_iter)
 
         # 1. optimize theta
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
+        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam1, lam2, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
 
         # 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, data, E, sigma)
-        
-        #experience_check(theta, data, E)
 
+        print "@E = ", E_min
+        
         n_iter += 1
 
     print "norm of final theta = ", np.linalg.norm(theta, ord = 2)
-    print "final value of error function = ", F_pyx(theta, data, lam, E, sigma)
-    print "final value of norm of gradient function = ", np.linalg.norm(Fprime_pyx(theta, data, lam, E, sigma), ord = 2)
+    print "final value of error function = ", F_pyx(theta, data, lam1, lam2, E, sigma)
+    print "final value of norm of gradient function = ", np.linalg.norm(Fprime_pyx(theta, data, lam1, lam2, E, sigma), ord = 2)
 
     return theta, sigma, E
 

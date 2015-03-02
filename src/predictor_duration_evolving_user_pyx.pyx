@@ -5,7 +5,7 @@ DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
 
-def F_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.float64_t lam, np.int_t E, sigma):
+def F_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.float64_t lam1, np.float64_t lam2, np.int_t E, sigma):
     from predictor_duration_evolving_user import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_user_count
     # error function to be minimized
     # assumes data has 4 columns : user_id, user_number, distance, duration and that it is sorted
@@ -39,7 +39,7 @@ def F_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, n
     # divide by denominator
     f = f / (float(N))
 
-    # add regularization norm
+    # add regularization 1
     cdef double reg = 0, a_i, a_i_plus_1
     for i in range(0, E - 1):
         a_i = get_alpha_e(theta, i, E, U)[0]
@@ -49,13 +49,24 @@ def F_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, n
         for u in range(0, U):
             diff = get_alpha_ue(theta, u, i, E)[0] - get_alpha_ue(theta, u, i+1, E)[0]
             reg += diff * diff
-    f += lam * reg
+    f += lam1 * reg
+
+    # add regularization 2
+    cdef double reg2 = 0, a_ui = 0.0
+    for i in range(0, E):
+        a_i = get_alpha_e(theta, i, E, U)[0]
+        reg2 += a_i * a_i
+        for u in range(0, U):
+            a_ui = get_alpha_ue(theta, u, i, E)[0]
+            reg2 += a_ui * a_ui
+    reg2 += theta_1 * theta_1
+    f += lam2 * reg2
     
     cdef double t2 = time.time()
     #print "F = %f, time taken = %f" % (f, t2 - t1)
     return f
 
-def Fprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.float64_t lam, np.int_t E, sigma):
+def Fprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.float64_t lam1, np.float64_t lam2, np.int_t E, sigma):
     from predictor_duration_evolving_user import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_user_count
     # theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
@@ -108,25 +119,28 @@ def Fprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
     # divide by denominator
     dE = dE / float(N)
 
-    # regularization
+    # regularization 1 and 2
     cdef double a_k_1, a_uk_1
     for k in range(0, E):
         [a_k, a_k_index] = get_alpha_e(theta, k, E, U)
         if (k < E - 1):
             a_k_1 = get_alpha_e(theta, k + 1, E, U)[0]
-            dE[a_k_index] +=  2 * lam * (a_k - a_k_1)
+            dE[a_k_index] +=  2 * lam1 * (a_k - a_k_1)
         if (k > 0):
             a_k_1 = get_alpha_e(theta, k - 1, E, U)[0]
-            dE[a_k_index] -=  2 * lam * (a_k_1 - a_k)
+            dE[a_k_index] -=  2 * lam1 * (a_k_1 - a_k)
+        dE[a_k_index] += 2 * lam2 * a_k     # regularization 2
 
         for u in range(0, U):
             [a_uk, a_uk_index] = get_alpha_ue(theta, u, k, E)
             if (k < E - 1):
                 a_uk_1 = get_alpha_ue(theta, u, k+1, E)[0]
-                dE[a_uk_index] +=  2 * lam * (a_uk - a_uk_1)
+                dE[a_uk_index] +=  2 * lam1 * (a_uk - a_uk_1)
             if (k > 0):
                 a_uk_1 = get_alpha_ue(theta, u, k-1, E)[0]
-                dE[a_uk_index] -= 2 * lam * (a_uk_1 - a_uk)
+                dE[a_uk_index] -= 2 * lam1 * (a_uk_1 - a_uk)
+            dE[a_uk_index] += 2 * lam2 * a_uk   # regularization 2
+    dE[-1] += 2 * lam2 * theta_1        # regularization 2
 
     cdef double t2 = time.time()
     #print "F prime : time taken = ", t2 - t1
