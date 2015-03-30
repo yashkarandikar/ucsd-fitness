@@ -516,15 +516,15 @@ def experience_check(theta, data, E):
         for i in range(0, E-1):
             assert(predictions[i] > predictions[i+1])
 
-def learn(data):
+def learn(data, lam1, lam2):
     E = 3
-    lam1 = 1.0
-    lam2 = 0.1
+    #lam1 = 1.0
+    #lam2 = 0.1
     check_grad = False
     F_fn = F_pyx
     Fprime_fn = Fprime_pyx
 
-    print "lam1 = %f, lam2 = %f" % (lam1, lam2)
+    print "@E = %d,lam1 = %f,lam2 = %f" % (E, lam1, lam2)
     U = get_user_count(data)
     randomState = np.random.RandomState(12345)
     #theta = np.array([1.0] * (U * E + E + 2))
@@ -738,7 +738,7 @@ if __name__ == "__main__":
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
-    prepare(infile, outfile, mode)
+    #prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -754,7 +754,9 @@ if __name__ == "__main__":
     print "Validation set has %d examples" % (val_set.shape[0])
 
     print "Training.."
-    theta, sigma, E = learn(train_set)
+    lam1 = float(sys.argv[1])
+    lam2 = float(sys.argv[2])
+    theta, sigma, E = learn(train_set, lam1, lam2)
     np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
@@ -775,12 +777,12 @@ if __name__ == "__main__":
 
     print "Computing statistics"
     [mse, var, fvu, r2] = compute_stats(train_set[:, param_indices["Duration"]], train_pred)
-    print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
+    print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2] = compute_stats(val_set[:, param_indices["Duration"]], val_pred)
-    print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
+    print "\n@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
 
     t2 = time.time()
-    print "Total time taken = ", t2 - t1
+    print "@Total time taken = ", t2 - t1
 
     print "Plotting.."
     plt.figure()
@@ -789,4 +791,4 @@ if __name__ == "__main__":
     plt.subplot(1,2,1)
     plot_data(val_set, val_pred, param_indices, title = "Validation set")
 
-    plt.show()
+    #plt.show()
