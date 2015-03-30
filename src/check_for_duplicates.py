@@ -1,8 +1,9 @@
 import gzip
 import utils
+import sys
 
 wids = set()
-with gzip.open("../../data/all_workouts_condensed.gz") as f:
+with gzip.open(sys.argv[1]) as f:
     n = 0
     for line in f:
         d = utils.json_to_dict(line)
