@@ -1,0 +1,39 @@
+other ways of using time evolution (maybe linear interpolation between first and last)
+retention plot - same sample
+other features
+2 regularizers - grid search
+baseline model denom term
+compare with baseline models
+number of users per experience level
+C++ convergence
+T test - statistically significant
+random mode - just 1 example
+refactor seconds conversion, experiment with normalization
+speed up packing, unpacking
+experiment with higher values of E
+results with random mode
+cross validation or early stopping
+other measures of error rate : how many examples were classified within reasonable margin?
+user retention plots
+outlier removal ideas - 
+    - remove top 10 % and bottom 10 % by workout
+    - remove records within 3 standard deviation
+make linear, user, baseline models share preparation part of the pipeline
+review prepare_data_set.read_data****
+combine training and validation and see if you get back the original training / val
+create single user from users who have very few workouts
+
+ideas from evolution paper:
+    - is the prediction error for users with higher fitness level lesser than that for users with lower fitness levels? i.e. are "Experts" more predictable?
+
+    - how does the "Experience" or fitness level of a user evolve over time ?
+    - how does the fitness level impact the ability of the model to predict duration ?
+    - how users progress through fitness levels with time?
+    - how users who stop working out differ from user who continue working out ?
+    - how do users achieve high fitness levels? through working out longer distances every time or repeating the same multiple times?
+    - do users who do both Cycling and Running achieve greater fitness level than those who do just Running ?
+    - Compare different models for predicting distance:
+        - simple linear model
+        - simply find average pace for user and use that to predict duration OR  alpha per user, but one which does not change gradually with each workout i.e. the order of workouts is not considered
+        - alpha per user, which changes with every workout i.e. order of workouts is considered
+
