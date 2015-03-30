@@ -83,7 +83,7 @@ def plot(model_file, data_file):
     print param_indices
 
     # separate users into 2 groups
-    threshold = "Apr 20, 2014 11:59 PM"
+    threshold = "Apr 15, 2014 11:59 PM"
     is_active, n_active, n_inactive = classify_users(train, param_indices, threshold)
 
     # get avg experience after j number of workouts
@@ -91,8 +91,8 @@ def plot(model_file, data_file):
     max_workout_number = len(active)
 
     # plot
-    print active
-    print inactive
+    #print active
+    #print inactive
     plt.plot(range(0, max_workout_number), active, label = "active")
     plt.plot(range(0, max_workout_number), inactive, label = "inactive")
     plt.xlabel("Workout number")
@@ -101,5 +101,21 @@ def plot(model_file, data_file):
     plt.legend(loc = "lower right")
     plt.show()
 
+def stats(model_file):
+    model = np.load(model_file)
+    sigma = model["sigma"]
+    count_by_exp = {}
+    counts = []
+    for s in sigma:
+        for w in s:
+            if (not count_by_exp.has_key(w)):
+                count_by_exp[w] = 0
+            count_by_exp[w] += 1
+    print count_by_exp
+    E = max(count_by_exp.keys())
+    for i in xrange(0, E):
+        counts
+
 if __name__ == "__main__":
-    plot("model_5.npz", "../../data/all_workouts_condensed.gzfinal.npz")
+    #plot("model_3.npz", "../../data/all_workouts_condensed.gzfinal.npz")
+    stats("model_3.npz")
