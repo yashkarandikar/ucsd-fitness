@@ -202,13 +202,15 @@ def shuffle_and_split_data_by_user(data, mode, fraction = 0.5):
         n_u = end_u - start_u
         assert(n_u > 0)
         if (mode == "random"):
-            perm = randomState.permutation(range(start_u, end_u))
-            end1 = int(math.ceil(fraction * float(n_u)))
+            #perm = randomState.permutation(range(start_u, end_u))
+            #end1 = int(math.ceil(fraction * float(n_u)))
+            for p in xrange(start_u, end_u): mask[p] = 1
+            mask[randomState.randint(low = start_u, high = end_u)] = 2 
         else:   # mode is "final"
             perm = range(start_u, end_u)
             end1 = n_u - 1      # only 1 workout for validation 
-        for p in perm[:end1]: mask[p] = 1
-        for p in perm[end1:]: mask[p] = 2
+            for p in perm[:end1]: mask[p] = 1
+            for p in perm[end1:]: mask[p] = 2
 
     d1_indices = [i for i in range(0, N) if mask[i] == 1]
     d2_indices = [i for i in range(0, N) if mask[i] == 2]
@@ -633,6 +635,7 @@ def add_experience_column_to_test_set(test_set, train_set, param_indices, mode =
 
             test_start_u = test_u_indices[u];  test_end_u = test_u_indices[u+1]
             test_Nu = test_end_u - test_start_u
+            assert(test_Nu == 1)
             for i in range(0, test_Nu):
                 curr_dt = test_set[test_start_u + i, datetime_ind]
                 j = np.searchsorted(train_date_times, curr_dt)
@@ -735,10 +738,10 @@ if __name__ == "__main__":
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     infile = "../../data/all_workouts_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
-    mode = "final"  # can be "final" or "random"
+    mode = "random"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
-    #prepare(infile, outfile, mode)
+    prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -779,12 +782,11 @@ if __name__ == "__main__":
     [mse, var, fvu, r2] = compute_stats(train_set[:, param_indices["Duration"]], train_pred)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2] = compute_stats(val_set[:, param_indices["Duration"]], val_pred)
-    print "\n@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
+    print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
 
     t2 = time.time()
     print "@Total time taken = ", t2 - t1
 
-    print "Plotting.."
     plt.figure()
     plt.subplot(1,2,0)
     plot_data(train_set, train_pred, param_indices, title = "Training set")
