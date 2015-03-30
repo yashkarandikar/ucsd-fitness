@@ -3,3 +3,4 @@
 *.npz
 src/output*.txt
 *~
+*.gz
