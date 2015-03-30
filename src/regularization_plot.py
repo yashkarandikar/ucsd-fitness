@@ -48,6 +48,9 @@ def main():
     print train
     print val
 
+    max_r2 = 0.0
+    max_lam1 = 0.0
+    max_lam2 = 0.0
     plt.figure()
     for k1, v1 in val.items():
         lam1 = k1
@@ -55,12 +58,20 @@ def main():
         for k2, v2 in v1.items():
             lam2.append(k2)
             r2.append(v2)
+            if (v2 > max_r2):
+                max_r2 = v2
+                max_lam1 = lam1
+                max_lam2 = k2
+
         both = zip(lam2, r2)
         both.sort()
         lam2 = [a for a,b in both]
         r2 = [b for a,b in both]
         print lam2, r2
         plt.plot(lam2, r2, label = "Lam1 = %f" % (lam1))
+    print "Best R2 = %f at lam1 = %f and lam2 = %f" % (max_r2, max_lam1, max_lam2)
+    plt.xlabel("lam2")
+    plt.ylabel("R2 on validation set")
     plt.legend()
     plt.semilogx(basex=10)
     plt.show()
