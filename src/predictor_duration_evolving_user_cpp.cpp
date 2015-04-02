@@ -6,6 +6,9 @@
 #include<algorithm>
 #include<random>
 #include<chrono>
+#include<vector>
+#include<cassert>
+#include<lbfgs.h>
 
 using namespace std;
 
@@ -17,9 +20,10 @@ class Matrix
         int shape[2];
         double **data;
 
-        Matrix(int nrows, int ncols)
+        Matrix(int nrows, int ncols, bool allocate = true)
         {
-            data = alloc_matrix(nrows, ncols);
+            if (allocate) 
+                data = alloc_matrix(nrows, ncols);
             shape[0] = nrows;
             shape[1] = ncols;
         }
@@ -49,7 +53,18 @@ double** zeros(int nrows, int ncols)
     return z;
 }
 
-double **read_matrix(const char *infile, int& N)
+Matrix zeros_matrix(int nrows, int ncols)
+{
+    Matrix m(nrows, ncols);
+    for (int i = 0 ; i < nrows; i++) {
+        for (int j = 0 ; j < ncols; j++) {
+            m.data[i][j] = 0;
+        }
+    }
+    return m;
+}
+
+Matrix read_matrix(const char *infile, int& N, int ncols = 3)
 {
     // count lines
     N = 0;
@@ -62,17 +77,15 @@ double **read_matrix(const char *infile, int& N)
     f.close();
 
     f.open(infile);
-    double **data = alloc_matrix(N, 3);
-    double uid, pid;
+    Matrix data(N, ncols);
+    string token;
     int i = 0;
-    double r;
     while (std::getline(f, line)) {
         std::istringstream iss(line);
-        if (!(iss >> uid >> pid >> r)) 
-             break;
-        data[i][0] = uid;
-        data[i][1] = pid;
-        data[i][2] = r;
+        for (int j = 0 ; j < ncols; j++) {
+            iss >> token;
+            data[i][j] = stod(token);
+        }
         i++;
     }
     f.close();
@@ -191,14 +204,14 @@ vector<int> find_best_path_DP(Matrix& M, double& leastError)
     }
 
     // check that path is monotonically increasing
-    for (int i = 0 ; i < path.size() - 1; i++) {
+    for (unsigned int i = 0 ; i < path.size() - 1; i++) {
         assert(path[i] <= path[i+1]);
     }
 
     return path;
 }
 
-bool fit_experience_for_all_users(vector<double>& theta, double **data, int E, vector<vector<int> >& sigma) 
+bool fit_experience_for_all_users(vector<double>& theta, Matrix& data, int E, vector<vector<int> >& sigma) 
 {
     // sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
     int N = data.shape[0];
@@ -218,7 +231,7 @@ bool fit_experience_for_all_users(vector<double>& theta, double **data, int E, v
         }
         
         // populate M
-        double** M = zeros(E, Nu);
+        Matrix M = zeros_matrix(E, Nu);
         for (int j = 0; j < Nu; j++) {   // over all workouts for this user
             t = data[row_u + j][3];    // actual time for that workout
             d = data[row_u + j][2];
@@ -232,7 +245,7 @@ bool fit_experience_for_all_users(vector<double>& theta, double **data, int E, v
         }
 
         double minError;
-        bestPath = find_best_path_DP(M, minError);
+        vector<int> bestPath = find_best_path_DP(M, minError);
         //print minError, bestPath
         // update sigma matrix using bestPath
         for (int i = 0 ; i < Nu; i++) {
@@ -248,10 +261,17 @@ bool fit_experience_for_all_users(vector<double>& theta, double **data, int E, v
     return changed;
 }
 
-map<string, int> get_workouts_per_user(Matrix& data) 
+vector<int> get_workouts_per_user(Matrix& data) 
 {
     int N = data.shape[0];
     int U = get_user_count(data);
+    vector<int> workouts_per_user(U, 0);
+    for (int i = 0 ; i < N; i++) {
+        int u = data[i][0];
+        workouts_per_user[u]++;
+    }
+    return workouts_per_user;
+    /*
     uins = np.array(range(0, U))
     col0 = data[:, 0]
     u_indices = list(np.searchsorted(col0, uins))
@@ -261,7 +281,8 @@ map<string, int> get_workouts_per_user(Matrix& data)
         start_u = u_indices[i]
         end_u = u_indices[i+1]
         workouts_per_user[i] = end_u - start_u
-    return workouts_per_user
+    return workouts_per_user;
+    */
 }
 
 double F(vector<double>& theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma) 
@@ -274,7 +295,7 @@ double F(vector<double>& theta, Matrix& data, double lam1, double lam2, int E, v
 
     //double t1 = time.time();
     int U = get_user_count(data);
-    assert(theta.shape[0] == U * E + E + 2);
+    assert(theta.size() == (unsigned int)(U * E + E + 2));
     int w = 0, i, u, e, index;
     int N = data.shape[0];
     double f = 0;
@@ -289,8 +310,8 @@ double F(vector<double>& theta, Matrix& data, double lam1, double lam2, int E, v
             e = sigma[u][i];
             a_ue = get_alpha_ue(theta, u, e, E, index);
             a_e = get_alpha_e(theta, e, E, U, index);
-            d = data[w, 2];
-            t = data[w, 3];
+            d = data[w][2];
+            t = data[w][3];
             diff = (a_e + a_ue) * (theta_0 + theta_1*d) - t;
             f += diff * diff;
             w += 1;
@@ -304,7 +325,7 @@ double F(vector<double>& theta, Matrix& data, double lam1, double lam2, int E, v
     // add regularization 1
     double reg = 0, a_i, a_i_plus_1;
     for (int i = 0; i < E - 1; i++) {
-        a_i = get_alpha_e(theta, i, E, U);
+        a_i = get_alpha_e(theta, i, E, U, index);
         a_i_plus_1 = get_alpha_e(theta, i + 1, E, U, index);
         diff = a_i - a_i_plus_1;
         reg += diff * diff;
@@ -330,7 +351,7 @@ double F(vector<double>& theta, Matrix& data, double lam1, double lam2, int E, v
     
     //double t2 = time.time()
     //print "F = %f, time taken = %f" % (f, t2 - t1)
-    return f
+    return f;
 }
 
 void Fprime(vector<double>& theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, double* dE) 
@@ -341,7 +362,8 @@ void Fprime(vector<double>& theta, Matrix& data, double lam1, double lam2, int E
      //double t1 = time.time()
     int N = data.shape[0];
     int U = get_user_count(data);
-    assert(theta.shape[0] == U * E + E + 2);
+    int nparams = U * E + E + 2;
+    assert(theta.size() == (unsigned int) nparams);
     double theta_0 = get_theta_0(theta);
     double theta_1 = get_theta_1(theta);
 
@@ -349,7 +371,7 @@ void Fprime(vector<double>& theta, Matrix& data, double lam1, double lam2, int E
     clear(dE, U * E + E + 2);
 
     int w = 0, u, i, k, a_uk_index, a_k_index;
-    double a_uk, a_k, d, t, t_prime, delta, t0_t1_d, dEda, dE0;
+    double a_uk, a_k, d, t, t_prime, t0_t1_d, dEda, dE0;
     while (w < N) {    //
         u = data[w][0];
         i = 0;
@@ -382,10 +404,13 @@ void Fprime(vector<double>& theta, Matrix& data, double lam1, double lam2, int E
     }
 
     // divide by denominator
-    dE = dE / N;
+    for (int i = 0; i < nparams; i++) {
+        dE[i] = dE[i] / N;
+    }
 
     // regularization 1 and 2
     double a_k_1, a_uk_1;
+    int index;
     for (int k = 0 ; k < E; k++) {
         a_k = get_alpha_e(theta, k, E, U, a_k_index);
         if (k < E - 1) {
@@ -415,7 +440,50 @@ void Fprime(vector<double>& theta, Matrix& data, double lam1, double lam2, int E
 
     //double t2 = time.time()
     //print "F prime : time taken = ", t2 - t1
-} 
+}
+
+class Constants
+{
+    public:
+        Matrix* data;
+        vector<vector<int> >* sigma;
+        int E, nparams;
+        double lam1, lam2;
+};
+
+static lbfgsfloatval_t evaluate(void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step)
+{
+    lbfgsfloatval_t fx = 0.0;
+    Constants *consts = (Constants*) instance;
+    vector<double> theta(x, x + consts -> nparams);
+    fx =  F(theta, *(consts -> data), consts -> lam1, consts -> lam2, consts -> E, *(consts -> sigma));
+    Fprime(theta, *(consts -> data), consts -> lam1, consts -> lam2, consts -> E, *(consts -> sigma), g);
+    return fx;
+}
+
+static int progress(void *instance, const lbfgsfloatval_t *x, const lbfgsfloatval_t *g, const lbfgsfloatval_t fx, const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm, const lbfgsfloatval_t step, int n, int k,int ls )
+{
+    printf("Iteration %d:\n", k);
+    printf("  fx = %f, x[0] = %f\n", fx, x[0]);
+    printf("  xnorm = %f, gnorm = %f, step = %f\n", xnorm, gnorm, step);
+    printf("\n");
+    return 0;
+}
+
+void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, lbfgs_parameter_t& param)
+{
+    // = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam1, lam2, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
+    lbfgsfloatval_t fx;
+    int U = get_user_count(data);
+    Constants c;
+    c.data = &data;
+    c.sigma = &sigma;
+    c.E = E;
+    c.lam1 = lam1;
+    c.lam2 = lam2;
+    int ret = lbfgs(U * E + E + 2, theta, &fx, evaluate, progress, (void *)&c, &param);
+    printf("LBFGS terminated with status %d\n", ret);
+}
 
 void learn(char *infile, double lam1, double lam2, char* outfile)
 {
@@ -425,10 +493,13 @@ void learn(char *infile, double lam1, double lam2, char* outfile)
     printf("@E = %d,lam1 = %f,lam2 = %f", E, lam1, lam2);
     int U = get_user_count(data);
     //double *theta = new double[U * E + E + 2];
-    vector<double> theta(U * E + E + 2);
+    lbfgsfloatval_t *th = lbfgs_malloc(U * E + E + 2);
+    vector<double> theta(th, th + U * E + E + 2);
     init_random(theta);
+    lbfgs_parameter_t lbfgsparam;
+    lbfgs_parameter_init(&lbfgsparam);
     
-    map<string, int> workouts_per_user = get_workouts_per_user(data);
+    vector<int> workouts_per_user = get_workouts_per_user(data);
     vector<vector <int> > sigma(U);
     for (int u = 0; u < U; u++) {
         //sigma.append(list(np.sort(randomState.randint(low = 0, high = E, size = (workouts_per_user[u])))))
@@ -459,12 +530,12 @@ void learn(char *infile, double lam1, double lam2, char* outfile)
 
         // 1. optimize theta
         //[theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam1, lam2, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
-        assert(false);
+        optimize(th, data, lam1, lam2, E, sigma, lbfgsparam);
 
         // 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, data, E, sigma);
 
-        printf("@E = %lf", E_min);
+        //printf("@E = %lf", E_min);
         n_iter += 1;
     }
 
@@ -472,7 +543,30 @@ void learn(char *infile, double lam1, double lam2, char* outfile)
     //print "final value of error function = ", F_pyx(theta, data, lam1, lam2, E, sigma)
     //print "final value of norm of gradient function = ", np.linalg.norm(Fprime_pyx(theta, data, lam1, lam2, E, sigma), ord = 2)
 
-    return theta, sigma, E
+    //return theta, sigma, E
+    ofstream of;
+    of.open(outfile);
+    of << "E=" << E << "\n";
+    of << "theta=[";
+    int i = 0;
+    for (i = 0 ; i < (int) theta.size() - 1; i++)
+        of << theta[i] << ",";
+    of << theta[i] << "]\n";
+    of << "sigma=[";
+    int n_users = sigma.size();
+    vector<int> sigma_u;
+    for (int i = 0 ; i < n_users; i++) {
+        of << "[";
+        sigma_u = sigma[i];
+        int j = 0;
+        for (j = 0 ; j < (int)sigma_u.size() - 1; j++)
+            of << sigma_u[j] << ",";
+        of << sigma_u[j] << "]";
+        if (i < n_users - 1)
+            of << ",";
+    }
+    of << "]";
+    of.close();
 }
 
 int main(int argc, char* argv[])
