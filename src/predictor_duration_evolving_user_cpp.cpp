@@ -495,7 +495,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile)
     int N, E = 3;
     Matrix data = read_matrix(infile, N);
 
-    printf("@E = %d,lam1 = %f,lam2 = %f", E, lam1, lam2);
+    printf("@E = %d,lam1 = %f,lam2 = %f\n", E, lam1, lam2);
     int U = get_user_count(data);
     int nparams = U * E + E + 2;
     cout << "U = " << U << " , E = " << E << " , nparams = " << nparams << "\n";
