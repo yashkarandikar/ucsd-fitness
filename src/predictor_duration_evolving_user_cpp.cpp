@@ -13,6 +13,7 @@
 using namespace std;
 
 double** alloc_matrix(int N, int M);
+void free_matrix(double **mat, int nrows, int ncols);
 
 class Matrix
 {
@@ -32,6 +33,11 @@ class Matrix
         {
             return data[i];
         }
+
+        void free()
+        {
+            free_matrix(data, shape[0], shape[1]);
+        }
 };
 
 double** alloc_matrix(int N, int M)
@@ -40,6 +46,14 @@ double** alloc_matrix(int N, int M)
     for (int i = 0; i < N; i++)
         mat[i] = new double[M];
     return mat;
+}
+
+void free_matrix(double **mat, int nrows, int ncols)
+{
+    for (int i = 0 ; i < nrows; i++) {
+        delete[] mat[i];
+    }
+    delete[] mat;
 }
 
 double** zeros(int nrows, int ncols)
@@ -213,7 +227,8 @@ vector<int> find_best_path_DP(Matrix& M, double& leastError)
     for (unsigned int i = 0 ; i < path.size() - 1; i++) {
         assert(path[i] <= path[i+1]);
     }
-
+    free_matrix(D, E, Nu);
+    free_matrix(decision, E, Nu);
     return path;
 }
 
@@ -262,6 +277,8 @@ bool fit_experience_for_all_users(const double *theta, int nparams, Matrix& data
                 //print sigma[u, :]
             }
         }
+
+        M.free();
     }
         
     return changed;
@@ -574,6 +591,8 @@ void learn(char *infile, double lam1, double lam2, char* outfile)
     }
     of << "]";
     of.close();
+    lbfgs_free(theta);
+    data.free();
 }
 
 int main(int argc, char* argv[])
