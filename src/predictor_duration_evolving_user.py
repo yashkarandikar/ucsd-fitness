@@ -769,12 +769,12 @@ if __name__ == "__main__":
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
     
-    infile = "endoMondo5000_workouts_condensed.gz"
-    #infile = "../../data/all_workouts_condensed.gz"
+    #infile = "endoMondo5000_workouts_condensed.gz"
+    infile = "../../data/all_workouts_condensed.gz"
     mode = "random"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
-    prepare(infile, outfile, mode)
+    #prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -792,8 +792,8 @@ if __name__ == "__main__":
     print "Training.."
     lam1 = float(sys.argv[1])
     lam2 = float(sys.argv[2])
-    theta, sigma, E = learn(train_set, lam1, lam2)
-    #theta, sigma, E = learn_cpp(train_set, lam1, lam2)
+    #theta, sigma, E = learn(train_set, lam1, lam2)
+    theta, sigma, E = learn_cpp(train_set, lam1, lam2)
     np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
