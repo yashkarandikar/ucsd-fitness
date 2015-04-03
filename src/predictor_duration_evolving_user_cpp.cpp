@@ -44,7 +44,7 @@ double** alloc_matrix(int N, int M)
 
 double** zeros(int nrows, int ncols)
 {
-    double **z = zeros(nrows, ncols);
+    double **z = alloc_matrix(nrows, ncols);
     for (int i = 0; i < nrows; i++) {
         for (int j = 0 ; j < ncols; j++) {
             z[i][j] = 0;
@@ -64,21 +64,28 @@ Matrix zeros_matrix(int nrows, int ncols)
     return m;
 }
 
-Matrix read_matrix(const char *infile, int& N, int ncols = 3)
+Matrix read_matrix(const char *infile, int& N)
 {
     // count lines
     N = 0;
     ifstream f;
     f.open(infile);
     string line;
-    while (std::getline(f, line))
+    string token;
+    int ncols = 0;
+    while (std::getline(f, line)) {
+        std::istringstream iss(line);
+        if (ncols == 0) {
+            while (iss >> token)
+                ncols++;
+        }
         N++;
-    cout << "N = " << N << "\n";
+    }
+    cout << "Data matrix dimensions = " << N << " x " << ncols << "\n";
     f.close();
 
     f.open(infile);
     Matrix data(N, ncols);
-    string token;
     int i = 0;
     while (std::getline(f, line)) {
         std::istringstream iss(line);
@@ -99,9 +106,8 @@ void init_random(double **a, int n, int m)
             a[i][j] = ((double)rand()/(double)RAND_MAX);
 }
 
-void init_random(vector<double>& a)
+void init_random(double* a, int n)
 {
-    int n = a.size();
     for (int i = 0; i < n; i++)
         a[i] = ((double)rand()/(double)RAND_MAX);
 }
@@ -123,28 +129,28 @@ int randint(int low, int high)
     return (low + (rand() % range));
 }
 
-double get_alpha_ue(vector<double>& theta, int u, int e, int E, int& index)
+double get_alpha_ue(const double* theta, int u, int e, int E, int& index)
 {
     // theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
     index = u * E + e;
     return theta[index];
 }
 
-double get_alpha_e(vector<double>& theta, int e, int E, int U, int& index) 
+double get_alpha_e(const double* theta, int e, int E, int U, int& index) 
 {
     // theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
     index = U * E + e;
     return theta[index]; 
 }
 
-double get_theta_0(vector<double>& theta)
+double get_theta_0(const double* theta, int nparams)
 {
-    return theta[theta.size() - 2];
+    return theta[nparams - 2];
 }
 
-double get_theta_1(vector<double>& theta)
+double get_theta_1(const double* theta, int nparams)
 {
-    return theta[theta.size() - 1];
+    return theta[nparams - 1];
 }
 
 int get_user_count(Matrix& data) 
@@ -211,14 +217,14 @@ vector<int> find_best_path_DP(Matrix& M, double& leastError)
     return path;
 }
 
-bool fit_experience_for_all_users(vector<double>& theta, Matrix& data, int E, vector<vector<int> >& sigma) 
+bool fit_experience_for_all_users(const double *theta, int nparams, Matrix& data, int E, vector<vector<int> >& sigma) 
 {
     // sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
     int N = data.shape[0];
     int U = get_user_count(data);
     int row = 0;
-    double theta_0 = get_theta_0(theta);
-    double theta_1 = get_theta_1(theta);
+    double theta_0 = get_theta_0(theta, nparams);
+    double theta_1 = get_theta_1(theta, nparams);
     bool changed = false;
     int index;
     double a_ue, a_e, tprime, diff, t, d;
@@ -285,7 +291,7 @@ vector<int> get_workouts_per_user(Matrix& data)
     */
 }
 
-double F(vector<double>& theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma) 
+double F(const double* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma) 
 {
     //from predictor_duration_evolving_user import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_user_count
     // error function to be minimized
@@ -295,12 +301,12 @@ double F(vector<double>& theta, Matrix& data, double lam1, double lam2, int E, v
 
     //double t1 = time.time();
     int U = get_user_count(data);
-    assert(theta.size() == (unsigned int)(U * E + E + 2));
+    int nparams = (U * E + E + 2);
     int w = 0, i, u, e, index;
     int N = data.shape[0];
     double f = 0;
-    double theta_0 = get_theta_0(theta);
-    double theta_1 = get_theta_1(theta);
+    double theta_0 = get_theta_0(theta, nparams);
+    double theta_1 = get_theta_1(theta, nparams);
     double a_ue, a_e, d, t, diff;
     while (w < N) {    // over all workouts i.e. all rows in data
         u = (int) (data[w][0]);
@@ -354,7 +360,7 @@ double F(vector<double>& theta, Matrix& data, double lam1, double lam2, int E, v
     return f;
 }
 
-void Fprime(vector<double>& theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, double* dE) 
+void Fprime(const double* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, double* dE) 
 {
     //from predictor_duration_evolving_user import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_user_count
     // theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
@@ -363,9 +369,8 @@ void Fprime(vector<double>& theta, Matrix& data, double lam1, double lam2, int E
     int N = data.shape[0];
     int U = get_user_count(data);
     int nparams = U * E + E + 2;
-    assert(theta.size() == (unsigned int) nparams);
-    double theta_0 = get_theta_0(theta);
-    double theta_1 = get_theta_1(theta);
+    double theta_0 = get_theta_0(theta, nparams);
+    double theta_1 = get_theta_1(theta, nparams);
 
     //np.ndarray[DTYPE_t, ndim=1] dE = np.array([0.0] * theta.shape[0]);
     clear(dE, U * E + E + 2);
@@ -395,8 +400,8 @@ void Fprime(vector<double>& theta, Matrix& data, double lam1, double lam2, int E
 
             // dE / d_theta_0 and 1
             dE0 = 2 * (t_prime - t) * (a_k + a_uk);
-            dE[-2] += dE0;
-            dE[-1] += dE0 * d;
+            dE[nparams - 2] += dE0;
+            dE[nparams - 1] += dE0 * d;
             
             w += 1;
             i += 1;
@@ -436,7 +441,7 @@ void Fprime(vector<double>& theta, Matrix& data, double lam1, double lam2, int E
             dE[a_uk_index] += 2 * lam2 * a_uk;   // regularization 2
         }
     }
-    dE[-1] += 2 * lam2 * theta_1 ;       // regularization 2
+    dE[nparams - 1] += 2 * lam2 * theta_1 ;       // regularization 2
 
     //double t2 = time.time()
     //print "F prime : time taken = ", t2 - t1
@@ -451,11 +456,11 @@ class Constants
         double lam1, lam2;
 };
 
-static lbfgsfloatval_t evaluate(void *instance, const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step)
+static lbfgsfloatval_t evaluate(void *instance, const lbfgsfloatval_t *theta, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step)
 {
     lbfgsfloatval_t fx = 0.0;
     Constants *consts = (Constants*) instance;
-    vector<double> theta(x, x + consts -> nparams);
+    //vector<double> theta(x, x + consts -> nparams);
     fx =  F(theta, *(consts -> data), consts -> lam1, consts -> lam2, consts -> E, *(consts -> sigma));
     Fprime(theta, *(consts -> data), consts -> lam1, consts -> lam2, consts -> E, *(consts -> sigma), g);
     return fx;
@@ -463,17 +468,17 @@ static lbfgsfloatval_t evaluate(void *instance, const lbfgsfloatval_t *x, lbfgsf
 
 static int progress(void *instance, const lbfgsfloatval_t *x, const lbfgsfloatval_t *g, const lbfgsfloatval_t fx, const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm, const lbfgsfloatval_t step, int n, int k,int ls )
 {
-    printf("Iteration %d:\n", k);
-    printf("  fx = %f, x[0] = %f\n", fx, x[0]);
-    printf("  xnorm = %f, gnorm = %f, step = %f\n", xnorm, gnorm, step);
-    printf("\n");
+    printf("Iteration %d: ", k);
+    printf("  fx = %f\n", fx);
+    //printf("  xnorm = %f, gnorm = %f, step = %f\n", xnorm, gnorm, step);
+    //printf("\n");
     return 0;
 }
 
 void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, lbfgs_parameter_t& param)
 {
     // = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam1, lam2, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
-    lbfgsfloatval_t fx;
+    lbfgsfloatval_t fx = 0;
     int U = get_user_count(data);
     Constants c;
     c.data = &data;
@@ -492,10 +497,12 @@ void learn(char *infile, double lam1, double lam2, char* outfile)
 
     printf("@E = %d,lam1 = %f,lam2 = %f", E, lam1, lam2);
     int U = get_user_count(data);
+    int nparams = U * E + E + 2;
+    cout << "U = " << U << " , E = " << E << " , nparams = " << nparams << "\n";
     //double *theta = new double[U * E + E + 2];
-    lbfgsfloatval_t *th = lbfgs_malloc(U * E + E + 2);
-    vector<double> theta(th, th + U * E + E + 2);
-    init_random(theta);
+    lbfgsfloatval_t *theta = lbfgs_malloc(nparams);
+    //vector<double> theta(th, th + U * E + E + 2);
+    init_random(theta, nparams);
     lbfgs_parameter_t lbfgsparam;
     lbfgs_parameter_init(&lbfgsparam);
     
@@ -526,14 +533,14 @@ void learn(char *infile, double lam1, double lam2, char* outfile)
     int n_iter = 0;
     bool changed = true;
     while (changed && n_iter < 100) {
-        printf("Iteration %d..", n_iter);
+        printf("Super Iteration %d..", n_iter);
 
         // 1. optimize theta
         //[theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam1, lam2, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
-        optimize(th, data, lam1, lam2, E, sigma, lbfgsparam);
+        optimize(theta, data, lam1, lam2, E, sigma, lbfgsparam);
 
         // 2. use DP to fit experience levels
-        changed = fit_experience_for_all_users(theta, data, E, sigma);
+        changed = fit_experience_for_all_users(theta, nparams, data, E, sigma);
 
         //printf("@E = %lf", E_min);
         n_iter += 1;
@@ -549,7 +556,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile)
     of << "E=" << E << "\n";
     of << "theta=[";
     int i = 0;
-    for (i = 0 ; i < (int) theta.size() - 1; i++)
+    for (i = 0 ; i < nparams - 1; i++)
         of << theta[i] << ",";
     of << theta[i] << "]\n";
     of << "sigma=[";

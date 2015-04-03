@@ -13,6 +13,7 @@ import random
 import sys
 import pyximport; pyximport.install()
 from predictor_duration_evolving_user_pyx import F_pyx, Fprime_pyx
+import os
 
 def get_user_count(data):
     assert(type(data).__name__ == "list" or type(data).__name__ == "matrix" or type(data).__name__ == "ndarray")
@@ -518,6 +519,37 @@ def experience_check(theta, data, E):
         for i in range(0, E-1):
             assert(predictions[i] > predictions[i+1])
 
+def learn_cpp(data, lam1, lam2):
+    # write data to file
+    data_file = "data.txt"
+    np.savetxt(data_file, data)
+
+    # call cpp executable
+    infile = data_file
+    outfile = "model.txt"
+    exec_name = "./predictor_duration_evolving_user_cpp"
+    command = "%s %s %s %s %s" % (exec_name, infile, str(lam1), str(lam2), outfile)
+    print "Running command %s" % (command)
+    assert(os.system(command) == 0)
+    print "Done with learning.."
+
+    # read output from file
+    print "Reading learned model from file.."
+    with open(outfile) as f:
+        for line in f:
+            parts = line.strip().split("=")
+            assert(len(parts) == 2)
+            k, v = parts
+            if (k == "theta"):
+                theta = eval(v)
+            elif (k == "sigma"):
+                sigma = eval(v)
+            elif (k == "E"):
+                E = eval(v)
+            else:
+                raise Exception("error in parsing outfile of cpp executable")
+    return theta, sigma, E
+
 def learn(data, lam1, lam2):
     E = 3
     #lam1 = 1.0
@@ -733,11 +765,12 @@ def check_sorted(data, param_indices):
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    #infile = "endoMondo5000_workouts_condensed.gz"
     #infile = "temp.gz"
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    infile = "../../data/all_workouts_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
+    
+    infile = "endoMondo5000_workouts_condensed.gz"
+    #infile = "../../data/all_workouts_condensed.gz"
     mode = "random"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
@@ -760,6 +793,7 @@ if __name__ == "__main__":
     lam1 = float(sys.argv[1])
     lam2 = float(sys.argv[2])
     theta, sigma, E = learn(train_set, lam1, lam2)
+    #theta, sigma, E = learn_cpp(train_set, lam1, lam2)
     np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
