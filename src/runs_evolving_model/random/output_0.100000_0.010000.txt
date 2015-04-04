@@ -1,0 +1,150 @@
+Data matrix dimensions = 743987 x 5
+@E = 3,lam1 = 0.100000,lam2 = 0.010000
+U = 52109 , E = 3 , nparams = 156332
+Super Iteration 0..Iteration 1: 
+@fx = 2237.692819
+LBFGS terminated with status 0
+Super Iteration 1..Iteration 1: 
+@fx = 0.187866
+LBFGS terminated with status 0
+Super Iteration 2..Iteration 1: 
+@fx = 0.167110
+LBFGS terminated with status 0
+Super Iteration 3..Iteration 1: 
+@fx = 0.159122
+LBFGS terminated with status 0
+Super Iteration 4..Iteration 1: 
+@fx = 0.155783
+LBFGS terminated with status 0
+Super Iteration 5..Iteration 1: 
+@fx = 0.153602
+LBFGS terminated with status 0
+Super Iteration 6..Iteration 1: 
+@fx = 0.152280
+LBFGS terminated with status 0
+Super Iteration 7..Iteration 1: 
+@fx = 0.151513
+LBFGS terminated with status 0
+Super Iteration 8..Iteration 1: 
+@fx = 0.150967
+LBFGS terminated with status 0
+Super Iteration 9..Iteration 1: 
+@fx = 0.150645
+LBFGS terminated with status 0
+Super Iteration 10..Iteration 1: 
+@fx = 0.150333
+LBFGS terminated with status 0
+Super Iteration 11..Iteration 1: 
+@fx = 0.150095
+LBFGS terminated with status 0
+Super Iteration 12..Iteration 1: 
+@fx = 0.149962
+LBFGS terminated with status 0
+Super Iteration 13..Iteration 1: 
+@fx = 0.149830
+LBFGS terminated with status 0
+Super Iteration 14..Iteration 1: 
+@fx = 0.149711
+LBFGS terminated with status 0
+Super Iteration 15..Iteration 1: 
+@fx = 0.149637
+LBFGS terminated with status 0
+Super Iteration 16..Iteration 1: 
+@fx = 0.149527
+LBFGS terminated with status 0
+Super Iteration 17..Iteration 1: 
+@fx = 0.149464
+LBFGS terminated with status 0
+Super Iteration 18..Iteration 1: 
+@fx = 0.149419
+LBFGS terminated with status 0
+Super Iteration 19..Iteration 1: 
+@fx = 0.149395
+LBFGS terminated with status 0
+Super Iteration 20..Iteration 1: 
+@fx = 0.149377
+LBFGS terminated with status 0
+Super Iteration 21..Iteration 1: 
+@fx = 0.149364
+LBFGS terminated with status 0
+Super Iteration 22..Iteration 1: 
+@fx = 0.149351
+LBFGS terminated with status 0
+Super Iteration 23..Iteration 1: 
+@fx = 0.149340
+LBFGS terminated with status 0
+Super Iteration 24..Iteration 1: 
+@fx = 0.149333
+LBFGS terminated with status 0
+Super Iteration 25..Iteration 1: 
+@fx = 0.149325
+LBFGS terminated with status 0
+Super Iteration 26..Iteration 1: 
+@fx = 0.149322
+LBFGS terminated with status 0
+Super Iteration 27..Iteration 1: 
+@fx = 0.149319
+LBFGS terminated with status 0
+Super Iteration 28..Iteration 1: 
+@fx = 0.149317
+LBFGS terminated with status 0
+Super Iteration 29..Iteration 1: 
+@fx = 0.149315
+LBFGS terminated with status 0
+Super Iteration 30..Iteration 1: 
+@fx = 0.149311
+LBFGS terminated with status 0
+Super Iteration 31..Iteration 1: 
+@fx = 0.149309
+LBFGS terminated with status 0
+Super Iteration 32..Iteration 1: 
+@fx = 0.149308
+LBFGS terminated with status 0
+Super Iteration 33..Iteration 1: 
+@fx = 0.149307
+LBFGS terminated with status 0
+Super Iteration 34..Iteration 1: 
+@fx = 0.149307
+LBFGS terminated with status 0
+Super Iteration 35..Iteration 1: 
+@fx = 0.149306
+LBFGS terminated with status 0
+Super Iteration 36..Iteration 1: 
+@fx = 0.149306
+LBFGS terminated with status 0
+Super Iteration 37..Iteration 1: 
+@fx = 0.149306
+LBFGS terminated with status 0
+Super Iteration 38..Iteration 1: 
+@fx = 0.149306
+LBFGS terminated with status 0
+Super Iteration 39..Iteration 1: 
+@fx = 0.149306
+LBFGS terminated with status 0
+Super Iteration 40..Iteration 1: 
+@fx = 0.149306
+LBFGS terminated with status 0
+Super Iteration 41..Iteration 1: 
+@fx = 0.149306
+LBFGS terminated with status 0
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of users =  52109
+Training set has 743987 examples
+Validation set has 52109 examples
+Training..
+Running command ./predictor_duration_evolving_user_cpp data.txt 0.1 0.01 model.txt
+Done with learning..
+Reading learned model from file..
+Loading model..
+Adding experience levels to data matrices
+Mode :  random
+Making predictions..
+{'Distance': 2, 'user_id': 1, 'experience': 5, 'Duration': 3, 'user_number': 0, 'date-time': 4}
+Computing statistics
+
+@Training Examples = 743987,MSE = 0.129649,Variance = 0.494746,FVU = 0.262051,R2 = 1 - FVU = 0.737949
+
+@Validation Examples = 52109,MSE = 0.176836,Variance = 0.458879,FVU = 0.385365,R2 = 1 - FVU = 0.614635
+
+@Total time taken =  90.5452370644
