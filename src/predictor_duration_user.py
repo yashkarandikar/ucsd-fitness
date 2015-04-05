@@ -13,6 +13,7 @@ import random
 import sys
 import pyximport; pyximport.install()
 from predictor_duration_user_pyx import Eprime_pyx, E_pyx
+import os
 
 def get_user_count(data):
     assert(type(data).__name__ == "list" or type(data).__name__ == "matrix" or type(data).__name__ == "ndarray")
@@ -312,32 +313,37 @@ def prepare(infile, outfile):
     print "Saving data to disk"
     np.savez(outfile, train_set = d1, val_set = d2)
 
-if __name__ == "__main__":
-    t1 = time.time()
-    # prepare data set.. Run once and comment it out if running multiple times with same settings
-    #infile = "endoMondo5000_workouts_condensed.gz"
-    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    infile = "../../data/all_workouts_condensed.gz"
-    #infile = "synth_user_model.gz"
-    outfile = infile + "final.npz"
-    #outfile = infile + ".npz"
-    e_fn = E_pyx
-    eprime_fn = Eprime_pyx
-    check_grad = False
+def learn_cpp(data, lam):
+    # write data to file
+    data_file = "data.txt"
+    np.savetxt(data_file, data)
 
-    #prepare(infile, outfile)
+    # call cpp executable
+    infile = data_file
+    outfile = "model.txt"
+    exec_name = "./predictor_duration_user_cpp"
+    command = "%s %s %s %s" % (exec_name, infile, str(lam), outfile)
+    print "Running command %s" % (command)
+    assert(os.system(command) == 0)
+    print "Done with learning.."
 
-    print "Loading data from file..", infile
-    data = np.load(outfile)
-    train = data["train_set"]
-    val = data["val_set"]
+    # read output from file
+    print "Reading learned model from file.."
+    with open(outfile) as f:
+        for line in f:
+            parts = line.strip().split("=")
+            assert(len(parts) == 2)
+            k, v = parts
+            if (k == "theta"):
+                theta = np.array(eval(v))
+            else:
+                raise Exception("error in parsing outfile of cpp executable")
+    return theta
+
+def learn(train, lam):
     n_users = get_user_count(train)
     assert(get_user_count(train) == get_user_count(val))
     theta = [1.0] * (n_users + 3)   # 1 alpha per user, 1 global alpha, theta0, theta1
-    lam = 0.0    # regularization
-    if (len(sys.argv) == 2):
-        lam = float(sys.argv[1])
-    print "lam = ", lam
 
     if (check_grad):
         print "Checking gradient before training.."
@@ -352,9 +358,36 @@ if __name__ == "__main__":
 
     print "Training.."
     [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam),  maxfun=100000, maxiter=100000, iprint=1, disp=1)
-    #print info
-    print theta
+    return theta
 
+if __name__ == "__main__":
+    t1 = time.time()
+    # prepare data set.. Run once and comment it out if running multiple times with same settings
+    #infile = "endoMondo5000_workouts_condensed.gz"
+    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
+    infile = "../../data/all_workouts_condensed.gz"
+    #infile = "synth_user_model.gz"
+    mode = "final"
+    outfile = infile + mode + ".npz"
+    #outfile = infile + ".npz"
+    e_fn = E_pyx
+    eprime_fn = Eprime_pyx
+    check_grad = False
+
+    #prepare(infile, outfile)
+
+    lam = 0.0    # regularization
+    if (len(sys.argv) == 2):
+        lam = float(sys.argv[1])
+    print "lam = ", lam
+    print "Loading data from file..", outfile
+    data = np.load(outfile)
+    train = data["train_set"]
+    val = data["val_set"]
+
+    theta = learn(train, lam)
+    #theta = learn_cpp(train, lam)
+    
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta)
     print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
@@ -363,32 +396,4 @@ if __name__ == "__main__":
 
     t2 = time.time()
     print "Total time taken = ", t2 - t1
-    sys.exit(0)
 
-    # plots for regularization
-    """
-    all_lam = []
-    all_r2_train = []
-    all_r2_val = []
-    while lam > 1e-7:
-        all_lam.append(lam)
-        theta = [1.0] * (n_users + 2)
-        [theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(e_fn, theta, eprime_fn, args = (train, lam), maxfun=100)
-        [mse, var, fvu, r2] = compute_stats(train, theta)
-        all_r2_train.append(r2)
-        print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
-        [mse, var, fvu, r2] = compute_stats(val, theta)
-        all_r2_val.append(r2)
-        lam = lam / 2.0
-        print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
-
-    print "all_lam =", all_lam
-    print "all_r2_train = ", all_r2_train
-    print "all_r2_val = ", all_r2_val
-
-    plt.figure()
-    plt.plot(all_lam, all_r2_train, label="Training R2")
-    plt.plot(all_lam, all_r2_val, label="Validation R2")
-    plt.legend()
-    plt.show()
-    """
