@@ -9,8 +9,12 @@
 #include<vector>
 #include<cassert>
 #include<lbfgs.h>
+#include <dlib/matrix.h>
+#include <dlib/optimization.h>
+#include<cmath>
 
 using namespace std;
+typedef dlib::matrix<double,0,1> column_vector;
 
 double** alloc_matrix(int N, int M);
 void free_matrix(double **mat, int nrows, int ncols);
@@ -293,6 +297,16 @@ void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam, lbfgs_parameter_
     printf("LBFGS terminated with status %d\n", ret);
 }
 
+double F_dlib(Constants c, const column_vector x)
+{
+    lbfgsfloatval_t *theta = new lbfgsfloatval_t[x.nr()];
+    for (int i = 0 ; i < x.nr(); i++)
+        theta[i] = x(i, 0);
+    double f = F(theta, *(c.data), c.lam);
+    delete[] theta;
+    return f;
+}
+
 void learn(char *infile, double lam, char* outfile)
 {
     int N;
@@ -303,19 +317,48 @@ void learn(char *infile, double lam, char* outfile)
     init_random(theta, nparams);
     lbfgs_parameter_t lbfgsparam;
     lbfgs_parameter_init(&lbfgsparam);
+    bool check_grad = false;
 
-    /*
-    if (check_grad):
-        print "Checking gradient before training.."
-        ourgrad = np.linalg.norm(eprime_fn(np.array(theta), train, lam), ord = 2)
-        print "gradient = ", ourgrad
-        numerical = np.linalg.norm(scipy.optimize.approx_fprime(np.array(theta), e_fn, np.sqrt(np.finfo(np.float).eps), train, lam), ord = 2)
-        print "numerical = ", numerical
-        ratio = ourgrad / numerical
-        print "ratio = ", ratio
-        assert(abs(1 - ratio) < 0.00001)
-        sys.exit(0)
-    */
+    if (check_grad) {
+        printf("Checking gradient before training..\n");
+        column_vector m(nparams);
+        for (int i = 0 ; i < nparams; i++) {
+            m(i, 0) = theta[i];
+        }
+
+        // Analytic
+        //ourgrad = np.linalg.norm(eprime_fn(np.array(theta), train, lam), ord = 2)
+        //print "gradient = ", ourgrad
+        lbfgsfloatval_t *dE = new lbfgsfloatval_t[nparams];
+        vector<int> u_indices = generate_u_indices(data, U);
+        Fprime(theta, data, lam, dE, u_indices);
+        double analytic = 0;
+        for (int i = 0 ; i < nparams; i++) {
+            analytic += dE[i] * dE[i];
+        }
+        analytic = sqrt(analytic);
+        cout << "analytic = " << analytic << "\n";
+        delete[] dE;
+
+        // Numerical
+        Constants c;
+        c.data = &data;
+        c.lam = lam;
+        column_vector numerical_grad_vec = dlib::derivative(F_dlib)(c, m);
+        double numerical = 0;
+        for (int i = 0; i < nparams; i++) {
+            double vi = numerical_grad_vec(i, 0);
+            numerical += vi * vi;
+        }
+        numerical = sqrt(numerical);
+        cout << "numerical = " << numerical << "\n";
+
+        double ratio = analytic / numerical;
+        cout << "Ratio = " << ratio << "\n";
+        assert(fabs(1 - ratio) < 1e-8);
+        exit(0);
+    }
+
     optimize(theta, data, lam, lbfgsparam);
 
     ofstream of;
