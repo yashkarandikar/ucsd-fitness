@@ -150,7 +150,7 @@ int randint(int low, int high)
 int get_user_count(Matrix& data) 
 {
     int nrows = data.shape[0];
-    return int(data[nrows-1][0] + 1);
+    return (int)(data[nrows-1][0] + 1);
 }
 
 class Constants
@@ -234,6 +234,7 @@ void Fprime(const lbfgsfloatval_t *theta, Matrix& data, double lam, double *dE, 
         end_u = u_indices[i+1];
         alpha_u = theta[i];
         for (int j = start_u; j < end_u; j++) {
+            assert(data[j][0] == i);
             t = data[j][3];
             d = data[j][2];
             
@@ -312,11 +313,14 @@ void learn(char *infile, double lam, char* outfile)
     int N;
     Matrix data = read_matrix(infile, N);
     int U = get_user_count(data);
+    cout << "U = " << U << "\n";
     int nparams = U + 3;
     lbfgsfloatval_t *theta = lbfgs_malloc(nparams);
     init_random(theta, nparams);
     lbfgs_parameter_t lbfgsparam;
     lbfgs_parameter_init(&lbfgsparam);
+    lbfgsparam.epsilon = 1e-8;
+    lbfgsparam.m = 10;
     bool check_grad = false;
 
     if (check_grad) {
@@ -354,8 +358,10 @@ void learn(char *infile, double lam, char* outfile)
         cout << "numerical = " << numerical << "\n";
 
         double ratio = analytic / numerical;
+        printf("Ratio = %lf\n", ratio);
         cout << "Ratio = " << ratio << "\n";
-        assert(fabs(1 - ratio) < 1e-8);
+        cout << fabs(1.0 - ratio) << "\n";
+        assert(fabs(1.0 - ratio) < 1e-6);
         exit(0);
     }
 
