@@ -524,6 +524,8 @@ void learn(char *infile, double lam1, double lam2, char* outfile)
     init_random(theta, nparams);
     lbfgs_parameter_t lbfgsparam;
     lbfgs_parameter_init(&lbfgsparam);
+    //lbfgsparam.epsilon = 1e-8;
+    lbfgsparam.m = 10;
     
     vector<int> workouts_per_user = get_workouts_per_user(data);
     vector<vector <int> > sigma(U);
