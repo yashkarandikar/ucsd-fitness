@@ -771,7 +771,7 @@ if __name__ == "__main__":
     
     #infile = "endoMondo5000_workouts_condensed.gz"
     infile = "../../data/all_workouts_condensed.gz"
-    mode = "random"  # can be "final" or "random"
+    mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
     #prepare(infile, outfile, mode)

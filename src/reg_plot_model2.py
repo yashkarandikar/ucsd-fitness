@@ -42,6 +42,8 @@ def main():
                     train[lam1] = {}
                 if (not val.has_key(lam1)):
                     val[lam1] = {}
+                if (lam2 == 0):
+                    lam2 = 1e-12;
                 train[lam1][lam2] = train_r2
                 val[lam1][lam2] = val_r2
 
