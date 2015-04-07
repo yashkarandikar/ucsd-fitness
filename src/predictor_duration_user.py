@@ -385,8 +385,8 @@ if __name__ == "__main__":
     train = data["train_set"]
     val = data["val_set"]
 
-    #theta = learn(train, lam)
-    theta = learn_cpp(train, lam)
+    theta = learn(train, lam)
+    #theta = learn_cpp(train, lam)
     
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta)
