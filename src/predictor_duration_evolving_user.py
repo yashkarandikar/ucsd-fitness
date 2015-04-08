@@ -607,7 +607,7 @@ def get_workouts_per_user(data):
     N = data.shape[0]
     U = get_user_count(data)
     uins = np.array(range(0, U))
-    col0 = data[:, 0]
+    col0 = data[:, 0].A1
     u_indices = list(np.searchsorted(col0, uins))
     u_indices.append(N)
     workouts_per_user = [0] * U
