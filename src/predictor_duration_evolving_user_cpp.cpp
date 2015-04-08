@@ -509,9 +509,9 @@ void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, in
     printf("LBFGS terminated with status %d\n", ret);
 }
 
-void learn(char *infile, double lam1, double lam2, char* outfile)
+void learn(char *infile, double lam1, double lam2, char* outfile, int E)
 {
-    int N, E = 5;
+    int N;
     Matrix data = read_matrix(infile, N);
 
     printf("@E = %d,lam1 = %f,lam2 = %f\n", E, lam1, lam2);
@@ -603,11 +603,11 @@ int main(int argc, char* argv[])
 {
     srand(12345);
     // arguments will have data file name, lam1, lam2, out file name
-    assert(argc == 5);
+    assert(argc == 6);
     char* infile = argv[1];
     double lam1 = atof(argv[2]);
     double lam2 = atof(argv[3]);
     char* outfile = argv[4];
-    learn(infile, lam1, lam2, outfile);
-
+    int E = atoi(argv[5]);
+    learn(infile, lam1, lam2, outfile, E);
 }

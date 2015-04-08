@@ -310,10 +310,11 @@ def compute_stats(t_actual, t_pred):
     #assert(t_actual.shape[1] == 1 and t_pred.shape[1] == 1)
     assert(t_actual.shape == t_pred.shape)
     mse = (np.square(t_actual - t_pred)).mean()
+    errors = t_actual - t_pred
     var = np.var(t_actual)
     fvu = mse / var
     r2 = 1 - fvu
-    return [mse, var,fvu, r2]
+    return [mse, var,fvu, r2, errors]
 
 '''
 def compute_stats(data, theta, E, sigma):
@@ -521,6 +522,7 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
+    E = 3
     data_file = "data.txt"
     np.savetxt(data_file, data)
 
@@ -528,7 +530,7 @@ def learn_cpp(data, lam1, lam2):
     infile = data_file
     outfile = "model.txt"
     exec_name = "./predictor_duration_evolving_user_cpp"
-    command = "%s %s %s %s %s" % (exec_name, infile, str(lam1), str(lam2), outfile)
+    command = "%s %s %s %s %s %d" % (exec_name, infile, str(lam1), str(lam2), outfile, E)
     print "Running command %s" % (command)
     assert(os.system(command) == 0)
     print "Done with learning.."
@@ -762,6 +764,12 @@ def check_sorted(data, param_indices):
         if (i < N):
             assert(data[i - 1, ind_u] < data[i, ind_u])
 
+#def plot_avg_error_vs_experience_level(data, errors, sigma, param_indices, E):
+#    t_ind = param_indices["Duration"]
+#    total_errors_by_exp = [0.0] * E
+#    N = data.shape[0]
+#    for i in range(0, N):
+
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
@@ -813,9 +821,9 @@ if __name__ == "__main__":
     print param_indices
 
     print "Computing statistics"
-    [mse, var, fvu, r2] = compute_stats(train_set[:, param_indices["Duration"]], train_pred)
+    [mse, var, fvu, r2, errors] = compute_stats(train_set[:, param_indices["Duration"]], train_pred)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
-    [mse, var, fvu, r2] = compute_stats(val_set[:, param_indices["Duration"]], val_pred)
+    [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["Duration"]], val_pred)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
 
     t2 = time.time()
