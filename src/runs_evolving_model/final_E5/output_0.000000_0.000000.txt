@@ -1,0 +1,79 @@
+Data matrix dimensions = 743987 x 5
+@E = 5,lam1 = 0.000000,lam2 = 0.000000
+U = 52109 , E = 5 , nparams = 260552
+Super Iteration 0..Iteration 1: 
+@fx = 0.372546
+LBFGS terminated with status 0
+Super Iteration 1..Iteration 1: 
+@fx = 0.100975
+LBFGS terminated with status 0
+Super Iteration 2..Iteration 1: 
+@fx = 0.089418
+LBFGS terminated with status 0
+Super Iteration 3..Iteration 1: 
+@fx = 0.087855
+LBFGS terminated with status 0
+Super Iteration 4..Iteration 1: 
+@fx = 0.086853
+LBFGS terminated with status 0
+Super Iteration 5..Iteration 1: 
+@fx = 0.086820
+LBFGS terminated with status 0
+Super Iteration 6..Iteration 1: 
+@fx = 0.086800
+LBFGS terminated with status 0
+Super Iteration 7..Iteration 1: 
+@fx = 0.086789
+LBFGS terminated with status 0
+Super Iteration 8..Iteration 1: 
+@fx = 0.086782
+LBFGS terminated with status 0
+Super Iteration 9..Iteration 1: 
+@fx = 0.086779
+LBFGS terminated with status 0
+Super Iteration 10..Iteration 1: 
+@fx = 0.086777
+LBFGS terminated with status 0
+Super Iteration 11..Iteration 1: 
+@fx = 0.086776
+LBFGS terminated with status 0
+Super Iteration 12..Iteration 1: 
+@fx = 0.086775
+LBFGS terminated with status 0
+Super Iteration 13..Iteration 1: 
+@fx = 0.086775
+LBFGS terminated with status 0
+Super Iteration 14..Iteration 1: 
+@fx = 0.086775
+LBFGS terminated with status 0
+Super Iteration 15..Iteration 1: 
+@fx = 0.086775
+LBFGS terminated with status 0
+Super Iteration 16..Iteration 1: 
+@fx = 0.085839
+LBFGS terminated with status 0
+Super Iteration 17..Iteration 1: 
+@fx = 0.085839
+LBFGS terminated with status 0
+Super Iteration 18..LBFGS terminated with status 2
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of users =  52109
+Training set has 743987 examples
+Validation set has 52109 examples
+Training..
+Running command ./predictor_duration_evolving_user_cpp data.txt 0.0 0.0 model.txt
+Done with learning..
+Reading learned model from file..
+Loading model..
+Adding experience levels to data matrices
+Mode :  final
+Making predictions..
+{'Distance': 2, 'user_id': 1, 'experience': 5, 'Duration': 3, 'user_number': 0, 'date-time': 4}
+Computing statistics
+
+@Training Examples = 743987,MSE = 0.085838,Variance = 0.485242,FVU = 0.176898,R2 = 1 - FVU = 0.823102
+
+@Validation Examples = 52109,MSE = 0.186852,Variance = 0.493200,FVU = 0.378856,R2 = 1 - FVU = 0.621144
+
+@Total time taken =  44.7365169525

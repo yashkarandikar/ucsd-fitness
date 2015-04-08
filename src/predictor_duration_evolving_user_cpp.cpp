@@ -511,7 +511,7 @@ void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, in
 
 void learn(char *infile, double lam1, double lam2, char* outfile)
 {
-    int N, E = 3;
+    int N, E = 5;
     Matrix data = read_matrix(infile, N);
 
     printf("@E = %d,lam1 = %f,lam2 = %f\n", E, lam1, lam2);
