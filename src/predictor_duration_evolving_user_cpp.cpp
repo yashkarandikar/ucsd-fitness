@@ -9,8 +9,11 @@
 #include<vector>
 #include<cassert>
 #include<lbfgs.h>
+#include <dlib/matrix.h>
+#include <dlib/optimization.h>
 
 using namespace std;
+typedef dlib::matrix<double,0,1> column_vector;
 
 double** alloc_matrix(int N, int M);
 void free_matrix(double **mat, int nrows, int ncols);
@@ -122,8 +125,9 @@ void init_random(double **a, int n, int m)
 
 void init_random(double* a, int n)
 {
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++) {
         a[i] = ((double)rand()/(double)RAND_MAX);
+    }
 }
 
 void clear(double *a, int n)
@@ -190,6 +194,17 @@ vector<int> find_best_path_DP(Matrix& M, double& leastError)
     double o1, o2;
     for (int n = 1; n < Nu; n++) {
         for (int m = 0 ; m < E; m++) {
+            /* this code segment considers all experience levels permitted, not just the curent and previous one. Did not improve results.
+            double o_best = numeric_limits<double>::max();
+            for (int i = 0; i <= m; i++) {
+                double o = M[m][n] + D[i][n - 1];
+                if (o < o_best) {
+                    o_best = o;
+                    D[m][n] = o_best;
+                    decision[m][n] = i;
+                }
+            }*/
+            
             o1 = numeric_limits<double>::max();
             if (m > 0)
                 o1 = D[m-1][n-1];
@@ -201,7 +216,7 @@ vector<int> find_best_path_DP(Matrix& M, double& leastError)
             else {
                 D[m][n] = M[m][n] + o2;
                 decision[m][n] = m;
-            }
+            } 
         }
     }
 
@@ -509,10 +524,21 @@ void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, in
     printf("LBFGS terminated with status %d\n", ret);
 }
 
+double F_dlib(Constants c, const column_vector x)
+{
+    lbfgsfloatval_t *theta = new lbfgsfloatval_t[x.nr()];
+    for (int i = 0 ; i < x.nr(); i++)
+        theta[i] = x(i, 0);
+    double f = F(theta, *(c.data), c.lam1, c.lam2, c.E, *(c.sigma));
+    delete[] theta;
+    return f;
+}
+
 void learn(char *infile, double lam1, double lam2, char* outfile, int E)
 {
     int N;
     Matrix data = read_matrix(infile, N);
+    bool check_grad = false;
 
     printf("@E = %d,lam1 = %f,lam2 = %f\n", E, lam1, lam2);
     int U = get_user_count(data);
@@ -524,7 +550,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E)
     init_random(theta, nparams);
     lbfgs_parameter_t lbfgsparam;
     lbfgs_parameter_init(&lbfgsparam);
-    //lbfgsparam.epsilon = 1e-8;
+    //lbfgsparam.epsilon = 1e-6;
     lbfgsparam.m = 10;
     
     vector<int> workouts_per_user = get_workouts_per_user(data);
@@ -534,10 +560,54 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E)
         int Nu = workouts_per_user[u];
         vector<int> v(Nu);
         for (int j = 0 ; j < Nu; j++) {
-            v[j] = randint(0, E);
+            v[j] = randint(0, E - 1);
         }
         sort(v.begin(), v.end());
         sigma[u] = v;
+    }
+
+    if (check_grad) {
+        printf("Checking gradient before training..\n");
+        column_vector m(nparams);
+        for (int i = 0 ; i < nparams; i++) {
+            m(i, 0) = theta[i];
+        }
+
+        // Analytic
+        //ourgrad = np.linalg.norm(eprime_fn(np.array(theta), train, lam), ord = 2)
+        //print "gradient = ", ourgrad
+        lbfgsfloatval_t *dE = new lbfgsfloatval_t[nparams];
+        Fprime(theta, data, lam1, lam2, E, sigma, dE);
+        double analytic = 0;
+        for (int i = 0 ; i < nparams; i++) {
+            analytic += dE[i] * dE[i];
+        }
+        analytic = sqrt(analytic);
+        cout << "analytic = " << analytic << "\n";
+        delete[] dE;
+
+        // Numerical
+        Constants c;
+        c.data = &data;
+        c.lam1 = lam1;
+        c.lam2 = lam2;
+        c.sigma = &sigma;
+        c.E = E;
+        column_vector numerical_grad_vec = dlib::derivative(F_dlib)(c, m);
+        double numerical = 0;
+        for (int i = 0; i < nparams; i++) {
+            double vi = numerical_grad_vec(i, 0);
+            numerical += vi * vi;
+        }
+        numerical = sqrt(numerical);
+        cout << "numerical = " << numerical << "\n";
+
+        double ratio = analytic / numerical;
+        printf("Ratio = %lf\n", ratio);
+        cout << "Ratio = " << ratio << "\n";
+        cout << fabs(1.0 - ratio) << "\n";
+        assert(fabs(1.0 - ratio) < 1e-6);
+        exit(0);
     }
 
     /*check grad first
