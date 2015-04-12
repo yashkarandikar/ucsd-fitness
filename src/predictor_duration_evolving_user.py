@@ -522,7 +522,7 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
-    E = 3
+    E = 5
     data_file = "data.txt"
     np.savetxt(data_file, data)
 
@@ -716,7 +716,7 @@ def prepare(infile, outfile, mode):
     data = remove_outliers(data, params, param_indices, scale_factors)
     
     print "Adding user numbers.."
-    data, param_indices = add_user_number_column(data, param_indices, rare_user_threshold = 10)    # add a user number
+    data, param_indices = add_user_number_column(data, param_indices, rare_user_threshold = 20)    # add a user number
     assert(param_indices == string_list_to_dict(["user_number"] + params))
         
     print "Splitting data into training, validation and test"
@@ -778,7 +778,9 @@ def plot_mse_by_experience_level(data, errors, sigma, param_indices, E):
         mse_by_exp[e] += err * err;
         counts_by_exp[e] += 1.0
     for e in range(0, E):
-        mse_by_exp[e] /= counts_by_exp[e]
+        if (counts_by_exp[e] != 0):
+            mse_by_exp[e] /= counts_by_exp[e]
+    print counts_by_exp
     plt.figure()
     plt.plot(range(0, E), mse_by_exp)
 
@@ -789,8 +791,8 @@ if __name__ == "__main__":
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
     
-    #infile = "endoMondo5000_workouts_condensed.gz"
-    infile = "../../data/all_workouts_condensed.gz"
+    infile = "endoMondo5000_workouts_condensed.gz"
+    #infile = "../../data/all_workouts_condensed.gz"
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
@@ -813,8 +815,8 @@ if __name__ == "__main__":
     lam1 = float(sys.argv[1])
     lam2 = float(sys.argv[2])
     #theta, sigma, E = learn(train_set, lam1, lam2)
-    #theta, sigma, E = learn_cpp(train_set, lam1, lam2)
-    #np.savez("model.npz", theta = theta, sigma = sigma, E = E)
+    theta, sigma, E = learn_cpp(train_set, lam1, lam2)
+    np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
     model = np.load("model.npz")
