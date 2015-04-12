@@ -183,6 +183,9 @@ double F(const lbfgsfloatval_t *theta, Matrix& data, double lam)
             i += 1;
         }
     }
+
+    e = e / (double) N;
+
     // regularization
     //e += lam * theta[:-3].dot(theta[:-3])
     double reg = 0;
@@ -190,7 +193,6 @@ double F(const lbfgsfloatval_t *theta, Matrix& data, double lam)
         reg += theta[i] * theta[i];
     }
     e += lam * reg;
-    e = e / (double) N;
     return e;
 }
 
@@ -257,13 +259,14 @@ void Fprime(const lbfgsfloatval_t *theta, Matrix& data, double lam, double *dE, 
     dE[nparams - 2] = dE_theta0;
     dE[nparams - 1] = dE_theta1;
 
+    for (int i = 0 ; i < nparams; i++)
+        dE[i] = dE[i] / (double) N;
+
     // regularization
     // dE = dE + lam * np.multiply(dE, (2 * theta))
     for (int u = 0; u < U; u++)
         dE[u] += 2 * lam * theta[u];
 
-    for (int i = 0 ; i < nparams; i++)
-        dE[i] = dE[i] / (double) N;
 }
 
 static lbfgsfloatval_t evaluate(void *instance, const lbfgsfloatval_t *theta, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step)
@@ -319,7 +322,7 @@ void learn(char *infile, double lam, char* outfile)
     init_random(theta, nparams);
     lbfgs_parameter_t lbfgsparam;
     lbfgs_parameter_init(&lbfgsparam);
-    lbfgsparam.epsilon = 1e-8;
+    //lbfgsparam.epsilon = 1e-8;
     lbfgsparam.m = 10;
     bool check_grad = false;
 
