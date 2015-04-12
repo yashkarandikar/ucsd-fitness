@@ -310,7 +310,7 @@ def compute_stats(t_actual, t_pred):
     #assert(t_actual.shape[1] == 1 and t_pred.shape[1] == 1)
     assert(t_actual.shape == t_pred.shape)
     mse = (np.square(t_actual - t_pred)).mean()
-    errors = t_actual - t_pred
+    errors = (t_actual - t_pred).A1
     var = np.var(t_actual)
     fvu = mse / var
     r2 = 1 - fvu
@@ -764,11 +764,23 @@ def check_sorted(data, param_indices):
         if (i < N):
             assert(data[i - 1, ind_u] < data[i, ind_u])
 
-#def plot_avg_error_vs_experience_level(data, errors, sigma, param_indices, E):
-#    t_ind = param_indices["Duration"]
-#    total_errors_by_exp = [0.0] * E
-#    N = data.shape[0]
-#    for i in range(0, N):
+def plot_mse_by_experience_level(data, errors, sigma, param_indices, E):
+    t_ind = param_indices["Duration"]
+    mse_by_exp = [0.0] * int(E)
+    counts_by_exp = [0.0] * int(E)
+    N = data.shape[0]
+    sigma = [e for sublist in sigma for e in sublist]
+    assert(len(sigma) == N)
+    assert(len(errors) == N)
+    for i in range(0, N):
+        e = sigma[i]
+        err = errors[i]
+        mse_by_exp[e] += err * err;
+        counts_by_exp[e] += 1.0
+    for e in range(0, E):
+        mse_by_exp[e] /= counts_by_exp[e]
+    plt.figure()
+    plt.plot(range(0, E), mse_by_exp)
 
 if __name__ == "__main__":
     t1 = time.time()
@@ -801,8 +813,8 @@ if __name__ == "__main__":
     lam1 = float(sys.argv[1])
     lam2 = float(sys.argv[2])
     #theta, sigma, E = learn(train_set, lam1, lam2)
-    theta, sigma, E = learn_cpp(train_set, lam1, lam2)
-    np.savez("model.npz", theta = theta, sigma = sigma, E = E)
+    #theta, sigma, E = learn_cpp(train_set, lam1, lam2)
+    #np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
     model = np.load("model.npz")
@@ -822,6 +834,7 @@ if __name__ == "__main__":
 
     print "Computing statistics"
     [mse, var, fvu, r2, errors] = compute_stats(train_set[:, param_indices["Duration"]], train_pred)
+    plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["Duration"]], val_pred)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
@@ -829,10 +842,10 @@ if __name__ == "__main__":
     t2 = time.time()
     print "@Total time taken = ", t2 - t1
 
-    plt.figure()
-    plt.subplot(1,2,0)
-    plot_data(train_set, train_pred, param_indices, title = "Training set")
-    plt.subplot(1,2,1)
-    plot_data(val_set, val_pred, param_indices, title = "Validation set")
+    #plt.figure()
+    #plt.subplot(1,2,0)
+    #plot_data(train_set, train_pred, param_indices, title = "Training set")
+    #plt.subplot(1,2,1)
+    #plot_data(val_set, val_pred, param_indices, title = "Validation set")
 
-    #plt.show()
+    plt.show()
