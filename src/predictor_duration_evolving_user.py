@@ -791,8 +791,8 @@ if __name__ == "__main__":
     #infile = "../../data/all_workouts_train_and_val_condensed.gz"
     #infile = "synth_evolving_user_model.gz"
     
-    infile = "endoMondo5000_workouts_condensed.gz"
-    #infile = "../../data/all_workouts_condensed.gz"
+    #infile = "endoMondo5000_workouts_condensed.gz"
+    infile = "../../data/all_workouts_condensed.gz"
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
