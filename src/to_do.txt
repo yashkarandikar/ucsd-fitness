@@ -1,20 +1,17 @@
+plot avg avg pace vs workout number
+see if evolving user is helping for heart rate prediction and avg pace prediction
+see paper for different ways of using time
+see if applying it for sections of a workout instead of entire workouts work - also try this with heart rate prediction, avg. pace prediction
+
+see difference between parameters for experience levels
+verify derivatives in C++ for model 2
 other ways of using time evolution (maybe linear interpolation between first and last)
-retention plot - same sample
 other features
-2 regularizers - grid search
 baseline model denom term
 compare with baseline models
-number of users per experience level
-C++ convergence
 T test - statistically significant
-random mode - just 1 example
 refactor seconds conversion, experiment with normalization
-speed up packing, unpacking
-experiment with higher values of E
-results with random mode
-cross validation or early stopping
 other measures of error rate : how many examples were classified within reasonable margin?
-user retention plots
 outlier removal ideas - 
     - remove top 10 % and bottom 10 % by workout
     - remove records within 3 standard deviation
