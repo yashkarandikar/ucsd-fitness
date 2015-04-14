@@ -784,6 +784,30 @@ def plot_mse_by_experience_level(data, errors, sigma, param_indices, E):
     plt.figure()
     plt.plot(range(0, E), mse_by_exp)
 
+def plot_avgpace_by_workout_number(data, param_indices):
+    ind_u = param_indices["user_number"]
+    d_ind = param_indices["Distance"]
+    t_ind = param_indices["Duration"]
+    max_workout_number = 50
+    avgpace_by_workout_number = [0.0] * max_workout_number
+    counts_by_workout_number = [0.0] * max_workout_number
+    i = 0
+    N = data.shape[0]
+    while (i < N):
+        u = data[i, ind_u]
+        w = 0
+        while (i < N and data[i, ind_u] == u and w < max_workout_number):
+            pace = data[i, t_ind] * 60.0 / data[i, d_ind]      # min per miles
+            avgpace_by_workout_number[w] += pace
+            counts_by_workout_number[w] += 1.0
+            w += 1
+            i += 1
+    for i in range(0, max_workout_number):
+        avgpace_by_workout_number[i] /= counts_by_workout_number[i]
+    plt.figure()
+    plt.plot(range(0, max_workout_number), avgpace_by_workout_number)
+
+
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
@@ -796,7 +820,7 @@ if __name__ == "__main__":
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
-    #prepare(infile, outfile, mode)
+    prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -837,6 +861,7 @@ if __name__ == "__main__":
     print "Computing statistics"
     [mse, var, fvu, r2, errors] = compute_stats(train_set[:, param_indices["Duration"]], train_pred)
     plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
+    plot_avgpace_by_workout_number(train_set, param_indices)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["Duration"]], val_pred)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
