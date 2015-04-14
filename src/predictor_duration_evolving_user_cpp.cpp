@@ -550,7 +550,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E)
     init_random(theta, nparams);
     lbfgs_parameter_t lbfgsparam;
     lbfgs_parameter_init(&lbfgsparam);
-    //lbfgsparam.epsilon = 1e-6;
+    //lbfgsparam.epsilon = 1e-7;
     lbfgsparam.m = 10;
     
     vector<int> workouts_per_user = get_workouts_per_user(data);
@@ -561,6 +561,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E)
         vector<int> v(Nu);
         for (int j = 0 ; j < Nu; j++) {
             v[j] = randint(0, E - 1);
+            assert(v[j] >= 0 && v[j] < E);
         }
         sort(v.begin(), v.end());
         sigma[u] = v;

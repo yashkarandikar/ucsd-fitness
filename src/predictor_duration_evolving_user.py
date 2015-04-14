@@ -522,7 +522,7 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
-    E = 5
+    E = 3
     data_file = "data.txt"
     np.savetxt(data_file, data)
 
@@ -568,7 +568,7 @@ def learn(data, lam1, lam2):
     workouts_per_user = get_workouts_per_user(data)
     sigma = []
     for u in range(0, U):
-        sigma.append(list(np.sort(randomState.randint(low = 0, high = E, size = (workouts_per_user[u])))))
+        sigma.append(list(np.sort(randomState.randint(low = 0, high = E - 1, size = (workouts_per_user[u])))))
         #sigma.append([0.0] * workouts_per_user[u])
     #sigma = np.array(sigma)
 
@@ -609,7 +609,10 @@ def get_workouts_per_user(data):
     N = data.shape[0]
     U = get_user_count(data)
     uins = np.array(range(0, U))
-    col0 = data[:, 0].A1
+    if (type(data).__name__ == "matrix"):
+        col0 = data[:, 0].A1
+    else:
+        col0 = data[:, 0]
     u_indices = list(np.searchsorted(col0, uins))
     u_indices.append(N)
     workouts_per_user = [0] * U
@@ -716,7 +719,7 @@ def prepare(infile, outfile, mode):
     data = remove_outliers(data, params, param_indices, scale_factors)
     
     print "Adding user numbers.."
-    data, param_indices = add_user_number_column(data, param_indices, rare_user_threshold = 20)    # add a user number
+    data, param_indices = add_user_number_column(data, param_indices, rare_user_threshold = 10)    # add a user number
     assert(param_indices == string_list_to_dict(["user_number"] + params))
         
     print "Splitting data into training, validation and test"
@@ -773,7 +776,7 @@ def plot_mse_by_experience_level(data, errors, sigma, param_indices, E):
     assert(len(sigma) == N)
     assert(len(errors) == N)
     for i in range(0, N):
-        e = sigma[i]
+        e = int(sigma[i])
         err = errors[i]
         mse_by_exp[e] += err * err;
         counts_by_exp[e] += 1.0
@@ -806,6 +809,29 @@ def plot_avgpace_by_workout_number(data, param_indices):
         avgpace_by_workout_number[i] /= counts_by_workout_number[i]
     plt.figure()
     plt.plot(range(0, max_workout_number), avgpace_by_workout_number)
+    plt.xlabel("Workout")
+    plt.ylabel("Average avg. pace (min / mi)")
+
+def plot_avgpace_by_experience(data, param_indices, E):
+    ind_t = param_indices["Duration"]
+    ind_d = param_indices["Distance"]
+    ind_e = param_indices["experience"]
+    avghr_by_exp = [0.0] * int(E)
+    counts_by_exp = [0.0] * int(E)
+    i = 0
+    N = data.shape[0]
+    while (i < N):
+        e = int(data[i, ind_e])
+        pace = data[i, ind_t] * 60.0 / data[i, ind_d]
+        avghr_by_exp[e] += pace
+        counts_by_exp[e] += 1.0
+        i += 1
+    for i in range(0, E):
+        avghr_by_exp[i] /= counts_by_exp[i]
+    plt.figure()
+    plt.plot(range(0, E), avghr_by_exp)
+    plt.xlabel("Experience")
+    plt.ylabel("Average avg. pace (min / mi)")
 
 
 if __name__ == "__main__":
@@ -862,6 +888,7 @@ if __name__ == "__main__":
     [mse, var, fvu, r2, errors] = compute_stats(train_set[:, param_indices["Duration"]], train_pred)
     plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
     plot_avgpace_by_workout_number(train_set, param_indices)
+    plot_avgpace_by_experience(train_set, param_indices, E)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["Duration"]], val_pred)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
