@@ -442,7 +442,7 @@ void Fprime(const double* theta, Matrix& data, double lam1, double lam2, int E, 
 
     // divide by denominator
     for (int i = 0; i < nparams; i++) {
-        dE[i] = dE[i] / N;
+        dE[i] = dE[i] / (double)N;
     }
 
     // regularization 1 and 2
@@ -524,14 +524,43 @@ void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, in
     printf("LBFGS terminated with status %d\n", ret);
 }
 
-double F_dlib(Constants c, const column_vector x)
+Constants dlib_consts;
+
+double F_dlib(const column_vector x)
 {
+    Constants c = dlib_consts;
     lbfgsfloatval_t *theta = new lbfgsfloatval_t[x.nr()];
     for (int i = 0 ; i < x.nr(); i++)
         theta[i] = x(i, 0);
     double f = F(theta, *(c.data), c.lam1, c.lam2, c.E, *(c.sigma));
     delete[] theta;
     return f;
+}
+
+const column_vector Fprime_dlib(const column_vector& m)
+{
+    Constants c = dlib_consts;
+    column_vector dE;
+    dE.set_size(m.nr(), 1);
+    Fprime(m.begin(), *(c.data), c.lam1, c.lam2, c.E, *(c.sigma), dE.begin());
+    return dE;
+}
+
+void optimize_dlib(double* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, lbfgs_parameter_t& param)
+{
+    int U = get_user_count(data);
+    int nparams = U * E + E + 2;
+    dlib_consts.data = &data;
+    dlib_consts.sigma = &sigma;
+    dlib_consts.E = E;
+    dlib_consts.lam1 = lam1;
+    dlib_consts.lam2 = lam2;
+    column_vector starting_point(nparams);
+    for (int i = 0 ; i < nparams; i++)
+        starting_point(i, 0) = theta[i];
+    find_min(dlib::lbfgs_search_strategy(10), dlib::objective_delta_stop_strategy(1e-7), F_dlib, Fprime_dlib, starting_point, numeric_limits<double>::min());
+    for (int i = 0 ; i < nparams; i++)
+        theta[i] = starting_point(i, 0);
 }
 
 void learn(char *infile, double lam1, double lam2, char* outfile, int E)
@@ -551,6 +580,8 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E)
     lbfgs_parameter_t lbfgsparam;
     lbfgs_parameter_init(&lbfgsparam);
     //lbfgsparam.epsilon = 1e-7;
+    lbfgsparam.ftol = 1e-6;
+    lbfgsparam.gtol = 1e-1;
     lbfgsparam.m = 10;
     
     vector<int> workouts_per_user = get_workouts_per_user(data);
@@ -567,6 +598,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E)
         sigma[u] = v;
     }
 
+    /*
     if (check_grad) {
         printf("Checking gradient before training..\n");
         column_vector m(nparams);
@@ -610,6 +642,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E)
         assert(fabs(1.0 - ratio) < 1e-6);
         exit(0);
     }
+    */
 
     /*check grad first
     if (check_grad == True):
@@ -630,6 +663,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E)
         // 1. optimize theta
         //[theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam1, lam2, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
         optimize(theta, data, lam1, lam2, E, sigma, lbfgsparam);
+        //optimize_dlib(theta, data, lam1, lam2, E, sigma, lbfgsparam);
 
         // 2. use DP to fit experience levels
         changed = fit_experience_for_all_users(theta, nparams, data, E, sigma);
