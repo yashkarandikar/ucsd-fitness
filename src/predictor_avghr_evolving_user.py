@@ -522,7 +522,7 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
-    E = 3
+    E = 5
     data_file = "data.txt"
     np.savetxt(data_file, data)
 
@@ -782,6 +782,49 @@ def plot_mse_by_experience_level(data, errors, sigma, param_indices, E):
     plt.figure()
     plt.plot(range(0, E), mse_by_exp)
 
+def plot_avghr_by_workout_number(data, param_indices):
+    ind_u = param_indices["user_number"]
+    hr_ind = param_indices["hr(avg)"]
+    max_workout_number = 50
+    avghr_by_workout_number = [0.0] * max_workout_number
+    counts_by_workout_number = [0.0] * max_workout_number
+    i = 0
+    N = data.shape[0]
+    while (i < N):
+        u = data[i, ind_u]
+        w = 0
+        while (i < N and data[i, ind_u] == u and w < max_workout_number):
+            avghr_by_workout_number[w] += data[i, hr_ind]
+            counts_by_workout_number[w] += 1.0
+            w += 1
+            i += 1
+    for i in range(0, max_workout_number):
+        avghr_by_workout_number[i] /= counts_by_workout_number[i]
+    plt.figure()
+    plt.plot(range(0, max_workout_number), avghr_by_workout_number)
+    plt.xlabel("Workout number")
+    plt.ylabel("Average avg. heart rate (bpm)")
+
+def plot_avghr_by_experience(data, param_indices, E):
+    hr_ind = param_indices["hr(avg)"]
+    ind_e = param_indices["experience"]
+    avghr_by_exp = [0.0] * int(E)
+    counts_by_exp = [0.0] * int(E)
+    i = 0
+    N = data.shape[0]
+    while (i < N):
+        e = int(data[i, ind_e])
+        avghr_by_exp[e] += data[i, hr_ind]
+        counts_by_exp[e] += 1.0
+        i += 1
+    for i in range(0, E):
+        avghr_by_exp[i] /= counts_by_exp[i]
+    plt.figure()
+    plt.plot(range(0, E), avghr_by_exp)
+    plt.xlabel("Experience")
+    plt.ylabel("Average avg. heart rate (bpm)")
+
+
 if __name__ == "__main__":
     t1 = time.time()
     # prepare data set.. Run once and comment it out if running multiple times with same settings
@@ -794,7 +837,7 @@ if __name__ == "__main__":
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
-    prepare(infile, outfile, mode)
+    #prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -835,6 +878,8 @@ if __name__ == "__main__":
     print "Computing statistics"
     [mse, var, fvu, r2, errors] = compute_stats(train_set[:, param_indices["hr(avg)"]], train_pred)
     plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
+    plot_avghr_by_workout_number(train_set, param_indices)
+    plot_avghr_by_experience(train_set, param_indices, E)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["hr(avg)"]], val_pred)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
