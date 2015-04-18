@@ -563,6 +563,23 @@ void optimize_dlib(double* theta, Matrix& data, double lam1, double lam2, int E,
         theta[i] = starting_point(i, 0);
 }
 
+void init_theta_monotonic(double* theta, int nparams, int U, int E)
+{
+    // theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
+    int start;
+    for (int u = 0 ; u < U; u++) {
+        get_alpha_ue(theta, u, 0, E, start);
+        for (int e = 0 ; e < E; e++) {
+            theta[start + e] = (double)rand() / (double) RAND_MAX;
+        }
+        sort(theta + start, theta + start + E, std::greater<double>());
+    }
+    get_alpha_e(theta, 0, E, U, start);
+    for (int e = 0; e < E; e++) 
+        theta[start + e] = (double) rand() / (double) RAND_MAX;
+    sort(theta + start, theta + start + E, std::greater<double>());
+}
+
 void learn(char *infile, double lam1, double lam2, char* outfile, int E)
 {
     int N;
@@ -573,15 +590,14 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E)
     int U = get_user_count(data);
     int nparams = U * E + E + 2;
     cout << "U = " << U << " , E = " << E << " , nparams = " << nparams << "\n";
-    //double *theta = new double[U * E + E + 2];
     lbfgsfloatval_t *theta = lbfgs_malloc(nparams);
-    //vector<double> theta(th, th + U * E + E + 2);
     init_random(theta, nparams);
+    //init_theta_monotonic(theta, nparams, U, E);
     lbfgs_parameter_t lbfgsparam;
     lbfgs_parameter_init(&lbfgsparam);
     //lbfgsparam.epsilon = 1e-7;
-    lbfgsparam.ftol = 1e-6;
-    lbfgsparam.gtol = 1e-1;
+    //lbfgsparam.ftol = 1e-6;
+    //lbfgsparam.gtol = 1e-1;
     lbfgsparam.m = 10;
     
     vector<int> workouts_per_user = get_workouts_per_user(data);
