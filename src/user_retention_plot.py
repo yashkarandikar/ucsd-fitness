@@ -120,7 +120,7 @@ def plot(model_file, data_file):
     is_active, n_active, n_inactive = classify_users(train, param_indices, threshold)
 
     # get avg experience after j number of workouts
-    [active, inactive, n_active, n_inactive] = get_avg_experience_per_workout_number(train, param_indices, is_active, 8)
+    [active, inactive, n_active, n_inactive] = get_avg_experience_per_workout_number(train, param_indices, is_active, threshold = 8)
     max_workout_number = len(active)
     print "number of active users = ", n_active
     print "number of inactive users = ", n_inactive
@@ -153,4 +153,4 @@ def stats(model_file):
 
 if __name__ == "__main__":
     plot("model2_final.npz", "../../data/all_workouts_condensed.gzfinal.npz")
-    #stats("model_3.npz")
+    stats("model2_final.npz")

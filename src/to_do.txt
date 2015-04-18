@@ -1,3 +1,5 @@
+try with dlib or convergence only with max iterations
+randint bugs
 plot avg avg pace vs workout number
 see if evolving user is helping for heart rate prediction and avg pace prediction
 see paper for different ways of using time
