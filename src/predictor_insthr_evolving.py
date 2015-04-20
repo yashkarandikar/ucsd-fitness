@@ -954,7 +954,7 @@ if __name__ == "__main__":
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + "_inst.npz"
 
-    prepare(infile, outfile, mode)
+    #prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
