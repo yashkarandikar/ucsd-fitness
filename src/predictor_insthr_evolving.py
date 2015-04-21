@@ -310,6 +310,8 @@ def add_workout_number_column(data, param_indices, rare_workout_threshold = 1):
             # consider only if more than threshold
             uin += 1
         else:
+            print "workout with less than 200 data points should not have been found !"
+            assert(False)
             # mark for deletion
             for j in range(start_u, end_u):
                 delete_mask[j] = True
@@ -605,8 +607,8 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
-    E = 1
-    lbfgs_max_iterations = 1000
+    E = 1; lbfgs_max_iterations = 1000;
+    #E = 20; lbfgs_max_iterations = 200
     if (E == 1):
         assert(lbfgs_max_iterations == 1000)
     data_file = "data.txt"
@@ -646,8 +648,7 @@ def learn_cpp(data, lam1, lam2):
             w += 1
             if (w % 1000 == 0):
                 used = ps.phymem_usage().percent
-                print str(used) + " percent memory used.."
-                if (used > 50):
+                if (used > 70):
                     print "Too much memory being used.."
                     break
     assert(len(theta) == nparams)
