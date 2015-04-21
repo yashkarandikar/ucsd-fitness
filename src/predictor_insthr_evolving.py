@@ -605,12 +605,15 @@ def experience_check(theta, data, E):
         for i in range(0, E-1):
             assert(predictions[i] > predictions[i+1])
 
-def learn_cpp(data, lam1, lam2):
+def learn_cpp(data, lam1, lam2, E):
     # write data to file
-    E = 1; lbfgs_max_iterations = 1000;
+    #E = 1; lbfgs_max_iterations = 1000;
     #E = 20; lbfgs_max_iterations = 200
     if (E == 1):
-        assert(lbfgs_max_iterations == 1000)
+        lbfgs_max_iterations == 1000
+    else:
+        lbfgs_max_iterations = 200
+
     data_file = "data.txt"
 
     np.savetxt(data_file, data, fmt = "%.6f")
@@ -631,7 +634,8 @@ def learn_cpp(data, lam1, lam2):
     print "Reading learned model from file.."
     with open("E_" + outfile) as f:
         print "\tReading E.."
-        E = int(f.readline().strip())
+        temp_E = int(f.readline().strip())
+        assert(temp_E == E)
     with open("theta_" + outfile) as f:
         theta = []
         print "\tReading theta.."
@@ -654,25 +658,7 @@ def learn_cpp(data, lam1, lam2):
     assert(len(theta) == nparams)
     assert(len(sigma) == W)
 
-    """
-    with open(outfile) as f:
-        for line in f:
-            parts = line.strip().split("=")
-            assert(len(parts) == 2)
-            k, v = parts
-            if (k == "theta"):
-                print "reading theta"
-                theta = eval(v)
-            elif (k == "sigma"):
-                print "reading sigma"
-                sigma = eval(v)
-            elif (k == "E"):
-                print "reading E"
-                E = eval(v)
-            else:
-                raise Exception("error in parsing outfile of cpp executable")
-    """
-    return theta, sigma, E
+    return theta, sigma
 
 def learn(data, lam1, lam2):
     E = 3       # number of tiredness levels
@@ -995,9 +981,9 @@ def plot_avghr_by_tiredness(data, param_indices, E):
         avghr_by_exp[i] /= counts_by_exp[i]
     plt.figure()
     plt.plot(range(0, E), avghr_by_exp)
-    plt.xlabel("Experience")
+    plt.xlabel("Tiredness")
     plt.ylabel("Average HR (bpm)")
-
+    plt.savefig("tiredness_vs_avhgr_E%d" % (E))
 
 if __name__ == "__main__":
     t1 = time.time()
@@ -1026,8 +1012,9 @@ if __name__ == "__main__":
     print "Training.."
     lam1 = float(sys.argv[1])
     lam2 = float(sys.argv[2])
+    E = int(sys.argv[3])
     #theta, sigma, E = learn(train_set, lam1, lam2)
-    theta, sigma, E = learn_cpp(train_set, lam1, lam2)
+    theta, sigma = learn_cpp(train_set, lam1, lam2, E)
     np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
@@ -1051,9 +1038,9 @@ if __name__ == "__main__":
     #plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
     #plot_avgpace_by_workout_number(train_set, param_indices)
     plot_avghr_by_tiredness(train_set, param_indices, E)
-    print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
+    print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (train_set.shape[0],mse, var, fvu, r2, E)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["hr"]], val_pred)
-    print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
+    print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (val_set.shape[0],mse, var, fvu, r2, E)
 
     t2 = time.time()
     print "@Total time taken = ", t2 - t1
@@ -1064,4 +1051,4 @@ if __name__ == "__main__":
     #plt.subplot(1,2,1)
     #plot_data(val_set, val_pred, param_indices, title = "Validation set")
 
-    plt.show()
+    #plt.show()
