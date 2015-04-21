@@ -14,8 +14,9 @@ import pyximport; pyximport.install()
 from predictor_duration_evolving_user_pyx import F_pyx, Fprime_pyx
 import os
 from param_formatter import ParamFormatter
+import psutil as ps
 
-def read_data_as_lists(infile, sport, params, min_distance = 1.0, max_distance = 100, min_data_points = 200, min_duration = 100, max_duration = 172800):   # min duration is 100 s
+def read_data_as_lists(infile, sport, params, min_distance = 1.0, max_distance = 100.0, min_data_points = 200, min_duration = 100.0, max_duration = 172800.0):   # min duration is 100 s
     print "Infile : ", infile
     print "params : ", params
     sport_missing = 0
@@ -80,7 +81,7 @@ def read_data_as_lists(infile, sport, params, min_distance = 1.0, max_distance =
     return data
 
 
-def get_user_count(data):
+def get_workout_count(data):
     assert(type(data).__name__ == "list" or type(data).__name__ == "matrix" or type(data).__name__ == "ndarray")
     if (type(data).__name__ == "matrix" or type(data).__name__ == "ndarray"):
         return int(data[-1,0] + 1)   # since user numbers start from 0
@@ -152,7 +153,7 @@ def F(theta, data, lam, E, sigma):
     # theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
     t1 = time.time()
-    U = get_user_count(data)
+    U = get_workout_count(data)
     assert(theta.shape[0] == U * E + E + 2)
     w = 0
     N = data.shape[0]
@@ -196,7 +197,7 @@ def Fprime(theta, data, lam, E, sigma):
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
     t1 = time.time()
     N = data.shape[0]
-    U = get_user_count(data)
+    U = get_workout_count(data)
     assert(theta.shape[0] == U * E + E + 2)
     N = data.shape[0]
     theta_0 = get_theta_0(theta)
@@ -256,7 +257,7 @@ def shuffle_and_split_data_by_workout(data, mode, fraction = 0.5):
     i = 0
     N = len(data)
     randomState = np.random.RandomState(seed = 12345)
-    n_users = get_user_count(data)
+    n_users = get_workout_count(data)
     uins = np.array(range(0, n_users))
     col0 = data[:, 0].A1
     u_indices = list(np.searchsorted(col0, uins))
@@ -349,7 +350,7 @@ def convert_to_numbers(data):
 def make_predictions(data, theta, E, param_indices):
     # use experience levels stored in last column
     N = data.shape[0]
-    U = get_user_count(data)
+    U = get_workout_count(data)
     theta_0 = get_theta_0(theta)
     theta_1 = get_theta_1(theta)
     tpred = np.matrix([0.0] * N).T
@@ -358,6 +359,7 @@ def make_predictions(data, theta, E, param_indices):
     d_ind = param_indices["distance"]
     t_ind = param_indices["hr"]
     e_ind = param_indices["experience"]
+    """
     while w < N:
         u = int(data[w, 0])
         i = 0
@@ -369,6 +371,22 @@ def make_predictions(data, theta, E, param_indices):
             tpred[w] = (a_e + a_ue) * (theta_0 + theta_1 * d)
             w += 1
             i += 1
+            if (w % 1000000 == 0):
+                print "%d data points done.." % (w)
+    """
+    for w in xrange(0, N):
+        u = int(data[w, 0])
+        i = 0
+        e = data[w, e_ind]
+        a_ue = get_alpha_ue(theta, u, e, E)[0]
+        a_e = get_alpha_e(theta, e, E, U)[0]
+        d = data[w, d_ind]
+        tpred[w] = (a_e + a_ue) * (theta_0 + theta_1 * d)
+        w += 1
+        i += 1
+        if (w % 1000000 == 0):
+            print "%d data points done.." % (w)
+
     return tpred
 
 def compute_stats(t_actual, t_pred):
@@ -384,7 +402,7 @@ def compute_stats(t_actual, t_pred):
 '''
 def compute_stats(data, theta, E, sigma):
     N = data.shape[0]
-    U = get_user_count(data)
+    U = get_workout_count(data)
     theta_0 = get_theta_0(theta)
     theta_1 = get_theta_1(theta)
     t = np.array([0.0] * N)
@@ -425,7 +443,7 @@ def compute_stats(data, theta, E, sigma):
 
 def compute_stats_validation(data, theta, E, sigma):
     N = data.shape[0]
-    U = get_user_count(data)
+    U = get_workout_count(data)
     theta_0 = get_theta_0(theta)
     theta_1 = get_theta_1(theta)
     t = np.array([0.0] * N)
@@ -530,7 +548,7 @@ def find_best_path_DP(M):
 
 def fit_tiredness_for_all_workouts(theta, data, E, sigma):
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
-    U = get_user_count(data)
+    U = get_workout_count(data)
     N = data.shape[0]
     row = 0
     theta_0 = get_theta_0(theta)
@@ -572,7 +590,7 @@ def fit_tiredness_for_all_workouts(theta, data, E, sigma):
 def experience_check(theta, data, E):
     # intuitively, given the same distance, the predicted duration must be lower with increasing experience. This functions tries to test this.
     d = 12.32
-    U = get_user_count(data)
+    U = get_workout_count(data)
     theta0 = get_theta_0(theta)
     theta1 = get_theta_0(theta)
     for u in range(0, U):
@@ -587,34 +605,72 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
-    E = 20
+    E = 1
+    lbfgs_max_iterations = 1000
+    if (E == 1):
+        assert(lbfgs_max_iterations == 1000)
     data_file = "data.txt"
-    np.savetxt(data_file, data)
+
+    np.savetxt(data_file, data, fmt = "%.6f")
 
     # call cpp executable
     infile = data_file
     outfile = "model.txt"
-    exec_name = "./predictor_duration_evolving_user_cpp"
-    command = "%s %s %s %s %s %d" % (exec_name, infile, str(lam1), str(lam2), outfile, E)
+    exec_name = "./predictor_insthr_evolving_cpp"
+    command = "%s %s %s %s %s %d %d" % (exec_name, infile, str(lam1), str(lam2), outfile, E, lbfgs_max_iterations)
     print "Running command %s" % (command)
     assert(os.system(command) == 0)
     print "Done with learning.."
 
     # read output from file
+    W = get_workout_count(data)
+    samples_per_workout = get_samples_per_workout(data)
+    nparams = W * E + E + 2
     print "Reading learned model from file.."
+    with open("E_" + outfile) as f:
+        print "\tReading E.."
+        E = int(f.readline().strip())
+    with open("theta_" + outfile) as f:
+        theta = []
+        print "\tReading theta.."
+        for line in f:
+            theta.append(float(line.strip()))
+    with open("sigma_" + outfile) as f:
+        print "\tReading sigma.."
+        sigma = []
+        w = 0
+        for line in f:
+            sigma_w = eval(line.strip())
+            assert(len(sigma_w) == samples_per_workout[w])
+            sigma.append(sigma_w)
+            w += 1
+            if (w % 1000 == 0):
+                used = ps.phymem_usage().percent
+                print str(used) + " percent memory used.."
+                if (used > 50):
+                    print "Too much memory being used.."
+                    break
+    assert(len(theta) == nparams)
+    assert(len(sigma) == W)
+
+    """
     with open(outfile) as f:
         for line in f:
             parts = line.strip().split("=")
             assert(len(parts) == 2)
             k, v = parts
             if (k == "theta"):
+                print "reading theta"
                 theta = eval(v)
             elif (k == "sigma"):
+                print "reading sigma"
                 sigma = eval(v)
             elif (k == "E"):
+                print "reading E"
                 E = eval(v)
             else:
                 raise Exception("error in parsing outfile of cpp executable")
+    """
     return theta, sigma, E
 
 def learn(data, lam1, lam2):
@@ -626,11 +682,11 @@ def learn(data, lam1, lam2):
     Fprime_fn = Fprime_pyx
 
     print "@E = %d,lam1 = %f,lam2 = %f" % (E, lam1, lam2)
-    U = get_user_count(data)
+    U = get_workout_count(data)
     randomState = np.random.RandomState(12345)
     #theta = np.array([1.0] * (U * E + E + 2))
     theta = randomState.rand(U * E + E + 2)
-    workouts_per_user = get_workouts_per_user(data)
+    workouts_per_user = get_samples_per_workout(data)
     sigma = []
     for u in range(0, U):
         sigma.append(list(np.sort(randomState.randint(low = 0, high = E - 1, size = (workouts_per_user[u])))))
@@ -669,10 +725,10 @@ def learn(data, lam1, lam2):
 
     return theta, sigma, E
 
-def get_workouts_per_user(data):
+def get_samples_per_workout(data):
     assert(type(data).__name__ == "matrix" or type(data).__name__ == "ndarray")
     N = data.shape[0]
-    U = get_user_count(data)
+    U = get_workout_count(data)
     uins = np.array(range(0, U))
     if (type(data).__name__ == "matrix"):
         col0 = data[:, 0].A1
@@ -690,7 +746,7 @@ def get_workouts_per_user(data):
 def add_experience_column_to_train_set(train_set, sigma, param_indices):
     np.set_printoptions(suppress = True)
     np.set_printoptions(precision = 2)
-    U = get_user_count(train_set)
+    U = get_workout_count(train_set)
     #assert(U == len(sigma))
     N = train_set.shape[0]
     exp_col = np.matrix([0] * N).T
@@ -714,7 +770,7 @@ def add_experience_column_to_test_set(test_set, train_set, param_indices, mode =
     print "Mode : ", mode
     N_train = train_set.shape[0]
     N_test = test_set.shape[0]
-    U = get_user_count(train_set)
+    U = get_workout_count(train_set)
     exp_col = np.matrix([0] * test_set.shape[0]).T
     exp_ind = param_indices["experience"]
     datetime_ind = param_indices["duration"]
@@ -722,7 +778,7 @@ def add_experience_column_to_test_set(test_set, train_set, param_indices, mode =
     train_u_indices = list(np.searchsorted(np.matrix(train_set[:, 0]).A1, uins)); train_u_indices.append(N_train)
     test_u_indices = list(np.searchsorted(np.matrix(test_set[:, 0]).A1, uins)); test_u_indices.append(N_test)
     if (mode == "final"):
-        assert (U == get_user_count(test_set) and test_set.shape[0] == U)
+        assert (U == get_workout_count(test_set) and test_set.shape[0] == U)
         for u in range(0, U):
             #Nu = train_u_indices[u+1] - train_u_indices[u]
             assert(test_set[u][0] == u)     # since we have exactly 1 workout per user in final mode
@@ -815,11 +871,11 @@ def prepare(infile, outfile, mode):
     
     print "Reading data.."
     data = read_data_as_lists(infile, sport, params)
+    print "Converting data matrix to numpy format"
     data = convert_to_matrix(data, param_indices)
     
     convert_sec_to_hours(data, param_indices)
 
-    print "Converting data matrix to numpy format"
     cols = []
     #cols.append(param_indices["Duration"])
     #cols.append(param_indices["Distance"])
@@ -830,7 +886,7 @@ def prepare(infile, outfile, mode):
     #data = remove_outliers(data, params, param_indices, scale_factors)
     
     print "Adding workouts numbers.."
-    data, param_indices = add_workout_number_column(data, param_indices, rare_workout_threshold = 100)    # add a user number
+    data, param_indices = add_workout_number_column(data, param_indices, rare_workout_threshold = 200)    # add a user number
     assert(param_indices == string_list_to_dict(["workout_number"] + params))
         
     print "Splitting data into training, validation and test"
@@ -840,7 +896,7 @@ def prepare(infile, outfile, mode):
     print "Train set contains %d data points\nValidation contains %d data points\nTest set contains %d data points" % (train_set.shape[0], val_set.shape[0], test_set.shape[0])
     assert(not np.array_equal(train_set, test_set))
     assert(not np.array_equal(val_set, test_set))
-    assert(get_user_count(train_set) == get_user_count(val_set) and get_user_count(val_set) == get_user_count(test_set))
+    assert(get_workout_count(train_set) == get_workout_count(val_set) and get_workout_count(val_set) == get_workout_count(test_set))
     
     print "Saving data to disk"
     np.savez(outfile, train_set = train_set, val_set = val_set, param_indices = param_indices)
@@ -944,17 +1000,14 @@ def plot_avghr_by_tiredness(data, param_indices, E):
 
 if __name__ == "__main__":
     t1 = time.time()
-    # prepare data set.. Run once and comment it out if running multiple times with same settings
-    #infile = "temp.gz"
-    #infile = "../../data/all_workouts_train_and_val_condensed.gz"
-    #infile = "synth_evolving_user_model.gz"
-    
-    #infile = "../../data/endoMondo5000_workouts.gz"
-    infile = "../../data/all_workouts.gz"
+ 
+    infile = "../../data/endoMondo5000_workouts.gz"
+    #infile = "../../data/all_workouts.gz"
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + "_inst.npz"
 
-    #prepare(infile, outfile, mode)
+    # prepare data set.. Run once and comment it out if running multiple times with same settings
+    prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -965,7 +1018,7 @@ if __name__ == "__main__":
     check_sorted(train_set, param_indices)
     check_sorted(val_set, param_indices)
 
-    print "Number of users = ", get_user_count(train_set)
+    print "Number of workouts = ", get_workout_count(train_set)
     print "Training set has %d examples" % (train_set.shape[0])
     print "Validation set has %d examples" % (val_set.shape[0])
 
