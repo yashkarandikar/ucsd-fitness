@@ -11,7 +11,7 @@ import time
 import random
 import sys
 import pyximport; pyximport.install()
-from predictor_duration_evolving_user_pyx import F_pyx, Fprime_pyx
+from predictor_insthr_evolving_pyx import F_pyx, Fprime_pyx, make_predictions_pyx
 import os
 from param_formatter import ParamFormatter
 import psutil as ps
@@ -1001,13 +1001,13 @@ def plot_avghr_by_tiredness(data, param_indices, E):
 if __name__ == "__main__":
     t1 = time.time()
  
-    infile = "../../data/endoMondo5000_workouts.gz"
-    #infile = "../../data/all_workouts.gz"
+    #infile = "../../data/endoMondo5000_workouts.gz"
+    infile = "../../data/all_workouts.gz"
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + "_inst.npz"
 
     # prepare data set.. Run once and comment it out if running multiple times with same settings
-    prepare(infile, outfile, mode)
+    #prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -1041,8 +1041,8 @@ if __name__ == "__main__":
     val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = mode)
 
     print "Making predictions.."
-    train_pred = make_predictions(train_set, theta, E, param_indices)
-    val_pred = make_predictions(val_set, theta, E, param_indices)
+    train_pred = make_predictions_pyx(train_set, theta, E, param_indices)
+    val_pred = make_predictions_pyx(val_set, theta, E, param_indices)
     print param_indices
 
     print "Computing statistics"
