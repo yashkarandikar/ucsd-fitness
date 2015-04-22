@@ -610,7 +610,7 @@ def learn_cpp(data, lam1, lam2, E):
     #E = 1; lbfgs_max_iterations = 1000;
     #E = 20; lbfgs_max_iterations = 200
     if (E == 1):
-        lbfgs_max_iterations = 1000
+        lbfgs_max_iterations = 2000
     else:
         lbfgs_max_iterations = 200
 
