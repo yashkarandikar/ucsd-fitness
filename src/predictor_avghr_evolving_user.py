@@ -522,7 +522,7 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
-    E = 5
+    E = 3
     data_file = "data.txt"
     np.savetxt(data_file, data)
 
@@ -893,4 +893,4 @@ if __name__ == "__main__":
     #plt.subplot(1,2,1)
     #plot_data(val_set, val_pred, param_indices, title = "Validation set")
 
-    plt.show()
+    #plt.show()

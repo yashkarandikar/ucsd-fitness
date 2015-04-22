@@ -1,4 +1,4 @@
-try with dlib or convergence only with max iterations
+do proper grid search for prediction of avghr
 randint bugs
 plot avg avg pace vs workout number
 see if evolving user is helping for heart rate prediction and avg pace prediction
