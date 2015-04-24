@@ -1045,6 +1045,8 @@ if __name__ == "__main__":
     t2 = time.time()
     print "@Total time taken = ", t2 - t1
 
+    print theta
+
     #plt.figure()
     #plt.subplot(1,2,0)
     #plot_data(train_set, train_pred, param_indices, title = "Training set")
