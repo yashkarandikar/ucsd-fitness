@@ -306,11 +306,12 @@ def add_workout_number_column(data, param_indices, rare_workout_threshold = 1):
             i += 1
         end_u = i
         n_u = end_u - start_u
-        if (n_u > rare_workout_threshold):
+        if (n_u >= rare_workout_threshold):
             # consider only if more than threshold
             uin += 1
         else:
             print "workout with less than 200 data points should not have been found !"
+            print n_u
             assert(False)
             # mark for deletion
             for j in range(start_u, end_u):
@@ -805,7 +806,7 @@ def add_experience_column_to_test_set(test_set, train_set, param_indices, mode =
         assert(param_indices["experience"] == train_set.shape[1] - 1)
     return test_set
 
-def convert_to_matrix(data, param_indices):
+def convert_to_matrix(data, param_indices, rare_workout_threshold = 200):
     print "Converting to matrix.."
     w_ind = param_indices["workout_id"]
     p_ind = param_indices["hr"]
@@ -826,11 +827,12 @@ def convert_to_matrix(data, param_indices):
         distance = [z[1] for z in zipped]
         duration = [z[2] for z in zipped]
         assert(len(pace) == len(duration) and len(duration) == len(distance))
-        all_workoutid += [d[w_ind]] * len(pace)
-        all_pace += pace
-        all_distance += distance
-        all_duration += duration
-        N += len(pace)
+        if (len(pace) >= rare_workout_threshold):
+            all_workoutid += [d[w_ind]] * len(pace)
+            all_pace += pace
+            all_distance += distance
+            all_duration += duration
+            N += len(pace)
 
     assert(len(all_pace) == len(all_duration) and len(all_duration) == len(all_distance))
     all_pace = [float(p) for p in all_pace]
@@ -861,7 +863,7 @@ def prepare(infile, outfile, mode):
     print "Converting data matrix to numpy format"
     data = convert_to_matrix(data, param_indices)
     
-    convert_sec_to_hours(data, param_indices)
+    #convert_sec_to_hours(data, param_indices)
 
     cols = []
     #cols.append(param_indices["Duration"])
