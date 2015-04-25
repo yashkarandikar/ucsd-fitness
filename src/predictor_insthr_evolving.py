@@ -677,7 +677,7 @@ def learn(data, lam1, lam2):
     workouts_per_user = get_samples_per_workout(data)
     sigma = []
     for u in range(0, U):
-        sigma.append(list(np.sort(randomState.randint(low = 0, high = E - 1, size = (workouts_per_user[u])))))
+        sigma.append(list(np.sort(randomState.randint(low = 0, high = E, size = (workouts_per_user[u])))))
         #sigma.append([0.0] * workouts_per_user[u])
     #sigma = np.array(sigma)
 
