@@ -1036,7 +1036,7 @@ def plot_avghr_by_tiredness(data, param_indices, E):
     plt.ylabel("Average HR (bpm)")
     plt.savefig("tiredness_vs_avhgr_E%d" % (E))
     
-def alternate_tiredness_hr(data, theta, E, param_indices, initial_sigma = None):
+def alternate_tiredness_hr(data, theta, E, param_indices, initial_sigma = None, last_e = None):
     # given theta, alternate between tiredness and hr till convergence
 
     # first initialize sigma randomly
@@ -1061,7 +1061,7 @@ def alternate_tiredness_hr(data, theta, E, param_indices, initial_sigma = None):
         
         # compute sigma
         print "Fitting tiredness levels.."
-        changed = fit_tiredness_for_all_workouts_pyx(theta, data, E, sigma, hr = hr)
+        changed = fit_tiredness_for_all_workouts_pyx(theta, data, E, sigma, hr = hr, last_e = last_e)
 
         n_iter += 1
 
@@ -1082,7 +1082,8 @@ def initialize_next_sigma(next_data, prev_data, prev_sigma):
     last_e = get_last_tiredness_levels(prev_data, prev_sigma)
     sigma = []
     for w in range(0, W):
-        sigma.append(list(np.sort(randomState.randint(low = last_e[w], high = E, size = (samples_per_workout[w])))))
+        sigma.append(list(np.sort(randomState.randint(low = last_e[w], high = last_e[w]+1, size = (samples_per_workout[w])))))
+    return sigma, last_e
 
 if __name__ == "__main__":
     t1 = time.time()
@@ -1113,8 +1114,8 @@ if __name__ == "__main__":
     lam2 = float(sys.argv[2])
     E = int(sys.argv[3])
     #theta, sigma, E = learn(train_set, lam1, lam2)
-    #theta, sigma = learn_cpp(train_set, lam1, lam2, E)
-    #np.savez("model.npz", theta = theta, sigma = sigma, E = E)
+    theta, sigma = learn_cpp(train_set, lam1, lam2, E)
+    np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
     model = np.load("model.npz")
@@ -1123,10 +1124,11 @@ if __name__ == "__main__":
     E = model["E"]
 
     print "Alternating to fit sigma and hr"
-    hr_train, sigma_train = alternate_tiredness_hr(train_set, theta, E, param_indices, initial_sigma = sigma)
-    sigma_val = initialize_next_sigma(val_set, train_set, sigma_train)
-    hr_val, sigma_val = alternate_tiredness_hr(val_set, theta, E, param_indices, initial_sigma = sigma_val)
-    del sigma
+    #hr_train, sigma_train = alternate_tiredness_hr(train_set, theta, E, param_indices, initial_sigma = sigma)
+    sigma_train = sigma
+    sigma_val, last_e = initialize_next_sigma(val_set, train_set, sigma_train)
+    #hr_val, sigma_val = alternate_tiredness_hr(val_set, theta, E, param_indices, initial_sigma = sigma_val, last_e = last_e)
+    #del sigma
 
     # add the experience level to each workout in train, validation and test set
     print "Adding experience levels to data matrices"
