@@ -1046,7 +1046,7 @@ def alternate_tiredness_hr(data, theta, E, param_indices, initial_sigma = None, 
         sigma = []
         randomState = np.random.RandomState(12345)
         for w in range(0, W):
-            sigma.append(list(np.sort(randomState.randint(low = 0, high = E - 1, size = (samples_per_workout[w])))))
+            sigma.append(list(np.sort(randomState.randint(low = 0, high = E, size = (samples_per_workout[w])))))
     else:
         sigma = initial_sigma
 
@@ -1075,14 +1075,17 @@ def get_last_tiredness_levels(data, sigma):
         last_e[w] = sigma[w][-1]
     return last_e
 
-def initialize_next_sigma(next_data, prev_data, prev_sigma):
+def initialize_next_sigma(next_data, prev_data, prev_sigma, E, future_tiredness_fitting = True):
     W = get_workout_count(next_data)
     samples_per_workout = get_samples_per_workout(next_data)
     randomState = np.random.RandomState(12345)
     last_e = get_last_tiredness_levels(prev_data, prev_sigma)
     sigma = []
-    for w in range(0, W):
-        sigma.append(list(np.sort(randomState.randint(low = last_e[w], high = last_e[w]+1, size = (samples_per_workout[w])))))
+    for w in range(0, W): 
+        high_E = E
+        if (future_tiredness_fitting == False):
+            high_E = last_e[w] + 1
+        sigma.append(list(np.sort(randomState.randint(low = last_e[w], high = high_E, size = (samples_per_workout[w])))))
     return sigma, last_e
 
 if __name__ == "__main__":
@@ -1091,6 +1094,8 @@ if __name__ == "__main__":
     #infile = "../../data/endoMondo5000_workouts.gz"
     infile = "../../data/all_workouts.gz"
     mode = "final"  # can be "final" or "random"
+    future_tiredness_fitting = False
+    
     outfile = infile + mode + "_inst_many.npz"
 
     # prepare data set.. Run once and comment it out if running multiple times with same settings
@@ -1114,8 +1119,8 @@ if __name__ == "__main__":
     lam2 = float(sys.argv[2])
     E = int(sys.argv[3])
     #theta, sigma, E = learn(train_set, lam1, lam2)
-    theta, sigma = learn_cpp(train_set, lam1, lam2, E)
-    np.savez("model.npz", theta = theta, sigma = sigma, E = E)
+    #theta, sigma = learn_cpp(train_set, lam1, lam2, E)
+    #np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
     model = np.load("model.npz")
@@ -1123,12 +1128,16 @@ if __name__ == "__main__":
     sigma = model["sigma"]
     E = model["E"]
 
-    print "Alternating to fit sigma and hr"
-    #hr_train, sigma_train = alternate_tiredness_hr(train_set, theta, E, param_indices, initial_sigma = sigma)
-    sigma_train = sigma
-    sigma_val, last_e = initialize_next_sigma(val_set, train_set, sigma_train)
-    #hr_val, sigma_val = alternate_tiredness_hr(val_set, theta, E, param_indices, initial_sigma = sigma_val, last_e = last_e)
-    #del sigma
+    if (future_tiredness_fitting) :
+        print "Alternating to fit sigma and hr"
+        #hr_train, sigma_train = alternate_tiredness_hr(train_set, theta, E, param_indices, initial_sigma = sigma)
+        sigma_train = sigma
+        sigma_val, last_e = initialize_next_sigma(val_set, train_set, sigma_train, E, future_tiredness_fitting = True)
+        hr_val, sigma_val = alternate_tiredness_hr(val_set, theta, E, param_indices, initial_sigma = sigma_val, last_e = last_e)
+    else:
+        print "Assuming last tiredness levels for validation and test sets.."
+        sigma_train = sigma
+        sigma_val, last_e = initialize_next_sigma(val_set, train_set, sigma_train, E, future_tiredness_fitting = False)
 
     # add the experience level to each workout in train, validation and test set
     print "Adding experience levels to data matrices"

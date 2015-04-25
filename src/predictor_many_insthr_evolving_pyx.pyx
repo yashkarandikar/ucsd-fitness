@@ -65,6 +65,7 @@ def fit_tiredness_for_all_workouts_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.nda
     cdef double theta_1 = get_theta_1(theta)
     cdef double d, a_ue, a_e, tprime, diff, minError
     cdef np.ndarray[DTYPE_t, ndim=2] M
+    cdef int n_skipped = 0
     changed = False
     for u in range(0, U):
         Nu = 0
@@ -79,35 +80,39 @@ def fit_tiredness_for_all_workouts_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.nda
             low_E = last_e[u]
         n_E = E - low_E
 
-        # populate M
-        M = np.zeros((n_E, Nu))
-        for j in range(0, Nu):  # over all workouts for this user
-            if (hr is None):
-                t = data[row_u + j, 3]    # actual time for that workout
-            else:
-                t = hr[row_u + j]
-            d = data[row_u + j, 2]
-            for i in range(low_E, E):       # over all experience levels
-                a_ue = get_alpha_ue(theta, u, i, E)[0]
-                a_e = get_alpha_e(theta, i, E, U)[0]
-                tprime = (a_e + a_ue) * (theta_0 + theta_1 * d)
-                diff = t - tprime
-                M[i - low_E, j] = diff * diff
+        if (n_E > 1):
+            # populate M
+            M = np.zeros((n_E, Nu))
+            for j in range(0, Nu):  # over all workouts for this user
+                if (hr is None):
+                    t = data[row_u + j, 3]    # actual time for that workout
+                else:
+                    t = hr[row_u + j]
+                d = data[row_u + j, 2]
+                for i in range(low_E, E):       # over all experience levels
+                    a_ue = get_alpha_ue(theta, u, i, E)[0]
+                    a_e = get_alpha_e(theta, i, E, U)[0]
+                    tprime = (a_e + a_ue) * (theta_0 + theta_1 * d)
+                    diff = t - tprime
+                    M[i - low_E, j] = diff * diff
 
 
-        [minError, bestPath] = find_best_path_DP(M)
-        bestPath = [e + low_E for e in bestPath]
-        #print minError, bestPath
-        # update sigma matrix using bestPath
-        for i in range(0, Nu):
-            if (sigma[u][i] != bestPath[i]):
-                sigma[u][i] = bestPath[i]
-                changed = True
-                #print "Updated sigma[%d, %d].." % (u, i)
-                #print sigma[u, :]
+            [minError, bestPath] = find_best_path_DP(M)
+            bestPath = [e + low_E for e in bestPath]
+            #print minError, bestPath
+            # update sigma matrix using bestPath
+            for i in range(0, Nu):
+                if (sigma[u][i] != bestPath[i]):
+                    sigma[u][i] = bestPath[i]
+                    changed = True
+                    #print "Updated sigma[%d, %d].." % (u, i)
+                    #print sigma[u, :]
+        else:
+            n_skipped += 1
         if (u % 10000 == 0):
-            print "Done %d out of %d" % (u, U)
+            print "Done %d out of %d, (%d skipped)" % (u, U, n_skipped)
         
+    print "Done fitting tiredness levels.. %d workouts skipped " % (n_skipped)
     return changed
 
 
