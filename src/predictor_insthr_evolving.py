@@ -606,7 +606,7 @@ def experience_check(theta, data, E):
         for i in range(0, E-1):
             assert(predictions[i] > predictions[i+1])
 
-def learn_cpp(data, lam1, lam2, E):
+def learn_cpp(data, lam1, lam2, E, use_features):
     # write data to file
     #E = 1; lbfgs_max_iterations = 1000;
     #E = 20; lbfgs_max_iterations = 200
@@ -623,7 +623,7 @@ def learn_cpp(data, lam1, lam2, E):
     infile = data_file
     outfile = "model.txt"
     exec_name = "./predictor_insthr_evolving_cpp"
-    command = "%s %s %s %s %s %d %d" % (exec_name, infile, str(lam1), str(lam2), outfile, E, lbfgs_max_iterations)
+    command = "%s %s %s %s %s %d %d %d" % (exec_name, infile, str(lam1), str(lam2), outfile, E, lbfgs_max_iterations, use_features)
     print "Running command %s" % (command)
     assert(os.system(command) == 0)
     print "Done with learning.."
@@ -994,6 +994,7 @@ if __name__ == "__main__":
     infile = "../../data/all_workouts.gz"
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + "_inst.npz"
+    use_features = True;
 
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     #prepare(infile, outfile, mode)
@@ -1015,8 +1016,9 @@ if __name__ == "__main__":
     lam1 = float(sys.argv[1])
     lam2 = float(sys.argv[2])
     E = int(sys.argv[3])
+    use_features = bool(sys.argv[4])
     #theta, sigma, E = learn(train_set, lam1, lam2)
-    theta, sigma = learn_cpp(train_set, lam1, lam2, E)
+    theta, sigma = learn_cpp(train_set, lam1, lam2, E, use_features = use_features)
     np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."

@@ -323,7 +323,7 @@ vector<int> get_workouts_per_user(Matrix& data)
     */
 }
 
-double F(const double* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma) 
+double F(const double* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, bool use_features = true) 
 {
     //from predictor_duration_evolving_user import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_user_count
     // error function to be minimized
@@ -338,7 +338,9 @@ double F(const double* theta, Matrix& data, double lam1, double lam2, int E, vec
     int N = data.shape[0];
     double f = 0;
     double theta_0 = get_theta_0(theta, nparams);
-    double theta_1 = get_theta_1(theta, nparams);
+    double theta_1 = 0.0;
+    if (use_features)
+        theta_1 = get_theta_1(theta, nparams);
     double a_ue, a_e, d, t, diff;
     while (w < N) {    // over all workouts i.e. all rows in data
         u = (int) (data[w][0]);
@@ -348,8 +350,10 @@ double F(const double* theta, Matrix& data, double lam1, double lam2, int E, vec
             e = sigma[u][i];
             a_ue = get_alpha_ue(theta, u, e, E, index);
             a_e = get_alpha_e(theta, e, E, U, index);
-            d = data[w][2];
             t = data[w][3];
+            d = 0.0;
+            if (use_features)
+                d = data[w][2];
             diff = (a_e + a_ue) * (theta_0 + theta_1*d) - t;
             f += diff * diff;
             w += 1;
@@ -392,7 +396,7 @@ double F(const double* theta, Matrix& data, double lam1, double lam2, int E, vec
     return f;
 }
 
-void Fprime(const double* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, double* dE) 
+void Fprime(const double* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, double* dE, bool use_features = true) 
 {
     //from predictor_duration_evolving_user import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_user_count
     // theta - first UxE elements are per-user per-experience alpha values, next E elements are per experience offset alphas, last 2 are theta0 and theta1
@@ -402,7 +406,9 @@ void Fprime(const double* theta, Matrix& data, double lam1, double lam2, int E, 
     int U = get_user_count(data);
     int nparams = U * E + E + 2;
     double theta_0 = get_theta_0(theta, nparams);
-    double theta_1 = get_theta_1(theta, nparams);
+    double theta_1 = 0.0;
+    if (use_features)
+        theta_1 = get_theta_1(theta, nparams);
 
     //np.ndarray[DTYPE_t, ndim=1] dE = np.array([0.0] * theta.shape[0]);
     clear(dE, U * E + E + 2);
@@ -417,7 +423,9 @@ void Fprime(const double* theta, Matrix& data, double lam1, double lam2, int E, 
             a_uk = get_alpha_ue(theta, u, k, E, a_uk_index);
             a_k = get_alpha_e(theta, k, E, U, a_k_index);
 
-            d = data[w][2];
+            d = 0.0;
+            if (use_features)
+                d = data[w][2];
             t = data[w][3];
             
             t0_t1_d = (theta_0 + theta_1*d);
@@ -433,7 +441,8 @@ void Fprime(const double* theta, Matrix& data, double lam1, double lam2, int E, 
             // dE / d_theta_0 and 1
             dE0 = 2 * (t_prime - t) * (a_k + a_uk);
             dE[nparams - 2] += dE0;
-            dE[nparams - 1] += dE0 * d;
+            if (use_features)
+                dE[nparams - 1] += dE0 * d;
             
             w += 1;
             i += 1;
@@ -486,6 +495,7 @@ class Constants
         vector<vector<int> >* sigma;
         int E, nparams;
         double lam1, lam2;
+        bool use_features;
 };
 
 static lbfgsfloatval_t evaluate(void *instance, const lbfgsfloatval_t *theta, lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step)
@@ -493,8 +503,8 @@ static lbfgsfloatval_t evaluate(void *instance, const lbfgsfloatval_t *theta, lb
     lbfgsfloatval_t fx = 0.0;
     Constants *consts = (Constants*) instance;
     //vector<double> theta(x, x + consts -> nparams);
-    fx =  F(theta, *(consts -> data), consts -> lam1, consts -> lam2, consts -> E, *(consts -> sigma));
-    Fprime(theta, *(consts -> data), consts -> lam1, consts -> lam2, consts -> E, *(consts -> sigma), g);
+    fx =  F(theta, *(consts -> data), consts -> lam1, consts -> lam2, consts -> E, *(consts -> sigma), consts -> use_features);
+    Fprime(theta, *(consts -> data), consts -> lam1, consts -> lam2, consts -> E, *(consts -> sigma), g, consts -> use_features);
     return fx;
 }
 
@@ -510,7 +520,7 @@ static int progress(void *instance, const lbfgsfloatval_t *x, const lbfgsfloatva
     return 0;
 }
 
-void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, lbfgs_parameter_t& param)
+void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, int E, vector<vector<int> >& sigma, lbfgs_parameter_t& param, bool use_features)
 {
     // = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam1, lam2, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
     lbfgsfloatval_t fx = 0;
@@ -521,6 +531,7 @@ void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, in
     c.E = E;
     c.lam1 = lam1;
     c.lam2 = lam2;
+    c.use_features = use_features;
     int ret = lbfgs(U * E + E + 2, theta, &fx, evaluate, progress, (void *)&c, &param);
     printf("LBFGS terminated with status %d\n", ret);
 }
@@ -581,7 +592,7 @@ void init_theta_monotonic(double* theta, int nparams, int U, int E)
     sort(theta + start, theta + start + E, std::greater<double>());
 }
 
-void learn(char *infile, double lam1, double lam2, char* outfile, int E, int lbfgs_max_iterations)
+void learn(char *infile, double lam1, double lam2, char* outfile, int E, int lbfgs_max_iterations, bool use_features)
 {
     int N;
     Matrix data = read_matrix(infile, N);
@@ -680,7 +691,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E, int lbf
 
         // 1. optimize theta
         //[theta, E_min, info] = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam1, lam2, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
-        optimize(theta, data, lam1, lam2, E, sigma, lbfgsparam);
+        optimize(theta, data, lam1, lam2, E, sigma, lbfgsparam, use_features);
         //optimize_dlib(theta, data, lam1, lam2, E, sigma, lbfgsparam);
 
         // 2. use DP to fit experience levels
@@ -734,12 +745,14 @@ int main(int argc, char* argv[])
 {
     srand(12345);
     // arguments will have data file name, lam1, lam2, out file name, E, lbfgs_max_iterations
-    assert(argc == 7);
+    assert(argc == 8);
     char* infile = argv[1];
     double lam1 = atof(argv[2]);
     double lam2 = atof(argv[3]);
     char* outfile = argv[4];
     int E = atoi(argv[5]);
     int lbfgs_max_iterations = atoi(argv[6]);
-    learn(infile, lam1, lam2, outfile, E, lbfgs_max_iterations);
+    bool use_features = atoi(argv[7]);
+    cout << "use_features = " << use_features << "\n";
+    learn(infile, lam1, lam2, outfile, E, lbfgs_max_iterations, use_features);
 }
