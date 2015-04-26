@@ -55,7 +55,7 @@ def find_best_path_DP(np.ndarray[DTYPE_t, ndim=2] M):
 
     return [leastError, path]
 
-def fit_tiredness_for_all_workouts_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.int_t E, sigma, hr = None, last_e = None):
+def fit_tiredness_for_all_workouts_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.int_t E, sigma, hr = None, np.ndarray[long, ndim=1] last_e = None):
     from predictor_many_insthr_evolving import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_workout_count
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
     cdef int U = get_workout_count(data)
@@ -77,7 +77,7 @@ def fit_tiredness_for_all_workouts_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.nda
 
         low_E = 0
         if (last_e is not None):
-            low_E = last_e[u]
+            low_E = int(last_e[u])
         n_E = E - low_E
 
         if (n_E > 1):

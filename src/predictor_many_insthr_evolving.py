@@ -1070,10 +1070,10 @@ def alternate_tiredness_hr(data, theta, E, param_indices, initial_sigma = None, 
 def get_last_tiredness_levels(data, sigma):
     # returns a dict indexed by workout number and returns last tiredness levels
     W = get_workout_count(data)
-    last_e = {}
+    last_e = [0] * int(W)
     for w in xrange(0, W):
         last_e[w] = sigma[w][-1]
-    return last_e
+    return np.array(last_e)
 
 def initialize_next_sigma(next_data, prev_data, prev_sigma, E, future_tiredness_fitting = True):
     W = get_workout_count(next_data)
@@ -1119,14 +1119,17 @@ if __name__ == "__main__":
     lam2 = float(sys.argv[2])
     E = int(sys.argv[3])
     #theta, sigma, E = learn(train_set, lam1, lam2)
-    #theta, sigma = learn_cpp(train_set, lam1, lam2, E)
-    #np.savez("model.npz", theta = theta, sigma = sigma, E = E)
+    theta, sigma = learn_cpp(train_set, lam1, lam2, E)
+    np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
     model = np.load("model.npz")
     theta = model["theta"]
     sigma = model["sigma"]
     E = model["E"]
+
+    if (E == 1):
+        assert(future_tiredness_fitting == False)
 
     if (future_tiredness_fitting) :
         print "Alternating to fit sigma and hr"
