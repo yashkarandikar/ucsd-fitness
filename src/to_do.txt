@@ -1,9 +1,14 @@
-do proper grid search for prediction of avghr
+subsampling
+
+find out why future tiredness fitting screws up results so much
+
+grid search again
+randint bugs() *****************
+insthr with random mode
+predicting last n values
+t - 1 vs t
+
 randint bugs
-plot avg avg pace vs workout number
-see if evolving user is helping for heart rate prediction and avg pace prediction
-see paper for different ways of using time
-see if applying it for sections of a workout instead of entire workouts work - also try this with heart rate prediction, avg. pace prediction
 
 see difference between parameters for experience levels
 verify derivatives in C++ for model 2

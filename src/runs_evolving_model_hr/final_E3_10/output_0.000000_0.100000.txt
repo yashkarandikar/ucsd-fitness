@@ -40,4 +40,4 @@ Computing statistics
 
 @Validation Examples = 2392,MSE = 204.762994,Variance = 326.083435,FVU = 0.627947,R2 = 1 - FVU = 0.372053
 
-@Total time taken =  14.2134721279
+@Total time taken =  14.2702600956
