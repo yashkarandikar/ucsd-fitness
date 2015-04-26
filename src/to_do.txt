@@ -1,10 +1,8 @@
-subsampling
-
-find out why future tiredness fitting screws up results so much
-
-grid search again
-randint bugs() *****************
+features
 insthr with random mode
+avghr with random mode
+
+randint bugs() *****************
 predicting last n values
 t - 1 vs t
 
