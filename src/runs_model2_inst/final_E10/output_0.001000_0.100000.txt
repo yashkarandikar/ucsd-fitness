@@ -1,20 +1,20 @@
-Data matrix dimensions = 24398086 x 5
+Data matrix dimensions = 24347765 x 5
 @E = 10,lam1 = 0.001000,lam2 = 0.100000, lbfgs_max_iterations = 200
-U = 83744 , E = 10 , nparams = 837452
+U = 83423 , E = 10 , nparams = 834242
 Super Iteration 0..Iteration 1: 
-@fx = 41020.342717
+@fx = 40000.278027
 LBFGS terminated with status -997
 Super Iteration 1..Iteration 1: 
-@fx = 239.567750
+@fx = 195.644356
 LBFGS terminated with status -997
 Super Iteration 2..Iteration 1: 
-@fx = 120.158016
+@fx = 95.337665
 LBFGS terminated with status -997
 Loading data from file..
 Doing sorted check on train and val sets..
-Number of workouts =  83744
-Training set has 24398086 examples
-Validation set has 83744 examples
+Number of workouts =  83423
+Training set has 24347765 examples
+Validation set has 83423 examples
 Training..
 Running command ./predictor_insthr_evolving_cpp data.txt 0.001 0.1 model.txt 10 200
 Done with learning..
@@ -53,8 +53,9 @@ Making predictions..
 {'distance': 2, 'hr': 3, 'workout_number': 0, 'experience': 5, 'workout_id': 1, 'duration': 4}
 Computing statistics
 
-@Training Examples = 24398086,MSE = 74.522542,Variance = 417.372554,FVU = 0.178552,R2 = 1 - FVU = 0.821448, E = 10
+@Training Examples = 24347765,MSE = 53.338760,Variance = 416.603416,FVU = 0.128032,R2 = 1 - FVU = 0.871968, E = 10
 
-@Validation Examples = 83744,MSE = 133.638967,Variance = 528.726528,FVU = 0.252756,R2 = 1 - FVU = 0.747244, E = 10
+@Validation Examples = 83423,MSE = 116.276523,Variance = 527.232861,FVU = 0.220541,R2 = 1 - FVU = 0.779459, E = 10
 
-@Total time taken =  488.791718006
+@Total time taken =  491.850035906
+[  -0.01   -0.     -0.   ...,    0.44  335.73    1.33]
