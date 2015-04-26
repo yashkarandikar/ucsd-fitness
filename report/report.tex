@@ -1,0 +1,108 @@
+% THIS IS SIGPROC-SP.TEX - VERSION 3.1
+% WORKS WITH V3.2SP OF ACM_PROC_ARTICLE-SP.CLS
+% APRIL 2009
+%
+% It is an example file showing how to use the 'acm_proc_article-sp.cls' V3.2SP
+% LaTeX2e document class file for Conference Proceedings submissions.
+% ----------------------------------------------------------------------------------------------------------------
+% This .tex file (and associated .cls V3.2SP) *DOES NOT* produce:
+%       1) The Permission Statement
+%       2) The Conference (location) Info information
+%       3) The Copyright Line with ACM data
+%       4) Page numbering
+% 
+\documentclass{acm_proc_article-sp}
+\usepackage{comment}
+\usepackage{url}
+\usepackage{float}
+\usepackage{needspace}
+
+\begin{document}
+
+\title{Modeling Temporal Evolution in the Endomondo Fitness Data Set}
+%
+\numberofauthors{1} % section.
+%
+\author{
+\alignauthor
+Yashodhan Karandikar\\
+       \email{ykarandi@ucsd.edu}
+}
+
+\maketitle
+\begin{abstract}
+This paper provides a sample of a \LaTeX\ document which conforms to the formatting guidelines for ACM SIG Proceedings.
+It complements the document \textit{Author's Guide to Preparing
+ACM SIG Proceedings Using \LaTeX$2_\epsilon$\ and Bib\TeX}. This
+source file has been written with the intention of being
+compiled under \LaTeX$2_\epsilon$\ and BibTeX.
+
+\end{abstract}
+
+\section{Introduction}
+
+\section{Motivation}
+
+\section{Endomondo Fitness data set}
+\label{expAnalysis}
+In this section, we introduce the Endomondo fitness data set. \cite{mldataset}. 
+
+\begin{comment}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.4]{plots/rating_vs_age}
+\caption{\label{plotRatingVsAge}Average rating for different age groups}
+\end{figure}
+
+\begin{figure*}
+\centering
+\includegraphics[scale=0.4]{plots/rating_vs_occupation}
+\caption{\label{plotRatingVsOcc} Average rating for various occupations}
+\end{figure*}
+\end{comment}
+
+Figure \ref{plotRatingVsOcc} shows the average rating for users in various occupations. We observe that there is a reasonable amount of variation in the average ratings for various occupations, with the minimum and maximum average ratings being 0.681257 and 0.757114 respectively. This indicates that the occupation of the user might be a useful feature in prediction of ratings.
+
+\begin{figure*}
+\centering
+\includegraphics[scale=0.4]{plots/rating_vs_genre}
+\caption{\label{plotRatingVsGenre} Average rating for various movie genres}
+\end{figure*}
+
+Figure \ref{plotRatingVsGenre} shows the average rating for various movie genres. We observe that there is a reasonable amount of variation in the average ratings for various genres, with the minimum and maximum average ratings being 0.644848 and 0.815781 respectively. This indicates that the genre of the movie might be a useful feature in prediction of ratings.
+
+\section{Related Work}
+
+\section{Baseline Model}
+\label{secBaselineModel}
+
+\section{Temporal Evolution of Users}
+\label{secTemporalModelUsers}
+
+\section{Temporal Evolution of Workouts}
+\label{secTemporalModelWorkouts}
+
+%\needspace{2\baselineskip}
+\section{Results}
+
+\begin{comment}
+\begin{table*}
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|} \hline
+& \# Examples & Variance & Linear Predictor & Collaborative Filtering & Latent Factor & Mahout ALS \\ \hline
+Training & 640135 & 0.049970 & 0.029748 {\bf(0.404688)} & 0.023681 {\bf(0.526092)} & 0.020354 {\bf(0.592680)} & {\bf(0.586866)} \\ \hline
+Validation & 160033 & 0.049826 & 0.033429 {\bf(0.329085)}  & 0.033488 {\bf(0.327886)} & 0.030545 {\bf(0.386954)} & {\bf(0.392062)} \\ \hline
+Test & 200041 & 0.049818 & 0.033776 {\bf(0.322010)} & 0.033779 {\bf(0.321948)} & 0.030765 {\bf(0.382451)} & {\bf(0.388799)}\\ \hline
+\end{tabular}
+\caption{MSE and $R^2$ obtained using the 3 predictors discussed in this work and Mahout's ALS recommender on the MovieLens dataset. Values in boldface/brackets are $R^2$ values.}
+\label{tableResults}
+\end{table*}
+% end the environment with {table*}, NOTE not {table}!
+\end{comment}
+
+\section{Conclusion and Future Work}
+
+\bibliographystyle{abbrv}
+\bibliography{references.bib}
+
+\end{document}
