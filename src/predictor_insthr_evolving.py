@@ -606,7 +606,7 @@ def experience_check(theta, data, E):
         for i in range(0, E-1):
             assert(predictions[i] > predictions[i+1])
 
-def learn_cpp(data, lam1, lam2, E, use_features):
+def learn_cpp(data, lam1, lam2, E, param_indices, use_features):
     # write data to file
     #E = 1; lbfgs_max_iterations = 1000;
     #E = 20; lbfgs_max_iterations = 200
@@ -658,6 +658,9 @@ def learn_cpp(data, lam1, lam2, E, use_features):
                     break
     assert(len(theta) == nparams)
     assert(len(sigma) == W)
+
+    if (not use_features):
+        assert(theta[-1] == 0.0)
 
     return theta, sigma
 
@@ -1016,10 +1019,11 @@ if __name__ == "__main__":
     lam1 = float(sys.argv[1])
     lam2 = float(sys.argv[2])
     E = int(sys.argv[3])
-    use_features = bool(sys.argv[4])
+    use_features = bool(int(sys.argv[4]))
+    print "Use_features = ", use_features
     #theta, sigma, E = learn(train_set, lam1, lam2)
-    theta, sigma = learn_cpp(train_set, lam1, lam2, E, use_features = use_features)
-    np.savez("model.npz", theta = theta, sigma = sigma, E = E)
+    #theta, sigma = learn_cpp(train_set, lam1, lam2, E, param_indices, use_features = use_features)
+    #np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
     model = np.load("model.npz")
@@ -1033,8 +1037,8 @@ if __name__ == "__main__":
     val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = mode)
 
     print "Making predictions.."
-    train_pred = make_predictions_pyx(train_set, theta, E, param_indices)
-    val_pred = make_predictions_pyx(val_set, theta, E, param_indices)
+    train_pred = make_predictions_pyx(train_set, theta, E, param_indices, use_features)
+    val_pred = make_predictions_pyx(val_set, theta, E, param_indices, use_features)
     print param_indices
 
     print "Computing statistics"

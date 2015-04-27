@@ -4,7 +4,7 @@ import time as time
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
-def make_predictions_pyx(np.ndarray[DTYPE_t, ndim=2] data, np.ndarray[DTYPE_t, ndim=1] theta, np.int_t E, param_indices):
+def make_predictions_pyx(np.ndarray[DTYPE_t, ndim=2] data, np.ndarray[DTYPE_t, ndim=1] theta, np.int_t E, param_indices, use_features):
     # use experience levels stored in last column
     from predictor_insthr_evolving import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_workout_count
     cdef int N = data.shape[0]
@@ -25,7 +25,9 @@ def make_predictions_pyx(np.ndarray[DTYPE_t, ndim=2] data, np.ndarray[DTYPE_t, n
         e = int(data[w, e_ind])
         a_ue = get_alpha_ue(theta, u, e, E)[0]
         a_e = get_alpha_e(theta, e, E, U)[0]
-        d = data[w, d_ind]
+        d = 0.0
+        if (use_features):
+            d = data[w, d_ind]
         tpred[w, 0] = (a_e + a_ue) * (theta_0 + theta_1 * d)
         w += 1
         i += 1

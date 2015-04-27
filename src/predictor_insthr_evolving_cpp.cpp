@@ -482,7 +482,8 @@ void Fprime(const double* theta, Matrix& data, double lam1, double lam2, int E, 
             dE[a_uk_index] += 2 * lam2 * a_uk;   // regularization 2
         }
     }
-    dE[nparams - 1] += 2 * lam2 * theta_1 ;       // regularization 2
+    if (use_features)
+        dE[nparams - 1] += 2 * lam2 * theta_1 ;       // regularization 2
 
     //double t2 = time.time()
     //print "F prime : time taken = ", t2 - t1
@@ -525,6 +526,7 @@ void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, in
     // = scipy.optimize.fmin_l_bfgs_b(F_fn, theta, Fprime_fn, args = (data, lam1, lam2, E, sigma),  maxfun=100, maxiter=100, iprint=1, disp=0)
     lbfgsfloatval_t fx = 0;
     int U = get_user_count(data);
+    int nparams = U * E + E + 2;
     Constants c;
     c.data = &data;
     c.sigma = &sigma;
@@ -532,7 +534,11 @@ void optimize(lbfgsfloatval_t* theta, Matrix& data, double lam1, double lam2, in
     c.lam1 = lam1;
     c.lam2 = lam2;
     c.use_features = use_features;
-    int ret = lbfgs(U * E + E + 2, theta, &fx, evaluate, progress, (void *)&c, &param);
+    int ret;
+    if (use_features == false)
+        ret = lbfgs(nparams - 1, theta, &fx, evaluate, progress, (void *)&c, &param);
+    else
+        ret = lbfgs(nparams, theta, &fx, evaluate, progress, (void *)&c, &param);
     printf("LBFGS terminated with status %d\n", ret);
 }
 
@@ -596,6 +602,13 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E, int lbf
 {
     int N;
     Matrix data = read_matrix(infile, N);
+
+    if (use_features == false) {
+        cout << "use_features is false.. so setting distance to 0.0 for all samples..";
+        for (int i = 0; i < N; i++)
+            data[i][2] = 0.0;
+    }
+
     //bool check_grad = false;
 
     printf("@E = %d,lam1 = %f,lam2 = %f, lbfgs_max_iterations = %d\n", E, lam1, lam2, lbfgs_max_iterations);
@@ -604,6 +617,8 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E, int lbf
     cout << "U = " << U << " , E = " << E << " , nparams = " << nparams << "\n";
     lbfgsfloatval_t *theta = lbfgs_malloc(nparams);
     init_random(theta, nparams);
+    if (use_features == false)
+        theta[nparams - 1] = 0.0;
     //init_theta_monotonic(theta, nparams, U, E);
     lbfgs_parameter_t lbfgsparam;
     lbfgs_parameter_init(&lbfgsparam);
