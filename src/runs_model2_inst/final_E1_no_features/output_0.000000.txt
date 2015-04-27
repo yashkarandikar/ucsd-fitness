@@ -1,0 +1,883 @@
+use_features = 0
+Data matrix dimensions = 24347765 x 5
+use_features is false.. so setting distance to 0.0 for all samples..@E = 1,lam1 = 0.000000,lam2 = 0.000000, lbfgs_max_iterations = 2000
+U = 83423 , E = 1 , nparams = 83426
+Super Iteration 0..Iteration 1: 
+@fx = 430.438515
+Iteration 2: 
+@fx = 429.440164
+Iteration 3: 
+@fx = 429.429359
+Iteration 4: 
+@fx = 429.409341
+Iteration 5: 
+@fx = 429.347834
+Iteration 6: 
+@fx = 429.190828
+Iteration 7: 
+@fx = 428.678125
+Iteration 8: 
+@fx = 423.394675
+Iteration 9: 
+@fx = 423.263290
+Iteration 10: 
+@fx = 421.628907
+Iteration 11: 
+@fx = 419.930545
+Iteration 12: 
+@fx = 418.179621
+Iteration 13: 
+@fx = 416.859696
+Iteration 14: 
+@fx = 416.473389
+Iteration 15: 
+@fx = 415.754066
+Iteration 16: 
+@fx = 413.882605
+Iteration 17: 
+@fx = 412.198736
+Iteration 18: 
+@fx = 411.640137
+Iteration 19: 
+@fx = 410.634717
+Iteration 20: 
+@fx = 408.833197
+Iteration 21: 
+@fx = 407.520476
+Iteration 22: 
+@fx = 406.428315
+Iteration 23: 
+@fx = 405.153022
+Iteration 24: 
+@fx = 404.016650
+Iteration 25: 
+@fx = 402.699973
+Iteration 26: 
+@fx = 402.118855
+Iteration 27: 
+@fx = 401.274041
+Iteration 28: 
+@fx = 399.513976
+Iteration 29: 
+@fx = 398.583508
+Iteration 30: 
+@fx = 396.212903
+Iteration 31: 
+@fx = 395.528404
+Iteration 32: 
+@fx = 395.031688
+Iteration 33: 
+@fx = 393.899654
+Iteration 34: 
+@fx = 392.174248
+Iteration 35: 
+@fx = 391.511463
+Iteration 36: 
+@fx = 390.441887
+Iteration 37: 
+@fx = 388.648603
+Iteration 38: 
+@fx = 387.908957
+Iteration 39: 
+@fx = 387.270700
+Iteration 40: 
+@fx = 386.609958
+Iteration 41: 
+@fx = 385.259919
+Iteration 42: 
+@fx = 384.192775
+Iteration 43: 
+@fx = 382.374645
+Iteration 44: 
+@fx = 381.499504
+Iteration 45: 
+@fx = 381.074709
+Iteration 46: 
+@fx = 380.133344
+Iteration 47: 
+@fx = 378.572385
+Iteration 48: 
+@fx = 377.999986
+Iteration 49: 
+@fx = 377.478000
+Iteration 50: 
+@fx = 376.326640
+Iteration 51: 
+@fx = 374.617709
+Iteration 52: 
+@fx = 373.829660
+Iteration 53: 
+@fx = 373.261823
+Iteration 54: 
+@fx = 372.073092
+Iteration 55: 
+@fx = 369.957511
+Iteration 56: 
+@fx = 369.078627
+Iteration 57: 
+@fx = 368.489169
+Iteration 58: 
+@fx = 366.998506
+Iteration 59: 
+@fx = 364.654423
+Iteration 60: 
+@fx = 363.754704
+Iteration 61: 
+@fx = 362.216941
+Iteration 62: 
+@fx = 359.603273
+Iteration 63: 
+@fx = 358.412247
+Iteration 64: 
+@fx = 357.502708
+Iteration 65: 
+@fx = 356.530479
+Iteration 66: 
+@fx = 354.371566
+Iteration 67: 
+@fx = 352.287373
+Iteration 68: 
+@fx = 349.071627
+Iteration 69: 
+@fx = 347.505738
+Iteration 70: 
+@fx = 346.662107
+Iteration 71: 
+@fx = 345.324847
+Iteration 72: 
+@fx = 343.983255
+Iteration 73: 
+@fx = 342.916141
+Iteration 74: 
+@fx = 340.406333
+Iteration 75: 
+@fx = 337.923310
+Iteration 76: 
+@fx = 336.593165
+Iteration 77: 
+@fx = 335.771626
+Iteration 78: 
+@fx = 333.637584
+Iteration 79: 
+@fx = 308.172848
+Iteration 80: 
+@fx = 245.728006
+Iteration 81: 
+@fx = 184.313435
+Iteration 82: 
+@fx = 180.862544
+Iteration 83: 
+@fx = 180.106952
+Iteration 84: 
+@fx = 179.454407
+Iteration 85: 
+@fx = 179.452723
+Iteration 86: 
+@fx = 179.452539
+Iteration 87: 
+@fx = 179.451698
+Iteration 88: 
+@fx = 179.449979
+Iteration 89: 
+@fx = 179.446263
+Iteration 90: 
+@fx = 179.440316
+Iteration 91: 
+@fx = 179.427331
+Iteration 92: 
+@fx = 179.400607
+Iteration 93: 
+@fx = 179.376201
+Iteration 94: 
+@fx = 179.361465
+Iteration 95: 
+@fx = 179.337960
+Iteration 96: 
+@fx = 179.331107
+Iteration 97: 
+@fx = 179.308278
+Iteration 98: 
+@fx = 179.299579
+Iteration 99: 
+@fx = 179.280998
+Iteration 100: 
+@fx = 179.264984
+Iteration 101: 
+@fx = 179.218910
+Iteration 102: 
+@fx = 179.196415
+Iteration 103: 
+@fx = 179.166919
+Iteration 104: 
+@fx = 179.159044
+Iteration 105: 
+@fx = 179.149247
+Iteration 106: 
+@fx = 179.116736
+Iteration 107: 
+@fx = 179.088071
+Iteration 108: 
+@fx = 179.064876
+Iteration 109: 
+@fx = 179.053695
+Iteration 110: 
+@fx = 179.035149
+Iteration 111: 
+@fx = 179.018793
+Iteration 112: 
+@fx = 179.002203
+Iteration 113: 
+@fx = 178.967360
+Iteration 114: 
+@fx = 178.922071
+Iteration 115: 
+@fx = 178.894999
+Iteration 116: 
+@fx = 178.886756
+Iteration 117: 
+@fx = 178.866964
+Iteration 118: 
+@fx = 178.857481
+Iteration 119: 
+@fx = 178.803597
+Iteration 120: 
+@fx = 178.791485
+Iteration 121: 
+@fx = 178.720176
+Iteration 122: 
+@fx = 178.714714
+Iteration 123: 
+@fx = 178.688674
+Iteration 124: 
+@fx = 178.652026
+Iteration 125: 
+@fx = 178.573066
+Iteration 126: 
+@fx = 178.518547
+Iteration 127: 
+@fx = 178.514228
+Iteration 128: 
+@fx = 178.414920
+Iteration 129: 
+@fx = 178.409551
+Iteration 130: 
+@fx = 178.377241
+Iteration 131: 
+@fx = 178.325564
+Iteration 132: 
+@fx = 178.232300
+Iteration 133: 
+@fx = 178.184879
+Iteration 134: 
+@fx = 178.148700
+Iteration 135: 
+@fx = 178.056648
+Iteration 136: 
+@fx = 177.921428
+Iteration 137: 
+@fx = 177.864873
+Iteration 138: 
+@fx = 177.764902
+Iteration 139: 
+@fx = 177.531268
+Iteration 140: 
+@fx = 177.464955
+Iteration 141: 
+@fx = 177.373406
+Iteration 142: 
+@fx = 177.157086
+Iteration 143: 
+@fx = 176.942815
+Iteration 144: 
+@fx = 176.814632
+Iteration 145: 
+@fx = 176.620270
+Iteration 146: 
+@fx = 176.291976
+Iteration 147: 
+@fx = 176.073859
+Iteration 148: 
+@fx = 175.528833
+Iteration 149: 
+@fx = 174.404131
+Iteration 150: 
+@fx = 173.729403
+Iteration 151: 
+@fx = 173.234681
+Iteration 152: 
+@fx = 172.476339
+Iteration 153: 
+@fx = 172.164467
+Iteration 154: 
+@fx = 171.880010
+Iteration 155: 
+@fx = 171.833726
+Iteration 156: 
+@fx = 171.828223
+Iteration 157: 
+@fx = 171.826793
+Iteration 158: 
+@fx = 171.812270
+Iteration 159: 
+@fx = 171.806671
+Iteration 160: 
+@fx = 171.792140
+Iteration 161: 
+@fx = 171.773581
+Iteration 162: 
+@fx = 171.765321
+Iteration 163: 
+@fx = 171.741854
+Iteration 164: 
+@fx = 171.722005
+Iteration 165: 
+@fx = 171.714928
+Iteration 166: 
+@fx = 171.708711
+Iteration 167: 
+@fx = 171.701857
+Iteration 168: 
+@fx = 171.688474
+Iteration 169: 
+@fx = 171.673483
+Iteration 170: 
+@fx = 171.653598
+Iteration 171: 
+@fx = 171.646998
+Iteration 172: 
+@fx = 171.640593
+Iteration 173: 
+@fx = 171.631077
+Iteration 174: 
+@fx = 171.608356
+Iteration 175: 
+@fx = 171.595662
+Iteration 176: 
+@fx = 171.561566
+Iteration 177: 
+@fx = 171.557345
+Iteration 178: 
+@fx = 171.545955
+Iteration 179: 
+@fx = 171.531308
+Iteration 180: 
+@fx = 171.526839
+Iteration 181: 
+@fx = 171.520547
+Iteration 182: 
+@fx = 171.518055
+Iteration 183: 
+@fx = 171.509206
+Iteration 184: 
+@fx = 171.498138
+Iteration 185: 
+@fx = 171.496100
+Iteration 186: 
+@fx = 171.487104
+Iteration 187: 
+@fx = 171.458493
+Iteration 188: 
+@fx = 171.453259
+Iteration 189: 
+@fx = 171.447616
+Iteration 190: 
+@fx = 171.440705
+Iteration 191: 
+@fx = 171.427429
+Iteration 192: 
+@fx = 171.420091
+Iteration 193: 
+@fx = 171.405675
+Iteration 194: 
+@fx = 171.386922
+Iteration 195: 
+@fx = 171.382000
+Iteration 196: 
+@fx = 171.373526
+Iteration 197: 
+@fx = 171.363877
+Iteration 198: 
+@fx = 171.340177
+Iteration 199: 
+@fx = 171.330666
+Iteration 200: 
+@fx = 171.315489
+Iteration 201: 
+@fx = 171.310833
+Iteration 202: 
+@fx = 171.305450
+Iteration 203: 
+@fx = 171.294053
+Iteration 204: 
+@fx = 171.282556
+Iteration 205: 
+@fx = 171.254963
+Iteration 206: 
+@fx = 171.252225
+Iteration 207: 
+@fx = 171.242239
+Iteration 208: 
+@fx = 171.231985
+Iteration 209: 
+@fx = 171.223832
+Iteration 210: 
+@fx = 171.206212
+Iteration 211: 
+@fx = 171.197579
+Iteration 212: 
+@fx = 171.186217
+Iteration 213: 
+@fx = 171.184216
+Iteration 214: 
+@fx = 171.179711
+Iteration 215: 
+@fx = 171.174627
+Iteration 216: 
+@fx = 171.166507
+Iteration 217: 
+@fx = 171.157026
+Iteration 218: 
+@fx = 171.136777
+Iteration 219: 
+@fx = 171.130292
+Iteration 220: 
+@fx = 171.120224
+Iteration 221: 
+@fx = 171.113157
+Iteration 222: 
+@fx = 171.107389
+Iteration 223: 
+@fx = 171.098344
+Iteration 224: 
+@fx = 171.087030
+Iteration 225: 
+@fx = 171.077461
+Iteration 226: 
+@fx = 171.067537
+Iteration 227: 
+@fx = 171.062265
+Iteration 228: 
+@fx = 171.045436
+Iteration 229: 
+@fx = 171.038374
+Iteration 230: 
+@fx = 171.030313
+Iteration 231: 
+@fx = 171.015210
+Iteration 232: 
+@fx = 171.002951
+Iteration 233: 
+@fx = 170.973844
+Iteration 234: 
+@fx = 170.954856
+Iteration 235: 
+@fx = 170.917750
+Iteration 236: 
+@fx = 170.902987
+Iteration 237: 
+@fx = 170.890701
+Iteration 238: 
+@fx = 170.867343
+Iteration 239: 
+@fx = 170.861869
+Iteration 240: 
+@fx = 170.855685
+Iteration 241: 
+@fx = 170.853306
+Iteration 242: 
+@fx = 170.850866
+Iteration 243: 
+@fx = 170.849886
+Iteration 244: 
+@fx = 170.848998
+Iteration 245: 
+@fx = 170.843197
+Iteration 246: 
+@fx = 170.836508
+Iteration 247: 
+@fx = 170.829055
+Iteration 248: 
+@fx = 170.817339
+Iteration 249: 
+@fx = 170.809708
+Iteration 250: 
+@fx = 170.804406
+Iteration 251: 
+@fx = 170.789556
+Iteration 252: 
+@fx = 170.785991
+Iteration 253: 
+@fx = 170.774053
+Iteration 254: 
+@fx = 170.770197
+Iteration 255: 
+@fx = 170.764160
+Iteration 256: 
+@fx = 170.755247
+Iteration 257: 
+@fx = 170.745544
+Iteration 258: 
+@fx = 170.741997
+Iteration 259: 
+@fx = 170.730612
+Iteration 260: 
+@fx = 170.728670
+Iteration 261: 
+@fx = 170.727067
+Iteration 262: 
+@fx = 170.720469
+Iteration 263: 
+@fx = 170.717279
+Iteration 264: 
+@fx = 170.715076
+Iteration 265: 
+@fx = 170.711823
+Iteration 266: 
+@fx = 170.706530
+Iteration 267: 
+@fx = 170.698119
+Iteration 268: 
+@fx = 170.691947
+Iteration 269: 
+@fx = 170.677582
+Iteration 270: 
+@fx = 170.674055
+Iteration 271: 
+@fx = 170.668020
+Iteration 272: 
+@fx = 170.667105
+Iteration 273: 
+@fx = 170.665923
+Iteration 274: 
+@fx = 170.661869
+Iteration 275: 
+@fx = 170.658723
+Iteration 276: 
+@fx = 170.655328
+Iteration 277: 
+@fx = 170.652362
+Iteration 278: 
+@fx = 170.649002
+Iteration 279: 
+@fx = 170.644122
+Iteration 280: 
+@fx = 170.641968
+Iteration 281: 
+@fx = 170.638639
+Iteration 282: 
+@fx = 170.634316
+Iteration 283: 
+@fx = 170.628733
+Iteration 284: 
+@fx = 170.625561
+Iteration 285: 
+@fx = 170.623864
+Iteration 286: 
+@fx = 170.620645
+Iteration 287: 
+@fx = 170.617519
+Iteration 288: 
+@fx = 170.613964
+Iteration 289: 
+@fx = 170.606457
+Iteration 290: 
+@fx = 170.604957
+Iteration 291: 
+@fx = 170.602658
+Iteration 292: 
+@fx = 170.600189
+Iteration 293: 
+@fx = 170.598583
+Iteration 294: 
+@fx = 170.596819
+Iteration 295: 
+@fx = 170.595719
+Iteration 296: 
+@fx = 170.594082
+Iteration 297: 
+@fx = 170.592917
+Iteration 298: 
+@fx = 170.592110
+Iteration 299: 
+@fx = 170.589982
+Iteration 300: 
+@fx = 170.586674
+Iteration 301: 
+@fx = 170.584654
+Iteration 302: 
+@fx = 170.583748
+Iteration 303: 
+@fx = 170.581888
+Iteration 304: 
+@fx = 170.579476
+Iteration 305: 
+@fx = 170.578845
+Iteration 306: 
+@fx = 170.577879
+Iteration 307: 
+@fx = 170.576867
+Iteration 308: 
+@fx = 170.576005
+Iteration 309: 
+@fx = 170.573711
+Iteration 310: 
+@fx = 170.570277
+Iteration 311: 
+@fx = 170.568771
+Iteration 312: 
+@fx = 170.565125
+Iteration 313: 
+@fx = 170.564319
+Iteration 314: 
+@fx = 170.563880
+Iteration 315: 
+@fx = 170.563554
+Iteration 316: 
+@fx = 170.562961
+Iteration 317: 
+@fx = 170.562291
+Iteration 318: 
+@fx = 170.561838
+Iteration 319: 
+@fx = 170.561466
+Iteration 320: 
+@fx = 170.560676
+Iteration 321: 
+@fx = 170.558776
+Iteration 322: 
+@fx = 170.556397
+Iteration 323: 
+@fx = 170.555580
+Iteration 324: 
+@fx = 170.555074
+Iteration 325: 
+@fx = 170.554713
+Iteration 326: 
+@fx = 170.554178
+Iteration 327: 
+@fx = 170.553740
+Iteration 328: 
+@fx = 170.552875
+Iteration 329: 
+@fx = 170.551374
+Iteration 330: 
+@fx = 170.550946
+Iteration 331: 
+@fx = 170.550032
+Iteration 332: 
+@fx = 170.549205
+Iteration 333: 
+@fx = 170.548954
+Iteration 334: 
+@fx = 170.548364
+Iteration 335: 
+@fx = 170.547151
+Iteration 336: 
+@fx = 170.546936
+Iteration 337: 
+@fx = 170.546419
+Iteration 338: 
+@fx = 170.545029
+Iteration 339: 
+@fx = 170.544527
+Iteration 340: 
+@fx = 170.543576
+Iteration 341: 
+@fx = 170.543092
+Iteration 342: 
+@fx = 170.542191
+Iteration 343: 
+@fx = 170.540556
+Iteration 344: 
+@fx = 170.539331
+Iteration 345: 
+@fx = 170.536833
+Iteration 346: 
+@fx = 170.536149
+Iteration 347: 
+@fx = 170.533697
+Iteration 348: 
+@fx = 170.532237
+Iteration 349: 
+@fx = 170.531050
+Iteration 350: 
+@fx = 170.528428
+Iteration 351: 
+@fx = 170.525834
+Iteration 352: 
+@fx = 170.523544
+Iteration 353: 
+@fx = 170.520585
+Iteration 354: 
+@fx = 170.510697
+Iteration 355: 
+@fx = 170.503378
+Iteration 356: 
+@fx = 170.501838
+Iteration 357: 
+@fx = 170.497665
+Iteration 358: 
+@fx = 170.494969
+Iteration 359: 
+@fx = 170.494632
+Iteration 360: 
+@fx = 170.494520
+Iteration 361: 
+@fx = 170.494145
+Iteration 362: 
+@fx = 170.493436
+Iteration 363: 
+@fx = 170.492288
+Iteration 364: 
+@fx = 170.491109
+Iteration 365: 
+@fx = 170.489769
+Iteration 366: 
+@fx = 170.489388
+Iteration 367: 
+@fx = 170.488760
+Iteration 368: 
+@fx = 170.488744
+Iteration 369: 
+@fx = 170.488588
+Iteration 370: 
+@fx = 170.487196
+Iteration 371: 
+@fx = 170.486056
+Iteration 372: 
+@fx = 170.483976
+Iteration 373: 
+@fx = 170.480217
+Iteration 374: 
+@fx = 170.478684
+Iteration 375: 
+@fx = 170.477776
+Iteration 376: 
+@fx = 170.476470
+Iteration 377: 
+@fx = 170.475248
+Iteration 378: 
+@fx = 170.473266
+Iteration 379: 
+@fx = 170.471316
+Iteration 380: 
+@fx = 170.466420
+Iteration 381: 
+@fx = 170.465589
+Iteration 382: 
+@fx = 170.460874
+Iteration 383: 
+@fx = 170.460354
+Iteration 384: 
+@fx = 170.459974
+Iteration 385: 
+@fx = 170.459748
+Iteration 386: 
+@fx = 170.459717
+Iteration 387: 
+@fx = 170.459711
+Iteration 388: 
+@fx = 170.459702
+Iteration 389: 
+@fx = 170.459700
+Iteration 390: 
+@fx = 170.459694
+Iteration 391: 
+@fx = 170.459663
+Iteration 392: 
+@fx = 170.459652
+Iteration 393: 
+@fx = 170.459623
+Iteration 394: 
+@fx = 170.459607
+Iteration 395: 
+@fx = 170.459598
+Iteration 396: 
+@fx = 170.459589
+Iteration 397: 
+@fx = 170.459576
+Iteration 398: 
+@fx = 170.459567
+Iteration 399: 
+@fx = 170.459557
+Iteration 400: 
+@fx = 170.459550
+Iteration 401: 
+@fx = 170.459537
+Iteration 402: 
+@fx = 170.459530
+Iteration 403: 
+@fx = 170.459521
+Iteration 404: 
+@fx = 170.459515
+Iteration 405: 
+@fx = 170.459513
+Iteration 406: 
+@fx = 170.459511
+Iteration 407: 
+@fx = 170.459509
+Iteration 408: 
+@fx = 170.459508
+Iteration 409: 
+@fx = 170.459507
+Iteration 410: 
+@fx = 170.459505
+Iteration 411: 
+@fx = 170.459504
+Iteration 412: 
+@fx = 170.459502
+Iteration 413: 
+@fx = 170.459501
+Iteration 414: 
+@fx = 170.459501
+LBFGS terminated with status 0
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of workouts =  83423
+Training set has 24347765 examples
+Validation set has 83423 examples
+Training..
+Use_features =  False
+Running command ./predictor_insthr_evolving_cpp data.txt 0.0 0.0 model.txt 1 2000 0
+Done with learning..
+Reading learned model from file..
+	Reading E..
+	Reading theta..
+	Reading sigma..
+Loading model..
+Adding experience levels to data matrices
+Mode :  final
+Making predictions..
+1000000 data points done..
+2000000 data points done..
+3000000 data points done..
+4000000 data points done..
+5000000 data points done..
+6000000 data points done..
+7000000 data points done..
+8000000 data points done..
+9000000 data points done..
+10000000 data points done..
+11000000 data points done..
+12000000 data points done..
+13000000 data points done..
+14000000 data points done..
+15000000 data points done..
+16000000 data points done..
+17000000 data points done..
+18000000 data points done..
+19000000 data points done..
+20000000 data points done..
+21000000 data points done..
+22000000 data points done..
+23000000 data points done..
+24000000 data points done..
+{'distance': 2, 'hr': 3, 'workout_number': 0, 'experience': 5, 'workout_id': 1, 'duration': 4}
+Computing statistics
+
+@Training Examples = 24347765,MSE = 170.459501,Variance = 416.603416,FVU = 0.409165,R2 = 1 - FVU = 0.590835, E = 1
+
+@Validation Examples = 83423,MSE = 222.259379,Variance = 527.232861,FVU = 0.421558,R2 = 1 - FVU = 0.578442, E = 1
+
+@Total time taken =  433.742547989
+[-11.6  -12.43   1.53 ...,  49.85   3.     0.  ]

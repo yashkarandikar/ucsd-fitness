@@ -1,0 +1,63 @@
+use_features = 0
+Data matrix dimensions = 24347765 x 5
+use_features is false.. so setting distance to 0.0 for all samples..@E = 10,lam1 = 0.000000,lam2 = 0.001000, lbfgs_max_iterations = 200
+U = 83423 , E = 10 , nparams = 834242
+Super Iteration 0..Iteration 1: 
+@fx = 848.837113
+LBFGS terminated with status -997
+Super Iteration 1..Iteration 1: 
+@fx = 55.883932
+LBFGS terminated with status -997
+Super Iteration 2..Iteration 1: 
+@fx = 41.620111
+LBFGS terminated with status -997
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of workouts =  83423
+Training set has 24347765 examples
+Validation set has 83423 examples
+Training..
+Use_features =  False
+Running command ./predictor_insthr_evolving_cpp data.txt 0.0 0.001 model.txt 10 200 0
+Done with learning..
+Reading learned model from file..
+	Reading E..
+	Reading theta..
+	Reading sigma..
+Loading model..
+Adding experience levels to data matrices
+Mode :  final
+Making predictions..
+1000000 data points done..
+2000000 data points done..
+3000000 data points done..
+4000000 data points done..
+5000000 data points done..
+6000000 data points done..
+7000000 data points done..
+8000000 data points done..
+9000000 data points done..
+10000000 data points done..
+11000000 data points done..
+12000000 data points done..
+13000000 data points done..
+14000000 data points done..
+15000000 data points done..
+16000000 data points done..
+17000000 data points done..
+18000000 data points done..
+19000000 data points done..
+20000000 data points done..
+21000000 data points done..
+22000000 data points done..
+23000000 data points done..
+24000000 data points done..
+{'distance': 2, 'hr': 3, 'workout_number': 0, 'experience': 5, 'workout_id': 1, 'duration': 4}
+Computing statistics
+
+@Training Examples = 24347765,MSE = 32.034607,Variance = 416.603416,FVU = 0.076895,R2 = 1 - FVU = 0.923105, E = 10
+
+@Validation Examples = 83423,MSE = 70.097845,Variance = 527.232861,FVU = 0.132954,R2 = 1 - FVU = 0.867046, E = 10
+
+@Total time taken =  506.091321945
+[  -0.14   -0.2    -0.2  ...,    0.76  209.66    0.  ]
