@@ -6,8 +6,8 @@ lam1 = 0.0
 while (lam1 <= 1.0):
     lam2 = 0.0
     while (lam2 <= 1.0):
-        ofile = "runs_model2_inst/final_E10/output_%f_%f.txt" % (lam1, lam2)
-        command = "python predictor_insthr_evolving.py %f %f 10 > %s" % (lam1, lam2, ofile)
+        ofile = "runs_model2_inst/final_E10_no_features/output_%f_%f.txt" % (lam1, lam2)
+        command = "python predictor_insthr_evolving.py %f %f 10 0 > %s" % (lam1, lam2, ofile)
         print "Running : ", command
         os.system(command)
         if (lam2 == 0.0):

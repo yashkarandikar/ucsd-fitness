@@ -55,7 +55,7 @@ def find_best_path_DP(np.ndarray[DTYPE_t, ndim=2] M):
 
     return [leastError, path]
 
-def fit_tiredness_for_all_workouts_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.int_t E, sigma, np.ndarray[DTYPE_t, ndim=2] hr = None, np.ndarray[long, ndim=1] last_e = None):
+def fit_tiredness_for_all_workouts_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.int_t E, sigma, np.ndarray[DTYPE_t, ndim=2] hr = None, np.ndarray[long, ndim=1] last_e = None, use_features = True):
     from predictor_many_insthr_evolving import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_workout_count
     # sigma - set of experience levels for all workouts for all users.. sigma is a matrix.. sigma(u,i) = e_ui i.e experience level of user u at workout i - these values are NOT optimized by L-BFGS.. they are optimized by DP procedure
     cdef int U = get_workout_count(data)
@@ -88,7 +88,9 @@ def fit_tiredness_for_all_workouts_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.nda
                     t = data[row_u + j, 3]    # actual time for that workout
                 else:
                     t = hr[row_u + j, 0]
-                d = data[row_u + j, 2]
+                d = 0.0
+                if (use_features):
+                    d = data[row_u + j, 2]
                 for i in xrange(low_E, E):       # over all experience levels
                     a_ue = get_alpha_ue(theta, u, i, E)[0]
                     a_e = get_alpha_e(theta, i, E, U)[0]
@@ -116,7 +118,7 @@ def fit_tiredness_for_all_workouts_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.nda
     return changed
 
 
-def make_predictions_separate_sigma_pyx(np.ndarray[DTYPE_t, ndim=2] data, np.ndarray[DTYPE_t, ndim=1] theta, np.int_t E, param_indices, sigma):
+def make_predictions_separate_sigma_pyx(np.ndarray[DTYPE_t, ndim=2] data, np.ndarray[DTYPE_t, ndim=1] theta, np.int_t E, param_indices, sigma, use_features):
     from predictor_many_insthr_evolving import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_workout_count
     # use experience levels stored separately in sigma
     cdef int N = data.shape[0]
@@ -136,7 +138,9 @@ def make_predictions_separate_sigma_pyx(np.ndarray[DTYPE_t, ndim=2] data, np.nda
             e = sigma[u][i]
             a_ue = get_alpha_ue(theta, u, e, E)[0]
             a_e = get_alpha_e(theta, e, E, U)[0]
-            d = data[w, d_ind]
+            d = 0.0
+            if (use_features):
+                d = data[w, d_ind]
             tpred[w] = (a_e + a_ue) * (theta_0 + theta_1 * d)
             w += 1
             i += 1
@@ -144,7 +148,7 @@ def make_predictions_separate_sigma_pyx(np.ndarray[DTYPE_t, ndim=2] data, np.nda
                 print "%d data points done.." % (w)
     return tpred
 
-def make_predictions_pyx(np.ndarray[DTYPE_t, ndim=2] data, np.ndarray[DTYPE_t, ndim=1] theta, np.int_t E, param_indices):
+def make_predictions_pyx(np.ndarray[DTYPE_t, ndim=2] data, np.ndarray[DTYPE_t, ndim=1] theta, np.int_t E, param_indices, use_features):
     # use experience levels stored in last column
     from predictor_insthr_evolving import get_theta_0, get_theta_1, get_alpha_e, get_alpha_ue, get_workout_count
     cdef int N = data.shape[0]
@@ -165,7 +169,8 @@ def make_predictions_pyx(np.ndarray[DTYPE_t, ndim=2] data, np.ndarray[DTYPE_t, n
         e = int(data[w, e_ind])
         a_ue = get_alpha_ue(theta, u, e, E)[0]
         a_e = get_alpha_e(theta, e, E, U)[0]
-        d = data[w, d_ind]
+        if (use_features):
+            d = data[w, d_ind]
         tpred[w, 0] = (a_e + a_ue) * (theta_0 + theta_1 * d)
         w += 1
         i += 1

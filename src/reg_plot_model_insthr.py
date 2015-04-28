@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import sys
+import string
 
 def main():
     files = sys.argv[1:]
@@ -12,6 +13,7 @@ def main():
             for k in found.keys():
                 found[k] = False
             for line in f:
+                line = string.replace(line, "use_features is false.. so setting distance to 0.0 for all samples..","")
                 if (line[0] == '@'):
                     line = line[1:]
                     if (line.startswith("Training")):
@@ -34,6 +36,7 @@ def main():
                             if (k == "lam2"):
                                 lam2 = float(v)
                                 found['lam2'] = True
+            print found
             found_all = True
             for v in found.values():
                 if (not v):

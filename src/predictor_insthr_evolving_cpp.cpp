@@ -604,7 +604,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E, int lbf
     Matrix data = read_matrix(infile, N);
 
     if (use_features == false) {
-        cout << "use_features is false.. so setting distance to 0.0 for all samples..";
+        cout << "use_features is false.. so setting distance to 0.0 for all samples..\n";
         for (int i = 0; i < N; i++)
             data[i][2] = 0.0;
     }

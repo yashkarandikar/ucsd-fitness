@@ -655,7 +655,7 @@ def experience_check(theta, data, E):
         for i in range(0, E-1):
             assert(predictions[i] > predictions[i+1])
 
-def learn_cpp(data, lam1, lam2, E):
+def learn_cpp(data, lam1, lam2, E, use_features):
     # write data to file
     #E = 1; lbfgs_max_iterations = 1000;
     #E = 20; lbfgs_max_iterations = 200
@@ -672,7 +672,7 @@ def learn_cpp(data, lam1, lam2, E):
     infile = data_file
     outfile = "model.txt"
     exec_name = "./predictor_insthr_evolving_cpp"
-    command = "%s %s %s %s %s %d %d" % (exec_name, infile, str(lam1), str(lam2), outfile, E, lbfgs_max_iterations)
+    command = "%s %s %s %s %s %d %d %d" % (exec_name, infile, str(lam1), str(lam2), outfile, E, lbfgs_max_iterations, use_features)
     print "Running command %s" % (command)
     assert(os.system(command) == 0)
     print "Done with learning.."
@@ -707,6 +707,9 @@ def learn_cpp(data, lam1, lam2, E):
                     break
     assert(len(theta) == nparams)
     assert(len(sigma) == W)
+
+    if (not use_features):
+        assert(theta[-1] == 0.0)
 
     return theta, sigma
 
@@ -1036,7 +1039,7 @@ def plot_avghr_by_tiredness(data, param_indices, E):
     plt.ylabel("Average HR (bpm)")
     plt.savefig("tiredness_vs_avhgr_E%d" % (E))
     
-def alternate_tiredness_hr(data, theta, E, param_indices, initial_sigma = None, last_e = None):
+def alternate_tiredness_hr(data, theta, E, param_indices, initial_sigma = None, last_e = None, use_features = True):
     # given theta, alternate between tiredness and hr till convergence
 
     # first initialize sigma randomly
@@ -1057,13 +1060,19 @@ def alternate_tiredness_hr(data, theta, E, param_indices, initial_sigma = None, 
     while (changed and n_iter < 100):
         print "Prediction Super Iteration ", n_iter
         # compute hr
-        hr = make_predictions_separate_sigma_pyx(data, theta, E, param_indices, sigma)
+        hr = make_predictions_separate_sigma_pyx(data, theta, E, param_indices, sigma, use_features)
         
         # compute sigma
         print "Fitting tiredness levels.."
-        changed = fit_tiredness_for_all_workouts_pyx(theta, data, E, sigma, hr = hr, last_e = last_e)
+        changed = fit_tiredness_for_all_workouts_pyx(theta, data, E, sigma, hr = hr, last_e = last_e, use_features = use_features)
 
         n_iter += 1
+
+    #if (last_e is None):
+    #    for w in xrange(0, W):
+    #        le = last_e[w]
+    #        for i in xrange(0, samples_per_workout[w]):
+    #            assert(sigma[w][i] >= le)
 
     return [hr, sigma]
 
@@ -1118,8 +1127,10 @@ if __name__ == "__main__":
     lam1 = float(sys.argv[1])
     lam2 = float(sys.argv[2])
     E = int(sys.argv[3])
+    use_features = bool(int(sys.argv[4]))
+    print "Use features = ", use_features
     #theta, sigma, E = learn(train_set, lam1, lam2)
-    theta, sigma = learn_cpp(train_set, lam1, lam2, E)
+    theta, sigma = learn_cpp(train_set, lam1, lam2, E, use_features = use_features)
     np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
@@ -1149,8 +1160,8 @@ if __name__ == "__main__":
     #val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = mode)
 
     print "Making predictions.."
-    train_pred = make_predictions_pyx(train_set, theta, E, param_indices)
-    val_pred = make_predictions_pyx(val_set, theta, E, param_indices)
+    train_pred = make_predictions_pyx(train_set, theta, E, param_indices, use_features)
+    val_pred = make_predictions_pyx(val_set, theta, E, param_indices, use_features)
     print param_indices
 
     print "Computing statistics"

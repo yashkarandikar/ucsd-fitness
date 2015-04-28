@@ -1022,8 +1022,8 @@ if __name__ == "__main__":
     use_features = bool(int(sys.argv[4]))
     print "Use_features = ", use_features
     #theta, sigma, E = learn(train_set, lam1, lam2)
-    #theta, sigma = learn_cpp(train_set, lam1, lam2, E, param_indices, use_features = use_features)
-    #np.savez("model.npz", theta = theta, sigma = sigma, E = E)
+    theta, sigma = learn_cpp(train_set, lam1, lam2, E, param_indices, use_features = use_features)
+    np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     print "Loading model.."
     model = np.load("model.npz")

@@ -1,0 +1,56 @@
+use_features = 0
+Data matrix dimensions = 9841317 x 5
+use_features is false.. so setting distance to 0.0 for all samples..
+@E = 10,lam1 = 0.010000,lam2 = 0.010000, lbfgs_max_iterations = 200
+U = 83423 , E = 10 , nparams = 834242
+Super Iteration 0..Iteration 1: 
+@fx = 4555.325090
+LBFGS terminated with status -997
+Super Iteration 1..Iteration 1: 
+@fx = 146.563201
+LBFGS terminated with status -997
+Super Iteration 2..Iteration 1: 
+@fx = 76.836029
+LBFGS terminated with status -997
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of workouts =  83423
+Training set has 9841317 examples
+Validation set has 7352229 examples
+Training..
+Use features =  False
+Running command ./predictor_insthr_evolving_cpp data.txt 0.01 0.01 model.txt 10 200 0
+Done with learning..
+Reading learned model from file..
+	Reading E..
+	Reading theta..
+	Reading sigma..
+Loading model..
+Assuming last tiredness levels for validation and test sets..
+Adding experience levels to data matrices
+Making predictions..
+1000000 data points done..
+2000000 data points done..
+3000000 data points done..
+4000000 data points done..
+5000000 data points done..
+6000000 data points done..
+7000000 data points done..
+8000000 data points done..
+9000000 data points done..
+1000000 data points done..
+2000000 data points done..
+3000000 data points done..
+4000000 data points done..
+5000000 data points done..
+6000000 data points done..
+7000000 data points done..
+{'distance': 2, 'hr': 3, 'workout_number': 0, 'experience': 5, 'workout_id': 1, 'duration': 4}
+Computing statistics
+
+@Training Examples = 9841317,MSE = 33.067170,Variance = 454.327908,FVU = 0.072783,R2 = 1 - FVU = 0.927217, E = 10
+
+@Validation Examples = 7352229,MSE = 126.816632,Variance = 348.064883,FVU = 0.364348,R2 = 1 - FVU = 0.635652, E = 10
+
+@Total time taken =  1945.38991094
+[  -0.06   -0.13   -0.04 ...,    0.78  197.61    0.  ]

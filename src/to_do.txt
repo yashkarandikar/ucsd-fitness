@@ -1,6 +1,8 @@
 features
+    - insthr many with no features
+    - avghr with additional features
 insthr with random mode
-avghr with random mode
+time series
 
 randint bugs() *****************
 predicting last n values
