@@ -1,22 +1,12 @@
+avg hr E = 1 with python lbfgs
 features
-    - insthr many with no features
     - avghr with additional features
-insthr with random mode
 time series
 
-randint bugs() *****************
-predicting last n values
-t - 1 vs t
-
-randint bugs
-
-see difference between parameters for experience levels
-verify derivatives in C++ for model 2
 other ways of using time evolution (maybe linear interpolation between first and last)
 other features
 baseline model denom term
 compare with baseline models
-T test - statistically significant
 refactor seconds conversion, experiment with normalization
 other measures of error rate : how many examples were classified within reasonable margin?
 outlier removal ideas - 

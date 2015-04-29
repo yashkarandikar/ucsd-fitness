@@ -995,7 +995,7 @@ if __name__ == "__main__":
  
     #infile = "../../data/endoMondo5000_workouts.gz"
     infile = "../../data/all_workouts.gz"
-    mode = "final"  # can be "final" or "random"
+    mode = "random"  # can be "final" or "random"
     outfile = infile + mode + "_inst.npz"
     use_features = True;
 
