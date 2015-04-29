@@ -1,4 +1,3 @@
-avg hr E = 1 with python lbfgs
 features
     - avghr with additional features
 time series
