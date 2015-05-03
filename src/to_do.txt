@@ -1,6 +1,7 @@
-features
-    - avghr with additional features
 time series
+test set
+E = 2
+avg duration 50 workouts threshold
 
 other ways of using time evolution (maybe linear interpolation between first and last)
 other features
