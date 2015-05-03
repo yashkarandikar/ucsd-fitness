@@ -522,7 +522,7 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
-    E = 3
+    E = 2
     data_file = "data.txt"
     np.savetxt(data_file, data)
 
@@ -846,7 +846,7 @@ if __name__ == "__main__":
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
-    prepare(infile, outfile, mode)
+    #prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
@@ -902,4 +902,4 @@ if __name__ == "__main__":
     #plt.subplot(1,2,1)
     #plot_data(val_set, val_pred, param_indices, title = "Validation set")
 
-    plt.show()
+    #plt.show()
