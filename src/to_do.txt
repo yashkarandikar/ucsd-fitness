@@ -1,6 +1,5 @@
 time series
 test set
-E = 2, 3 for duration - do full grid search
 
 other ways of using time evolution (maybe linear interpolation between first and last)
 other features
