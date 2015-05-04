@@ -522,7 +522,7 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
-    E = 2
+    E = 3
     data_file = "data.txt"
     np.savetxt(data_file, data)
 
