@@ -13,7 +13,7 @@ import sys
 import os
 from param_formatter import ParamFormatter
 import psutil as ps
-#import statsmodels.api as sm
+import statsmodels.api as sm
 from sklearn import linear_model
 from datetime import datetime
 
@@ -43,19 +43,43 @@ def make_predictions(all_X, all_models):
     #    pred[i, 0] = pred[0, 0]
     return pred
 
-def predict_next(all_last_E, all_models, next_n):
+def predict_next_ARMA(all_models, start_all, end_all):
     W = len(all_models)
+    all_y = [0.0] * W
+    for w in xrange(0, W):
+        m = all_models[w]
+        all_y[w] = m.predict(start = start_all[w], end = end_all[w])
+        #all_y[w] = m.predict()
+        if (w % 10000 == 0):
+            print "Done %d workouts, out of %d" % (w, W)
+
+    #pred = np.matrix(np.concatenate(tuple(all_y))).T
+    return all_y
+
+
+def predict_next(all_last_E, all_models, next_n, E):
+    W = len(all_models)
+    assert(len(all_last_E) == W)
+    assert(len(next_n) == W)
     all_y = [0.0] * W
     for w in xrange(0, W):
         m = all_models[w]
         n = next_n[w]
         all_y[w] = [0.0] * n
-        x = all_last_E[w]
+        x = [0.0] * (n + E)
+        x[:E] = all_last_E[w]
         for i in xrange(0, n):
-            p = m.predict(x)
+            #p = m.predict(np.matrix([x]))[0]
+            v = x[i:i+E]
+            p = m.predict(np.insert(v, 0, 1.0))
             all_y[w][i] = p
-            x = x[1:]
-            x = np.append(x, p)
+            x[E + i] = p
+            #x.append(p)
+            #x = x[1:]
+            #x = np.append(x, p)
+        if (w % 10000 == 0):
+            print "Done %d workouts, out of %d" % (w, W)
+
     #pred = np.matrix(np.concatenate(tuple(all_y))).T
     return all_y
 
@@ -89,11 +113,12 @@ def normalize(data, cols):
 
 def organize_for_learning(vals, E):
     P = E
-    X = np.zeros((len(vals) - P, P))
+    X = np.zeros((len(vals) - P, P + 1))
     y = np.zeros(len(vals) - P)
     for p in xrange(0, len(vals) - P):
-        X[p, :] = vals[p : p + P]
+        X[p, 1:] = vals[p : p + P]
         y[p] = vals[p + P]
+    X[:, 0] = 1.0
     return [X, y]
 
 def extract_col(data, col):
@@ -101,6 +126,31 @@ def extract_col(data, col):
         return data[:, col].A1
     else:
         return data[:, col]
+
+def organize(data, E, param_indices):
+    print "Organizing data.."
+    # organizes data as a matrix for linear regression    
+    hr_ind = param_indices["hr"]
+    W = get_workout_count(data)
+    
+    wins = np.array(range(0, W))
+    w_indices = list(np.searchsorted(extract_col(data, 0), wins))
+    w_indices.append(data.shape[0])
+
+    all_X = [0.0] * W
+    all_y = [0.0] * W
+
+    for w in xrange(0, W):
+        start, end = w_indices[w : w + 2]
+        hr = data[start:end, hr_ind]
+        X, y = organize_for_learning(hr, E)
+        all_X[w] = X
+        all_y[w] = y
+
+        if (w % 10000 == 0):
+            print "Done %d out of %d" % (w, W)
+   
+    return all_X, all_y
 
 def organize_data(train_set, val_set, test_set, param_indices, E):
     print "Organizing data.."
@@ -155,17 +205,20 @@ def organize_data(train_set, val_set, test_set, param_indices, E):
    
     return train_X, train_y, val_X, val_y, test_X, test_y
     
-def learn(all_X, all_y):
+def learn(all_X, all_y, E):
     W = len(all_X) 
     models = [0.0] * W
     for w in xrange(0, W):
-        X = all_X[w]
+        #X = all_X[w]
         y = all_y[w]
-        model = linear_model.LinearRegression(copy_X = True)
-        model.fit(X, y)
-        models[w] = model
-        #arma = sm.tsa.ARMA(y, (10, 1))
-        #all_models[w] = arma.fit(start_params = np.random.rand(11))
+        #model = linear_model.LinearRegression(copy_X = True)
+        #model = linear_model.Ridge(alpha = 1.0, copy_X = True)
+        #model.fit(X, y)
+        #models[w] = model
+        #arma = sm.tsa.ARMA(y, (E, 1))
+        model = sm.tsa.AR(y)
+        models[w] = model.fit(maxlag = E)
+        #models[w] = arma.fit(start_params = np.zeros((E+2, 1)))
         if (w % 10000 == 0):
             print "Done %d workouts out of %d" % (w, W)
     return models
@@ -206,7 +259,7 @@ def flatten_list(l):
     new_l = [x for sublist in l for x in sublist]
     return new_l
 
-if __name__ == "__main__":
+def main():
     t1 = time.time()
 
     E = int(sys.argv[1])
@@ -214,7 +267,6 @@ if __name__ == "__main__":
     infile = "../../data/endoMondo5000_workouts.gz"
     #infile = "../../data/all_workouts.gz"
     mode = "final"  # can be "final" or "random"
-    future_tiredness_fitting = False
     
     outfile = infile + mode + "_inst_many.npz"
 
@@ -235,10 +287,13 @@ if __name__ == "__main__":
     print "Training set has %d examples" % (train_set.shape[0])
     print "Validation set has %d examples" % (val_set.shape[0])
 
-    train_X, train_y, val_X, val_y, test_X, test_y = organize_data(train_set, val_set, None, param_indices, E)
+    #train_X, train_y, val_X, val_y, test_X, test_y = organize_data(train_set, val_set, None, param_indices, E)
+    train_X, train_y = organize(train_set, E, param_indices)
+    #train_X = train_X[:100]
+    #train_y = train_y[:100]
 
     print "Training.."
-    all_models = learn(train_X, train_y)
+    all_models = learn(train_X, train_y, E)
     #np.savez("model.npz", theta = theta, sigma = sigma, E = E)
     
     #print "Loading model.."
@@ -253,29 +308,46 @@ if __name__ == "__main__":
 
     print "Making predictions.."
     print E
-    train_pred = make_predictions(train_X, all_models)
+    #train_pred = make_predictions(train_X, all_models)
     #val_pred = make_predictions_test(val_X, all_models)
+    #print train_X
+    #print train_y
     W = len(train_X)
     all_last_E = [0.0] * W
     for w in xrange(0, W):
-        all_last_E[w] = train_y[w][-E:]
-        assert(len(all_last_E[w]) == E)
-    val_pred = predict_next(all_last_E, all_models, get_samples_per_workout(val_set))
+        all_last_E[w] = train_y[w][:E]
+    samples_per_workout = get_samples_per_workout(train_set)
+    start = [0.0] * W
+    end = [0.0] * W
+    for w in xrange(0, W):
+        start[w] = E
+        end[w] = samples_per_workout[w] - 1
+    #train_pred = predict_next(all_last_E, all_models, next_n, E)
+    train_pred = predict_next_ARMA(all_models, start, end)
+    #print train_pred
+    #for w in xrange(0, W):
+    #    all_last_E[w] = train_y[w][-E:]
+    #    assert(len(all_last_E[w]) == E)
+    #val_pred = predict_next(all_last_E, all_models, get_samples_per_workout(val_set))
     #for w in xrange(0, W):
     #    all_last_E[w] = val_pred[-E:]
     #test_pred = predict_next(all_last_E, all_models, get_samples_per_workout(test_set))
 
     train_y = np.matrix(flatten_list(train_y)).T
-    val_y = np.matrix(flatten_list(val_y)).T
+    #val_y = val_set[:, param_indices["hr"]]
+    #val_y = np.matrix(list(val_y)).T
     
-    val_pred = np.matrix(flatten_list(val_pred)).T
-    #test_pred = np.matrix(flatten_list(test_pred)).T
+    train_pred = np.matrix(flatten_list(train_pred)).T
+    #val_pred = np.matrix(flatten_list(val_pred)).T
+
+    print train_pred[:200]
+    print train_y[:200]
 
     print "Computing statistics"
     [mse, var, fvu, r2, errors] = compute_stats(train_y, train_pred)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (train_set.shape[0],mse, var, fvu, r2, E)
-    [mse, var, fvu, r2, errors] = compute_stats(val_y, val_pred)
-    print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (val_set.shape[0],mse, var, fvu, r2, E)
+    #[mse, var, fvu, r2, errors] = compute_stats(val_y, val_pred)
+    #print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (val_set.shape[0],mse, var, fvu, r2, E)
     #[mse, var, fvu, r2, errors] = compute_stats(test_y, test_pred)
     #print "@Test Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (test_set.shape[0],mse, var, fvu, r2, E)
 
@@ -289,3 +361,7 @@ if __name__ == "__main__":
     #plot_data(val_set, val_pred, param_indices, title = "Validation set")
 
     #plt.show()
+
+
+if __name__ == "__main__":
+    main()
