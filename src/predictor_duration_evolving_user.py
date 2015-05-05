@@ -843,7 +843,7 @@ if __name__ == "__main__":
     
     #infile = "endoMondo5000_workouts_condensed.gz"
     infile = "../../data/all_workouts_condensed.gz"
-    mode = "final"  # can be "final" or "random"
+    mode = "random"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
     #prepare(infile, outfile, mode)
@@ -852,7 +852,7 @@ if __name__ == "__main__":
     data = np.load(outfile)
     train_set = data["train_set"]
     val_set = data["val_set"]
-    test_set = data["test_set"]
+    #test_set = data["test_set"]
     param_indices = data["param_indices"][()]
     print "Doing sorted check on train and val sets.."
     check_sorted(train_set, param_indices)
@@ -879,12 +879,12 @@ if __name__ == "__main__":
     print "Adding experience levels to data matrices"
     train_set = add_experience_column_to_train_set(train_set, sigma, param_indices)
     val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = mode)
-    test_set = add_experience_column_to_test_set(test_set, train_set, param_indices, mode = mode)
+    #test_set = add_experience_column_to_test_set(test_set, train_set, param_indices, mode = mode)
 
     print "Making predictions.."
     train_pred = make_predictions(train_set, theta, E, param_indices)
     val_pred = make_predictions(val_set, theta, E, param_indices)
-    test_pred = make_predictions(test_set, theta, E, param_indices)
+    #test_pred = make_predictions(test_set, theta, E, param_indices)
     print param_indices
 
     print "Computing statistics"
@@ -895,8 +895,8 @@ if __name__ == "__main__":
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["Duration"]], val_pred)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
-    [mse, var, fvu, r2, errors] = compute_stats(test_set[:, param_indices["Duration"]], test_pred)
-    print "@Test Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (test_set.shape[0],mse, var, fvu, r2)
+    #[mse, var, fvu, r2, errors] = compute_stats(test_set[:, param_indices["Duration"]], test_pred)
+    #print "@Test Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (test_set.shape[0],mse, var, fvu, r2)
 
     t2 = time.time()
     print "@Total time taken = ", t2 - t1
