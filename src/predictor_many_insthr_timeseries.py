@@ -39,7 +39,25 @@ def make_predictions(all_X, all_models):
     for w in xrange(0, W):
         all_y[w] = all_models[w].predict(all_X[w])
     pred = np.matrix(np.concatenate(tuple(all_y))).T
+    #for i in xrange(0, pred.shape[0]):
+    #    pred[i, 0] = pred[0, 0]
     return pred
+
+def predict_next(all_last_E, all_models, next_n):
+    W = len(all_models)
+    all_y = [0.0] * W
+    for w in xrange(0, W):
+        m = all_models[w]
+        n = next_n[w]
+        all_y[w] = [0.0] * n
+        x = all_last_E[w]
+        for i in xrange(0, n):
+            p = m.predict(x)
+            all_y[w][i] = p
+            x = x[1:]
+            x = np.append(x, p)
+    #pred = np.matrix(np.concatenate(tuple(all_y))).T
+    return all_y
 
 def compute_stats(t_actual, t_pred):
     #assert(t_actual.shape[1] == 1 and t_pred.shape[1] == 1)
@@ -193,8 +211,8 @@ if __name__ == "__main__":
 
     E = int(sys.argv[1])
  
-    #infile = "../../data/endoMondo5000_workouts.gz"
-    infile = "../../data/all_workouts.gz"
+    infile = "../../data/endoMondo5000_workouts.gz"
+    #infile = "../../data/all_workouts.gz"
     mode = "final"  # can be "final" or "random"
     future_tiredness_fitting = False
     
@@ -207,6 +225,7 @@ if __name__ == "__main__":
     data = np.load(outfile)
     train_set = data["train_set"]
     val_set = data["val_set"]
+    #test_set = data["test_set"]
     param_indices = data["param_indices"][()]
     #print "Doing sorted check on train and val sets.."
     #check_sorted(train_set, param_indices)
@@ -233,20 +252,32 @@ if __name__ == "__main__":
     #val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = mode)
 
     print "Making predictions.."
+    print E
     train_pred = make_predictions(train_X, all_models)
-    val_pred = make_predictions(val_X, all_models)
+    #val_pred = make_predictions_test(val_X, all_models)
+    W = len(train_X)
+    all_last_E = [0.0] * W
+    for w in xrange(0, W):
+        all_last_E[w] = train_y[w][-E:]
+        assert(len(all_last_E[w]) == E)
+    val_pred = predict_next(all_last_E, all_models, get_samples_per_workout(val_set))
+    #for w in xrange(0, W):
+    #    all_last_E[w] = val_pred[-E:]
+    #test_pred = predict_next(all_last_E, all_models, get_samples_per_workout(test_set))
 
     train_y = np.matrix(flatten_list(train_y)).T
     val_y = np.matrix(flatten_list(val_y)).T
+    
+    val_pred = np.matrix(flatten_list(val_pred)).T
+    #test_pred = np.matrix(flatten_list(test_pred)).T
 
     print "Computing statistics"
     [mse, var, fvu, r2, errors] = compute_stats(train_y, train_pred)
-    #plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
-    #plot_avgpace_by_workout_number(train_set, param_indices)
-    #plot_avghr_by_tiredness(train_set, param_indices, E)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (train_set.shape[0],mse, var, fvu, r2, E)
     [mse, var, fvu, r2, errors] = compute_stats(val_y, val_pred)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (val_set.shape[0],mse, var, fvu, r2, E)
+    #[mse, var, fvu, r2, errors] = compute_stats(test_y, test_pred)
+    #print "@Test Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (test_set.shape[0],mse, var, fvu, r2, E)
 
     t2 = time.time()
     print "@Total time taken = ", t2 - t1
