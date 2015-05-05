@@ -384,17 +384,18 @@ if __name__ == "__main__":
     data = np.load(outfile)
     train = data["train_set"]
     val = data["val_set"]
+    test = data["test_set"]
 
     theta = learn(train, lam)
     #theta = learn_cpp(train, lam)
     
     print "Computing predictions and statistics"
     [mse, var, fvu, r2] = compute_stats(train, theta)
-    #print "\nStats for training data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2] = compute_stats(val, theta)
-    #print "\nStats for val data : \n# Examples = %d\nMSE = %f\nVariance = %f\nFVU = %f\nR2 = 1 - FVU = %f\n" % (val.shape[0],mse, var, fvu, r2)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val.shape[0], mse, var, fvu, r2)
+    [mse, var, fvu, r2] = compute_stats(test, theta)
+    print "@Test Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (test.shape[0], mse, var, fvu, r2)
 
     t2 = time.time()
     print "@Total time taken = ", t2 - t1
