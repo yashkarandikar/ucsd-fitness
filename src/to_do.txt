@@ -1,6 +1,4 @@
 time series
-test set
-    - check which experience level is beign used for avg hr test example
 E = 2, 3 duration for random
 
 other ways of using time evolution (maybe linear interpolation between first and last)
