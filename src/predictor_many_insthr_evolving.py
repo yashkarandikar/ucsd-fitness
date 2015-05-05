@@ -940,7 +940,7 @@ def prepare(infile, outfile, mode):
     assert(get_workout_count(train_set) == get_workout_count(val_set) and get_workout_count(val_set) == get_workout_count(test_set))
     
     print "Saving data to disk"
-    np.savez(outfile, train_set = train_set, val_set = val_set, param_indices = param_indices)
+    np.savez(outfile, train_set = train_set, val_set = val_set, test_set = test_set, param_indices = param_indices)
 
 def plot_data(data, predictions, param_indices, title = ""):
     #dur_ind = param_indices["Duration"]
@@ -1097,6 +1097,14 @@ def initialize_next_sigma(next_data, prev_data, prev_sigma, E, future_tiredness_
         sigma.append(list(np.sort(randomState.randint(low = last_e[w], high = high_E, size = (samples_per_workout[w])))))
     return sigma, last_e
 
+def sigmas_equal(s1, s2):
+    u1 = len(s1)
+    u2 = len(s2)
+    assert(u1 == u2)
+    U = u1
+    for u in xrange(0, U):
+        assert(np.array_equal(s1[u], s1[u]))
+
 if __name__ == "__main__":
     t1 = time.time()
  
@@ -1114,10 +1122,12 @@ if __name__ == "__main__":
     data = np.load(outfile)
     train_set = data["train_set"]
     val_set = data["val_set"]
+    test_set = data["test_set"]
     param_indices = data["param_indices"][()]
     print "Doing sorted check on train and val sets.."
     check_sorted(train_set, param_indices)
     check_sorted(val_set, param_indices)
+    check_sorted(test_set, param_indices)
 
     print "Number of workouts = ", get_workout_count(train_set)
     print "Training set has %d examples" % (train_set.shape[0])
@@ -1127,7 +1137,9 @@ if __name__ == "__main__":
     lam1 = float(sys.argv[1])
     lam2 = float(sys.argv[2])
     E = int(sys.argv[3])
-    use_features = bool(int(sys.argv[4]))
+    use_features = True
+    assert(len(sys.argv) == 4)
+    #use_features = bool(int(sys.argv[4]))
     print "Use features = ", use_features
     #theta, sigma, E = learn(train_set, lam1, lam2)
     theta, sigma = learn_cpp(train_set, lam1, lam2, E, use_features = use_features)
@@ -1152,26 +1164,33 @@ if __name__ == "__main__":
         print "Assuming last tiredness levels for validation and test sets.."
         sigma_train = sigma
         sigma_val, last_e = initialize_next_sigma(val_set, train_set, sigma_train, E, future_tiredness_fitting = False)
+        sigma_test, last_e = initialize_next_sigma(test_set, val_set, sigma_val, E, future_tiredness_fitting = False)
+
+    sigmas_equal(sigma_val, sigma_test)
 
     # add the experience level to each workout in train, validation and test set
     print "Adding experience levels to data matrices"
     train_set = add_experience_column_to_train_set(train_set, sigma_train, param_indices)
     val_set = add_experience_column_to_train_set(val_set, sigma_val, param_indices)
     #val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = mode)
+    test_set = add_experience_column_to_train_set(test_set, sigma_test, param_indices)
 
     print "Making predictions.."
     train_pred = make_predictions_pyx(train_set, theta, E, param_indices, use_features)
     val_pred = make_predictions_pyx(val_set, theta, E, param_indices, use_features)
+    test_pred = make_predictions_pyx(test_set, theta, E, param_indices, use_features)
     print param_indices
 
     print "Computing statistics"
     [mse, var, fvu, r2, errors] = compute_stats(train_set[:, param_indices["hr"]], train_pred)
     #plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
     #plot_avgpace_by_workout_number(train_set, param_indices)
-    plot_avghr_by_tiredness(train_set, param_indices, E)
+    #plot_avghr_by_tiredness(train_set, param_indices, E)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (train_set.shape[0],mse, var, fvu, r2, E)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["hr"]], val_pred)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (val_set.shape[0],mse, var, fvu, r2, E)
+    [mse, var, fvu, r2, errors] = compute_stats(test_set[:, param_indices["hr"]], test_pred)
+    print "@Test Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (test_set.shape[0],mse, var, fvu, r2, E)
 
     t2 = time.time()
     print "@Total time taken = ", t2 - t1

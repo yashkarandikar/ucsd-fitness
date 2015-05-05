@@ -522,7 +522,7 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
-    E = 3
+    E = 2
     data_file = "data.txt"
     np.savetxt(data_file, data)
 
@@ -733,7 +733,7 @@ def prepare(infile, outfile, mode):
     assert(get_user_count(train_set) == get_user_count(val_set) and get_user_count(val_set) == get_user_count(test_set))
     
     print "Saving data to disk"
-    np.savez(outfile, train_set = train_set, val_set = val_set, param_indices = param_indices)
+    np.savez(outfile, train_set = train_set, val_set = val_set, test_set = test_set, param_indices = param_indices)
 
 def plot_data(data, predictions, param_indices, title = ""):
     #dur_ind = param_indices["Duration"]
@@ -846,12 +846,13 @@ if __name__ == "__main__":
     mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
-    #prepare(infile, outfile, mode)
+    prepare(infile, outfile, mode)
 
     print "Loading data from file.."
     data = np.load(outfile)
     train_set = data["train_set"]
     val_set = data["val_set"]
+    test_set = data["test_set"]
     param_indices = data["param_indices"][()]
     print "Doing sorted check on train and val sets.."
     check_sorted(train_set, param_indices)
@@ -878,20 +879,24 @@ if __name__ == "__main__":
     print "Adding experience levels to data matrices"
     train_set = add_experience_column_to_train_set(train_set, sigma, param_indices)
     val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = mode)
+    test_set = add_experience_column_to_test_set(test_set, train_set, param_indices, mode = mode)
 
     print "Making predictions.."
     train_pred = make_predictions(train_set, theta, E, param_indices)
     val_pred = make_predictions(val_set, theta, E, param_indices)
+    test_pred = make_predictions(test_set, theta, E, param_indices)
     print param_indices
 
     print "Computing statistics"
+    #plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
+    #plot_avgpace_by_workout_number(train_set, param_indices)
+    #plot_avgpace_by_experience(train_set, param_indices, E)
     [mse, var, fvu, r2, errors] = compute_stats(train_set[:, param_indices["Duration"]], train_pred)
-    plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
-    plot_avgpace_by_workout_number(train_set, param_indices)
-    plot_avgpace_by_experience(train_set, param_indices, E)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["Duration"]], val_pred)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
+    [mse, var, fvu, r2, errors] = compute_stats(test_set[:, param_indices["Duration"]], test_pred)
+    print "@Test Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (test_set.shape[0],mse, var, fvu, r2)
 
     t2 = time.time()
     print "@Total time taken = ", t2 - t1

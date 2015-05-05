@@ -212,6 +212,7 @@ def shuffle_and_split_data_by_user(data, mode, fraction = 0.5):
             end1 = n_u - 1      # only 1 workout for validation 
             for p in perm[:end1]: mask[p] = 1
             for p in perm[end1:]: mask[p] = 2
+            assert(len(perm[end1:]) == 1)
 
     d1_indices = [i for i in range(0, N) if mask[i] == 1]
     d2_indices = [i for i in range(0, N) if mask[i] == 2]
@@ -727,7 +728,7 @@ def prepare(infile, outfile, mode):
     assert(get_user_count(train_set) == get_user_count(val_set) and get_user_count(val_set) == get_user_count(test_set))
     
     print "Saving data to disk"
-    np.savez(outfile, train_set = train_set, val_set = val_set, param_indices = param_indices)
+    np.savez(outfile, train_set = train_set, val_set = val_set, test_set = test_set, param_indices = param_indices)
 
 def plot_data(data, predictions, param_indices, title = ""):
     #dur_ind = param_indices["Duration"]
@@ -834,7 +835,7 @@ if __name__ == "__main__":
     
     #infile = "endoMondo5000_workouts_condensed.gz"
     infile = "../../data/all_workouts_condensed.gz"
-    mode = "random"  # can be "final" or "random"
+    mode = "final"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
     #prepare(infile, outfile, mode)
@@ -843,6 +844,7 @@ if __name__ == "__main__":
     data = np.load(outfile)
     train_set = data["train_set"]
     val_set = data["val_set"]
+    test_set = data["test_set"]
     param_indices = data["param_indices"][()]
     print "Doing sorted check on train and val sets.."
     check_sorted(train_set, param_indices)
@@ -869,20 +871,27 @@ if __name__ == "__main__":
     print "Adding experience levels to data matrices"
     train_set = add_experience_column_to_train_set(train_set, sigma, param_indices)
     val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = mode)
+    test_set = add_experience_column_to_test_set(test_set, train_set, param_indices, mode = mode)
+    exp_ind = param_indices["experience"]
+    if (mode == "final"):
+        assert(np.array_equal(val_set[:, exp_ind], test_set[:, exp_ind]))
 
     print "Making predictions.."
     train_pred = make_predictions(train_set, theta, E, param_indices)
     val_pred = make_predictions(val_set, theta, E, param_indices)
+    test_pred = make_predictions(test_set, theta, E, param_indices)
     print param_indices
 
     print "Computing statistics"
+    #plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
+    #plot_avghr_by_workout_number(train_set, param_indices)
+    #plot_avghr_by_experience(train_set, param_indices, E)
     [mse, var, fvu, r2, errors] = compute_stats(train_set[:, param_indices["hr(avg)"]], train_pred)
-    plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
-    plot_avghr_by_workout_number(train_set, param_indices)
-    plot_avghr_by_experience(train_set, param_indices, E)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["hr(avg)"]], val_pred)
     print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (val_set.shape[0],mse, var, fvu, r2)
+    [mse, var, fvu, r2, errors] = compute_stats(test_set[:, param_indices["hr(avg)"]], test_pred)
+    print "@Test Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (test_set.shape[0],mse, var, fvu, r2)
 
     t2 = time.time()
     print "@Total time taken = ", t2 - t1
