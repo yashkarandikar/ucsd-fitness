@@ -1,0 +1,114 @@
+Data matrix dimensions = 743987 x 5
+@E = 2,lam1 = 0.100000,lam2 = 0.010000
+U = 52109 , E = 2 , nparams = 104222
+Super Iteration 0..Iteration 1: 
+@fx = 1089.609220
+LBFGS terminated with status 0
+Super Iteration 1..Iteration 1: 
+@fx = 0.187868
+LBFGS terminated with status 0
+Super Iteration 2..Iteration 1: 
+@fx = 0.175069
+LBFGS terminated with status 0
+Super Iteration 3..Iteration 1: 
+@fx = 0.171385
+LBFGS terminated with status 0
+Super Iteration 4..Iteration 1: 
+@fx = 0.169620
+LBFGS terminated with status 0
+Super Iteration 5..Iteration 1: 
+@fx = 0.168325
+LBFGS terminated with status 0
+Super Iteration 6..Iteration 1: 
+@fx = 0.167376
+LBFGS terminated with status 0
+Super Iteration 7..Iteration 1: 
+@fx = 0.166699
+LBFGS terminated with status 0
+Super Iteration 8..Iteration 1: 
+@fx = 0.166201
+LBFGS terminated with status 0
+Super Iteration 9..Iteration 1: 
+@fx = 0.165809
+LBFGS terminated with status 0
+Super Iteration 10..Iteration 1: 
+@fx = 0.165592
+LBFGS terminated with status 0
+Super Iteration 11..Iteration 1: 
+@fx = 0.165366
+LBFGS terminated with status 0
+Super Iteration 12..Iteration 1: 
+@fx = 0.165214
+LBFGS terminated with status 0
+Super Iteration 13..Iteration 1: 
+@fx = 0.165121
+LBFGS terminated with status 0
+Super Iteration 14..Iteration 1: 
+@fx = 0.165046
+LBFGS terminated with status 0
+Super Iteration 15..Iteration 1: 
+@fx = 0.164984
+LBFGS terminated with status 0
+Super Iteration 16..Iteration 1: 
+@fx = 0.164957
+LBFGS terminated with status 0
+Super Iteration 17..Iteration 1: 
+@fx = 0.164929
+LBFGS terminated with status 0
+Super Iteration 18..Iteration 1: 
+@fx = 0.164909
+LBFGS terminated with status 0
+Super Iteration 19..Iteration 1: 
+@fx = 0.164886
+LBFGS terminated with status 0
+Super Iteration 20..Iteration 1: 
+@fx = 0.164848
+LBFGS terminated with status 0
+Super Iteration 21..Iteration 1: 
+@fx = 0.164840
+LBFGS terminated with status 0
+Super Iteration 22..Iteration 1: 
+@fx = 0.164834
+LBFGS terminated with status 0
+Super Iteration 23..Iteration 1: 
+@fx = 0.164814
+LBFGS terminated with status 0
+Super Iteration 24..Iteration 1: 
+@fx = 0.164812
+LBFGS terminated with status 0
+Super Iteration 25..Iteration 1: 
+@fx = 0.164810
+LBFGS terminated with status 0
+Super Iteration 26..Iteration 1: 
+@fx = 0.164809
+LBFGS terminated with status 0
+Super Iteration 27..Iteration 1: 
+@fx = 0.164809
+LBFGS terminated with status 0
+Super Iteration 28..Iteration 1: 
+@fx = 0.164807
+LBFGS terminated with status 0
+Super Iteration 29..Iteration 1: 
+@fx = 0.164806
+LBFGS terminated with status 0
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of users =  52109
+Training set has 743987 examples
+Validation set has 52109 examples
+Training..
+Running command ./predictor_duration_evolving_user_cpp data.txt 0.1 0.01 model.txt 2
+Done with learning..
+Reading learned model from file..
+Loading model..
+Adding experience levels to data matrices
+Mode :  random
+Making predictions..
+{'Distance': 2, 'user_id': 1, 'experience': 5, 'Duration': 3, 'user_number': 0, 'date-time': 4}
+Computing statistics
+
+@Training Examples = 743987,MSE = 0.145708,Variance = 0.494746,FVU = 0.294511,R2 = 1 - FVU = 0.705489
+
+@Validation Examples = 52109,MSE = 0.179765,Variance = 0.458879,FVU = 0.391748,R2 = 1 - FVU = 0.608252
+
+@Total time taken =  64.225137949
