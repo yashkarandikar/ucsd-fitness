@@ -1,5 +1,5 @@
 time series
-E = 2, 3 duration for random
+
 
 other ways of using time evolution (maybe linear interpolation between first and last)
 other features
