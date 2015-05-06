@@ -1,0 +1,66 @@
+Loading data from file..
+Number of workouts =  83423
+Training set has 9841317 examples
+Validation set has 7352229 examples
+Organizing data..
+Done 0 out of 83423
+Done 10000 out of 83423
+Done 20000 out of 83423
+Done 30000 out of 83423
+Done 40000 out of 83423
+Done 50000 out of 83423
+Done 60000 out of 83423
+Done 70000 out of 83423
+Done 80000 out of 83423
+Training..
+Done 0 workouts out of 83423
+Done 10000 workouts out of 83423
+Done 20000 workouts out of 83423
+Done 30000 workouts out of 83423
+Done 40000 workouts out of 83423
+Done 50000 workouts out of 83423
+Done 60000 workouts out of 83423
+Done 70000 workouts out of 83423
+Done 80000 workouts out of 83423
+Making predictions (train)..
+Done 0 workouts, out of 83423
+Done 10000 workouts, out of 83423
+Done 20000 workouts, out of 83423
+Done 30000 workouts, out of 83423
+Done 40000 workouts, out of 83423
+Done 50000 workouts, out of 83423
+Done 60000 workouts, out of 83423
+Done 70000 workouts, out of 83423
+Done 80000 workouts, out of 83423
+Making predictions (val).. 
+Done 0 workouts, out of 83423
+Done 10000 workouts, out of 83423
+Done 20000 workouts, out of 83423
+Done 30000 workouts, out of 83423
+Done 40000 workouts, out of 83423
+Done 50000 workouts, out of 83423
+Done 60000 workouts, out of 83423
+Done 70000 workouts, out of 83423
+Done 80000 workouts, out of 83423
+Making predictions (test) ..
+Done 0 workouts, out of 83423
+Done 10000 workouts, out of 83423
+Done 20000 workouts, out of 83423
+Done 30000 workouts, out of 83423
+Done 40000 workouts, out of 83423
+Done 50000 workouts, out of 83423
+Done 60000 workouts, out of 83423
+Done 70000 workouts, out of 83423
+Done 80000 workouts, out of 83423
+5670167
+Computing statistics
+
+@Training Examples = 9841317,MSE = 51.050796,Variance = 330.263423,FVU = 0.154576,R2 = 1 - FVU = 0.845424, E = 50
+
+(7352229, 1)
+(7352229, 1)
+@Validation Examples = 7352229,MSE = 136.101647,Variance = 348.064883,FVU = 0.391024,R2 = 1 - FVU = 0.608976, E = 50
+
+@Test Examples = 7321065,MSE = 232.950700,Variance = 398.075182,FVU = 0.585193,R2 = 1 - FVU = 0.414807, E = 50
+
+@Total time taken =  859.019027948
