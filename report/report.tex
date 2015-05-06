@@ -25,23 +25,23 @@
 %
 \author{
 \alignauthor
-Yashodhan Karandikar\\
+Yashodhan Hemant Karandikar\\
        \email{ykarandi@ucsd.edu}
 }
 
 \maketitle
 \begin{abstract}
-This paper provides a sample of a \LaTeX\ document which conforms to the formatting guidelines for ACM SIG Proceedings.
-It complements the document \textit{Author's Guide to Preparing
-ACM SIG Proceedings Using \LaTeX$2_\epsilon$\ and Bib\TeX}. This
-source file has been written with the intention of being
-compiled under \LaTeX$2_\epsilon$\ and BibTeX.
 
 \end{abstract}
 
 \section{Introduction}
 
+
 \section{Motivation}
+
+
+\section{Related Work}
+\cite{www13} describes various models which account for temporal evolution of user expertise through online reviews on websites such as Amazon, BeerAdvocate, RateBeer, CellarTracker. 
 
 \section{Endomondo Fitness data set}
 \label{expAnalysis}
@@ -61,23 +61,28 @@ In this section, we introduce the Endomondo fitness data set. \cite{mldataset}.
 \end{figure*}
 \end{comment}
 
-Figure \ref{plotRatingVsOcc} shows the average rating for users in various occupations. We observe that there is a reasonable amount of variation in the average ratings for various occupations, with the minimum and maximum average ratings being 0.681257 and 0.757114 respectively. This indicates that the occupation of the user might be a useful feature in prediction of ratings.
-
 \begin{figure*}
 \centering
 \includegraphics[scale=0.4]{plots/rating_vs_genre}
 \caption{\label{plotRatingVsGenre} Average rating for various movie genres}
 \end{figure*}
 
-Figure \ref{plotRatingVsGenre} shows the average rating for various movie genres. We observe that there is a reasonable amount of variation in the average ratings for various genres, with the minimum and maximum average ratings being 0.644848 and 0.815781 respectively. This indicates that the genre of the movie might be a useful feature in prediction of ratings.
-
-\section{Related Work}
-
 \section{Baseline Model}
 \label{secBaselineModel}
+This section describes a baseline model to predict the duration of a workout given the distance.
 
 \section{Temporal Evolution of Users}
 \label{secTemporalModelUsers}
+This section describes a model that attempts to account for temporal evolution of users across workouts. First, we describe the model and then describe the training algorithm.
+
+\subsection{Model}
+Given the total distance $d_{ui}$ for the $i$'th workout of user $u$, the predicted duration $T_{ui}'$ of the workout is given by:
+
+$$T_{ui}' = (\alpha_{e_{ui}} + \alpha_{ue_{ui}})(\theta_0 + \theta_1 d_{ui})$$
+
+where $e_{ui}$ is the \emph{experience} level of the user $u$ at the $i$'th workout. Thus, we have one parameter $\alpha_{ue}$ per user $u$ per experience level $e$. Further, we have an intercept term $\alpha_e$ for every experience level $e$, common to all users. The terms $\theta_0$ and $\theta_1$ are global to all users and experience levels. Thus, given $U$ users and $E$ experience levels, we have a total of $UE + E + 2$ parameters. 
+
+\subsection{Training Algorithm}
 
 \section{Temporal Evolution of Workouts}
 \label{secTemporalModelWorkouts}
@@ -85,7 +90,6 @@ Figure \ref{plotRatingVsGenre} shows the average rating for various movie genres
 %\needspace{2\baselineskip}
 \section{Results}
 
-\begin{comment}
 \begin{table*}
 \centering
 \begin{tabular}{|c|c|c|c|c|c|c|} \hline
@@ -98,7 +102,6 @@ Test & 200041 & 0.049818 & 0.033776 {\bf(0.322010)} & 0.033779 {\bf(0.321948)} &
 \label{tableResults}
 \end{table*}
 % end the environment with {table*}, NOTE not {table}!
-\end{comment}
 
 \section{Conclusion and Future Work}
 
