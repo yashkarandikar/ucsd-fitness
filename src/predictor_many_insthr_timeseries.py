@@ -38,6 +38,9 @@ def make_predictions(all_X, all_models):
     all_y = [0.0] * W
     for w in xrange(0, W):
         all_y[w] = all_models[w].predict(all_X[w])
+        for p in all_y[w]:
+            if (p > 400.0):
+                print p
     pred = np.matrix(np.concatenate(tuple(all_y))).T
     #for i in xrange(0, pred.shape[0]):
     #    pred[i, 0] = pred[0, 0]
@@ -72,6 +75,10 @@ def predict_next(all_last_E, all_models, next_n, E):
             #p = m.predict(np.matrix([x]))[0]
             v = x[i:i+E]
             p = m.predict(np.insert(v, 0, 1.0))
+            if (p > 400.0):
+                print "ALERT : w = ", w
+                #print all_last_E[w]
+                #print v
             all_y[w][i] = p
             x[E + i] = p
             #x.append(p)
@@ -209,15 +216,16 @@ def learn(all_X, all_y, E):
     W = len(all_X) 
     models = [0.0] * W
     for w in xrange(0, W):
-        #X = all_X[w]
+        X = all_X[w]
         y = all_y[w]
         #model = linear_model.LinearRegression(copy_X = True)
-        #model = linear_model.Ridge(alpha = 1.0, copy_X = True)
-        #model.fit(X, y)
-        #models[w] = model
+        model = linear_model.Ridge(alpha = 100000000.0, copy_X = True)
+        model.fit(X, y)
+        models[w] = model
+        
         #arma = sm.tsa.ARMA(y, (E, 1))
-        model = sm.tsa.AR(y)
-        models[w] = model.fit(maxlag = E)
+        #model = sm.tsa.AR(y)
+        #models[w] = model.fit(maxlag = E)
         #models[w] = arma.fit(start_params = np.zeros((E+2, 1)))
         if (w % 10000 == 0):
             print "Done %d workouts out of %d" % (w, W)
@@ -264,8 +272,8 @@ def main():
 
     E = int(sys.argv[1])
  
-    infile = "../../data/endoMondo5000_workouts.gz"
-    #infile = "../../data/all_workouts.gz"
+    #infile = "../../data/endoMondo5000_workouts.gz"
+    infile = "../../data/all_workouts.gz"
     mode = "final"  # can be "final" or "random"
     
     outfile = infile + mode + "_inst_many.npz"
@@ -316,15 +324,18 @@ def main():
     all_last_E = [0.0] * W
     for w in xrange(0, W):
         all_last_E[w] = train_y[w][:E]
-    samples_per_workout = get_samples_per_workout(train_set)
-    start = [0.0] * W
-    end = [0.0] * W
-    for w in xrange(0, W):
-        start[w] = E
-        end[w] = samples_per_workout[w] - 1
-    #train_pred = predict_next(all_last_E, all_models, next_n, E)
-    train_pred = predict_next_ARMA(all_models, start, end)
-    #print train_pred
+    next_n = get_samples_per_workout(train_set)
+    for w in range(0, W):
+        next_n[w] = next_n[w] - E
+    train_pred = predict_next(all_last_E, all_models, next_n, E)
+    #samples_per_workout = get_samples_per_workout(train_set)
+    #start = [0.0] * W
+    #end = [0.0] * W
+    #for w in xrange(0, W):
+    #    start[w] = E
+    #    end[w] = samples_per_workout[w] - 1
+    #train_pred = predict_next_ARMA(all_models, start, end)
+    
     #for w in xrange(0, W):
     #    all_last_E[w] = train_y[w][-E:]
     #    assert(len(all_last_E[w]) == E)
@@ -340,8 +351,21 @@ def main():
     train_pred = np.matrix(flatten_list(train_pred)).T
     #val_pred = np.matrix(flatten_list(val_pred)).T
 
-    print train_pred[:200]
-    print train_y[:200]
+    #with open("pred.txt", "w") as f:
+    #    f.write(str(train_pred[-200:]))
+    #with open("true.txt", "w") as f:
+    #    f.write(str(train_y[-200:]))
+    #with open("diff.txt", "w") as f:
+    #    f.write(str(list(train_y.A1 - train_pred.A1)))
+    n = train_pred.shape[0]
+    print n
+    for i in xrange(0, n):
+        d = train_pred[i, 0] - train_y[i, 0]
+        if (d > 200):
+            print "ALERT : ", i
+            print train_pred[i, 0]
+            print train_y[i, 0]
+            break
 
     print "Computing statistics"
     [mse, var, fvu, r2, errors] = compute_stats(train_y, train_pred)
