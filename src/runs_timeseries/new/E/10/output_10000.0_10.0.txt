@@ -55,12 +55,12 @@ Done 80000 workouts, out of 83423
 9007087
 Computing statistics
 
-@Training Examples = 9841317,MSE = 82.617598,Variance = 366.257179,FVU = 0.225573,R2 = 1 - FVU = 0.774427, E = 10
+@Training Examples = 9841317,MSE = 100.082714,Variance = 366.257179,FVU = 0.273258,R2 = 1 - FVU = 0.726742, E = 10
 
 (7352229, 1)
 (7352229, 1)
-@Validation Examples = 7352229,MSE = 149.848937,Variance = 348.064883,FVU = 0.430520,R2 = 1 - FVU = 0.569480, E = 10
+@Validation Examples = 7352229,MSE = 169.167530,Variance = 348.064883,FVU = 0.486023,R2 = 1 - FVU = 0.513977, E = 10
 
-@Test Examples = 7321065,MSE = 262.515073,Variance = 398.075182,FVU = 0.659461,R2 = 1 - FVU = 0.340539, E = 10
+@Test Examples = 7321065,MSE = 244.405853,Variance = 398.075182,FVU = 0.613969,R2 = 1 - FVU = 0.386031, E = 10
 
-@Total time taken =  984.526809931
+@Total time taken =  938.838516951

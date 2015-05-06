@@ -52,15 +52,27 @@ Done 50000 workouts, out of 83423
 Done 60000 workouts, out of 83423
 Done 70000 workouts, out of 83423
 Done 80000 workouts, out of 83423
-9007087
+7338627
+ALERT :  4595396
+436.288174998
+234.5
+ALERT :  4595397
+454.044291616
+231.0
+ALERT :  4595398
+472.753071895
+226.33333
+ALERT :  4595399
+492.459469644
+212.66667
 Computing statistics
 
-@Training Examples = 9841317,MSE = 82.617598,Variance = 366.257179,FVU = 0.225573,R2 = 1 - FVU = 0.774427, E = 10
+@Training Examples = 9841317,MSE = 55.908257,Variance = 340.235580,FVU = 0.164322,R2 = 1 - FVU = 0.835678, E = 30
 
 (7352229, 1)
 (7352229, 1)
-@Validation Examples = 7352229,MSE = 149.848937,Variance = 348.064883,FVU = 0.430520,R2 = 1 - FVU = 0.569480, E = 10
+@Validation Examples = 7352229,MSE = 273.356435,Variance = 348.064883,FVU = 0.785361,R2 = 1 - FVU = 0.214639, E = 30
 
-@Test Examples = 7321065,MSE = 262.515073,Variance = 398.075182,FVU = 0.659461,R2 = 1 - FVU = 0.340539, E = 10
+@Test Examples = 7321065,MSE = 141568.357824,Variance = 398.075182,FVU = 355.632212,R2 = 1 - FVU = -354.632212, E = 30
 
-@Total time taken =  984.526809931
+@Total time taken =  1173.62777615
