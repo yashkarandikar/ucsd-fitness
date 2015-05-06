@@ -80,7 +80,12 @@ def predict_next(all_last_E, all_models, next_n, E):
             #p = m.predict(np.insert(v, 0, 1.0))
             p = np.dot(m, np.insert(v, 0, 1.0))
             all_y[w][i] = p
-            x[E + i] = p
+            try :
+                x[E + i] = p
+            except:
+                print E
+                print i
+                print len(x)
         if (w % 10000 == 0):
             print "Done %d workouts, out of %d" % (w, W)
 
@@ -318,6 +323,9 @@ def main():
     print "Validation set has %d examples" % (val_set.shape[0])
 
     train_X, train_y = organize(train_set, E, param_indices)
+    W = len(train_X)
+    for w in xrange(0, W):
+        assert(train_X[w].shape[1] == E + 1)
 
     print "Training.."
     all_models = learn(train_X, train_y, lam, E)
