@@ -72,20 +72,26 @@ def predict_next(all_last_E, all_models, next_n, E):
         m = all_models[w]
         n = next_n[w]
         all_y[w] = [0.0] * n
-        x = [0.0] * (n + E)
-        x[:E] = all_last_E[w]
+        x = [0.0] * int(n + E)
+        for i in xrange(0, E):
+            x[i] = all_last_E[w][i]
         for i in xrange(0, n):
             #p = m.predict(np.matrix([x]))[0]
-            v = x[i:i+E]
             #p = m.predict(np.insert(v, 0, 1.0))
-            p = np.dot(m, np.insert(v, 0, 1.0))
+            v = x[i:i+E]
+            v_temp = np.insert(v, 0, 1.0)
+            p = np.dot(m, v_temp)
             all_y[w][i] = p
             try :
                 x[E + i] = p
             except:
+                print "==="
                 print E
                 print i
                 print len(x)
+                print next_n[w]
+                print n
+                print "==="
         if (w % 10000 == 0):
             print "Done %d workouts, out of %d" % (w, W)
 
@@ -334,7 +340,8 @@ def main():
     W = len(train_X)
     all_last_E = [0.0] * W
     for w in xrange(0, W):
-        all_last_E[w] = train_y[w][:E]
+        all_last_E[w] = train_X[w][0, 1:E+1]
+        assert(len(all_last_E[w]) == E)
     next_n = get_samples_per_workout(train_set)
     for w in range(0, W):
         next_n[w] = next_n[w] - E
@@ -342,7 +349,9 @@ def main():
     
     print "Making predictions (val).. "
     for w in xrange(0, W):
-        all_last_E[w] = train_y[w][-E:]
+        #all_last_E[w] = train_y[w][-E:]
+        l = train_X[w][-1, 2:E+1]
+        all_last_E[w] = np.insert(l, E - 1, train_y[w][-1])
         assert(len(all_last_E[w]) == E)
     val_pred = predict_next(all_last_E, all_models, get_samples_per_workout(val_set), E)
 
