@@ -285,7 +285,7 @@ def main():
     data = np.load(outfile)
     train_set = data["train_set"]
     val_set = data["val_set"]
-    #test_set = data["test_set"]
+    test_set = data["test_set"]
     param_indices = data["param_indices"][()]
     #print "Doing sorted check on train and val sets.."
     #check_sorted(train_set, param_indices)
@@ -314,12 +314,7 @@ def main():
     #val_set = add_experience_column_to_train_set(val_set, sigma_val, param_indices)
     #val_set = add_experience_column_to_test_set(val_set, train_set, param_indices, mode = mode)
 
-    print "Making predictions.."
-    print E
-    #train_pred = make_predictions(train_X, all_models)
-    #val_pred = make_predictions_test(val_X, all_models)
-    #print train_X
-    #print train_y
+    print "Making predictions (train).."
     W = len(train_X)
     all_last_E = [0.0] * W
     for w in xrange(0, W):
@@ -328,28 +323,18 @@ def main():
     for w in range(0, W):
         next_n[w] = next_n[w] - E
     train_pred = predict_next(all_last_E, all_models, next_n, E)
-    #samples_per_workout = get_samples_per_workout(train_set)
-    #start = [0.0] * W
-    #end = [0.0] * W
-    #for w in xrange(0, W):
-    #    start[w] = E
-    #    end[w] = samples_per_workout[w] - 1
-    #train_pred = predict_next_ARMA(all_models, start, end)
     
-    #for w in xrange(0, W):
-    #    all_last_E[w] = train_y[w][-E:]
-    #    assert(len(all_last_E[w]) == E)
-    #val_pred = predict_next(all_last_E, all_models, get_samples_per_workout(val_set))
-    #for w in xrange(0, W):
-    #    all_last_E[w] = val_pred[-E:]
-    #test_pred = predict_next(all_last_E, all_models, get_samples_per_workout(test_set))
+    print "Making predictions (val).. "
+    for w in xrange(0, W):
+        all_last_E[w] = train_y[w][-E:]
+        assert(len(all_last_E[w]) == E)
+    val_pred = predict_next(all_last_E, all_models, get_samples_per_workout(val_set), E)
 
-    train_y = np.matrix(flatten_list(train_y)).T
-    #val_y = val_set[:, param_indices["hr"]]
-    #val_y = np.matrix(list(val_y)).T
-    
-    train_pred = np.matrix(flatten_list(train_pred)).T
-    #val_pred = np.matrix(flatten_list(val_pred)).T
+    print "Makign predictions (test) .."
+    for w in xrange(0, W):
+        all_last_E[w] = val_pred[w][-E:]
+        assert(len(all_last_E[w]) == E)
+    test_pred = predict_next(all_last_E, all_models, get_samples_per_workout(test_set), E)
 
     #with open("pred.txt", "w") as f:
     #    f.write(str(train_pred[-200:]))
@@ -357,6 +342,17 @@ def main():
     #    f.write(str(train_y[-200:]))
     #with open("diff.txt", "w") as f:
     #    f.write(str(list(train_y.A1 - train_pred.A1)))
+    
+    train_pred = np.matrix(flatten_list(train_pred)).T
+    val_pred = np.matrix(flatten_list(val_pred)).T
+    test_pred = np.matrix(flatten_list(test_pred)).T
+    
+    train_y = np.matrix(flatten_list(train_y)).T
+    val_y = val_set[:, param_indices["hr"]]
+    val_y = np.matrix(list(val_y)).T
+    test_y = test_set[:, param_indices["hr"]]
+    test_y = np.matrix(list(test_y)).T
+
     n = train_pred.shape[0]
     print n
     for i in xrange(0, n):
@@ -367,13 +363,14 @@ def main():
             print train_y[i, 0]
             break
 
+
     print "Computing statistics"
     [mse, var, fvu, r2, errors] = compute_stats(train_y, train_pred)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (train_set.shape[0],mse, var, fvu, r2, E)
-    #[mse, var, fvu, r2, errors] = compute_stats(val_y, val_pred)
-    #print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (val_set.shape[0],mse, var, fvu, r2, E)
-    #[mse, var, fvu, r2, errors] = compute_stats(test_y, test_pred)
-    #print "@Test Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (test_set.shape[0],mse, var, fvu, r2, E)
+    [mse, var, fvu, r2, errors] = compute_stats(val_y, val_pred)
+    print "@Validation Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (val_set.shape[0],mse, var, fvu, r2, E)
+    [mse, var, fvu, r2, errors] = compute_stats(test_y, test_pred)
+    print "@Test Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (test_set.shape[0],mse, var, fvu, r2, E)
 
     t2 = time.time()
     print "@Total time taken = ", t2 - t1
