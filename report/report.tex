@@ -35,7 +35,7 @@ Yashodhan Hemant Karandikar\\
 \end{abstract}
 
 \section{Introduction}
-
+In order to 
 
 \section{Motivation}
 
@@ -61,11 +61,13 @@ In this section, we introduce the Endomondo fitness data set. \cite{mldataset}.
 \end{figure*}
 \end{comment}
 
+\begin{comment}
 \begin{figure*}
 \centering
 \includegraphics[scale=0.4]{plots/rating_vs_genre}
 \caption{\label{plotRatingVsGenre} Average rating for various movie genres}
 \end{figure*}
+\end{comment}
 
 \section{Baseline Model}
 \label{secBaselineModel}
@@ -75,14 +77,23 @@ This section describes a baseline model to predict the duration of a workout giv
 \label{secTemporalModelUsers}
 This section describes a model that attempts to account for temporal evolution of users across workouts. First, we describe the model and then describe the training algorithm.
 
-\subsection{Model}
-Given the total distance $d_{ui}$ for the $i$'th workout of user $u$, the predicted duration $T_{ui}'$ of the workout is given by:
+\subsection{Model Specification}
+In order to account for evolution in the fitness level or capability of a user over time,  we associate a \emph{experience level} or \emph{fitness level} $e$ with each workout $w$. This can be seen as a way of encoding how fit the user is at the time of the workout $w$. The value $e$ is an integer in the interval $[0, E)$ where $E$ is the number of experience levels. 
+
+Intuitively, we expect the experience level of a user to either stay the same or increase with each workout. We encode this intuition in the form of a monotonicity constraint on the experience levels of workouts for each user, as given below:
+
+$$\forall u,i,j \;\;\;\;\; t_{ui} \geq t_{uj} \implies e_{ui} \geq e_{uj}$$
+
+Then, given the total distance $d_{ui}$ for the $i$'th workout of user $u$, the predicted duration $T_{ui}'$ of the workout is given by:
 
 $$T_{ui}' = (\alpha_{e_{ui}} + \alpha_{ue_{ui}})(\theta_0 + \theta_1 d_{ui})$$
 
-where $e_{ui}$ is the \emph{experience} level of the user $u$ at the $i$'th workout. Thus, we have one parameter $\alpha_{ue}$ per user $u$ per experience level $e$. Further, we have an intercept term $\alpha_e$ for every experience level $e$, common to all users. The terms $\theta_0$ and $\theta_1$ are global to all users and experience levels. Thus, given $U$ users and $E$ experience levels, we have a total of $UE + E + 2$ parameters. 
+where $e_{ui}$ is the experience level of the user $u$ at the $i$'th workout. Thus, we have one parameter $\alpha_{ue}$ per user $u$ per experience level $e$. Further, we have an intercept term $\alpha_e$ for every experience level $e$, common to all users. The terms $\theta_0$ and $\theta_1$ are global to all users and experience levels. Thus, given $U$ users and $E$ experience levels, we have a total of $UE + E + 2$ parameters.
+
+Note that setting $E = 1$ reduces the model to the baseline model described in section \ref{secBaselineModel}.
 
 \subsection{Training Algorithm}
+
 
 \section{Temporal Evolution of Workouts}
 \label{secTemporalModelWorkouts}
