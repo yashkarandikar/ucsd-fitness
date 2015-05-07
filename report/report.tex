@@ -110,14 +110,37 @@ where $e_{ui}$ is the experience level of the user $u$ at the $i$'th workout. Th
 
 Note that setting $E = 1$ reduces the model to the baseline model described in section \ref{secBaselineModel}.
 
-\subsection{Training Algorithm}
+\subsection{Training the model}
+As explained above, we have a different model for each of the $E$ experience levels. Each of the $E$ model has the following parameters:
 
+$$\Theta_e = (\alpha_e; \alpha_{1e}...\alpha_{Ue})$$
+
+where $1 \leq e \leq E$ is the experience level.
+
+Thus, all the parameters in the model can be written as:
+
+$$\Theta = (\Theta_1, \Theta_2,..., \Theta_E)$$
+
+where $U$ is the number of distinct runners in the dataset.
+
+Let $\beta$ denote the set of all experience parameters $e_{ui}$. Then, we need to choose the optimal parameters $(\hat{\Theta}, \hat{\beta})$ according to the objective
+
+$$(\hat{\Theta}, \hat{\beta})  =  \arg\min_{\Theta,\beta}\frac{1}{|D|} \sum_{T_{ui} \in D}(T_{ui}' - T_{ui})^2 + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta) $$
+
+\begin{comment}
+\begin{align}
+(\hat{\Theta}, \hat{\beta})  &= \arg\min_{\Theta,\beta}\frac{1}{N} \sum_{u,i}(T_{ui}' - T_{ui})^2 \nonumber \\
+ & + \lambda_1\Omega(\Theta) + \lambda_2\Omega(\Theta)
+\end{align}
+\end{comment}
+
+where $D$ is the data set of all workouts for all users.
 
 \section{Temporal Evolution of Workouts}
 \label{secTemporalModelWorkouts}
 
 %\needspace{2\baselineskip}
-\section{Results}
+\section{Evaluation}
 
 \begin{table*}
 \centering
