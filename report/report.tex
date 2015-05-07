@@ -31,7 +31,7 @@ Yashodhan Hemant Karandikar\\
 
 \maketitle
 \begin{abstract}
-
+The goal of this project is to model temporal evolution of runners' capacity across workouts as well as within each workout. We study this temporal evolution over 2 predictive tasks - prediction of duration of the next workout given previous workouts and prediction of average and instantaneous heart-rates. We show that accounting for temporal evolution improves results on these predictive tasks.
 \end{abstract}
 
 \section{Introduction}
@@ -41,8 +41,19 @@ Alternatively, runners often monitor their heart-rate while running and set goal
 
 The examples above highlight the temporal evolution of a runner's capacity, both across workouts and within each workout. We attempt to model both these forms of temporal evolution in this work.
 
-\section{Motivation}
+\section{Predictive Tasks}
+In order to study temporal evolution of a runner \emph{across} several workouts, we choose the following 2 predictive tasks as follows:
+\begin{enumerate}
+\item Given the distance $d_i$ and duration $T_i$ for each workout $i$ among first $n$ workouts of a user $u$ and given the distance $d_{n+1}$ for the $(n+1)$'th workout, predict the duration $T_{n+1}$ of the $(n+1)$'th workout.
+\item Given the distance $d_i$ and average heart-rate $H_i$ for each workout $i$ among first $n$ workouts of a user $u$ and given the distance $d_{n+1}$ for the $(n+1)$'th workout, predict the average heart-rate $H_{n+1}$ of the $(n+1)$'th workout.
+\end{enumerate}
 
+In order to study temporal evolution of a runner \emph{within} \emph{each} workout, we choose the following 2 predictive tasks as follows:
+
+\begin{enumerate}
+\item Given the first $n$ instantaneous heart-rates of a workout, predict the $(n+1)$'th instantaneous heart-rate.
+\item Given the instantaneous heart-rates of the first $f$ fraction of a workout, predict the heart-rates of the remaining $1-f$ fraction of the workout. This task is a generalization of the first.
+\end{enumerate}
 
 \section{Related Work}
 \cite{www13} describes various models which account for temporal evolution of user expertise through online reviews on websites such as Amazon, BeerAdvocate, RateBeer, CellarTracker. 
