@@ -98,7 +98,7 @@ This section describes a model that attempts to account for temporal evolution o
 \subsection{Model Specification}
 In order to account for evolution in the fitness level or capability of a user over time,  we associate a \emph{experience level} or \emph{fitness level} $e$ with each workout $w$. This can be seen as a way of encoding how fit the user is at the time of the workout $w$. The value $e$ is an integer in the interval $[0, E)$ where $E$ is the number of experience levels. 
 
-Intuitively, we expect the experience level of a user to either stay the same or increase with each workout. We encode this intuition in the form of a monotonicity constraint on the experience levels of workouts for each user, as given below:
+Intuitively, we expect the experience level of a user to either stay the same or increase with each workout. We encode this intuition in the form of a monotonicity constraint on the experience levels of workouts for each user, as given below \cite{www13}:
 
 $$\forall u,i,j \;\;\;\;\; t_{ui} \geq t_{uj} \implies e_{ui} \geq e_{uj}$$
 
@@ -110,31 +110,40 @@ where $e_{ui}$ is the experience level of the user $u$ at the $i$'th workout. Th
 
 Note that setting $E = 1$ reduces the model to the baseline model described in section \ref{secBaselineModel}.
 
-\subsection{Training the model}
-As explained above, we have a different model for each of the $E$ experience levels. Each of the $E$ model has the following parameters:
+\subsection{Objective Function}
+As explained above, we have a different model for each of the $E$ experience levels. Each of the $E$ models has the following parameters:
 
 $$\Theta_e = (\alpha_e; \alpha_{1e}...\alpha_{Ue})$$
 
-where $1 \leq e \leq E$ is the experience level.
+where $1 \leq e \leq E$ is the experience level and $U$ is the number of distinct users.
 
-Thus, all the parameters in the model can be written as:
+Thus, all the parameters in all of the $E$ models together can be written as:
 
 $$\Theta = (\Theta_1, \Theta_2,..., \Theta_E)$$
 
-where $U$ is the number of distinct runners in the dataset.
-
 Let $\beta$ denote the set of all experience parameters $e_{ui}$. Then, we need to choose the optimal parameters $(\hat{\Theta}, \hat{\beta})$ according to the objective
 
-$$(\hat{\Theta}, \hat{\beta})  =  \arg\min_{\Theta,\beta}\frac{1}{|D|} \sum_{T_{ui} \in D}(T_{ui}' - T_{ui})^2 + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta) $$
+%$$(\hat{\Theta}, \hat{\beta})  =  \arg\min_{\Theta,\beta}\frac{1}{|D|} \sum_{T_{ui} \in D}(T_{ui}' - T_{ui})^2 + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1) $$
 
-\begin{comment}
 \begin{align}
 (\hat{\Theta}, \hat{\beta})  &= \arg\min_{\Theta,\beta}\frac{1}{N} \sum_{u,i}(T_{ui}' - T_{ui})^2 \nonumber \\
- & + \lambda_1\Omega(\Theta) + \lambda_2\Omega(\Theta)
+ & + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1)
 \end{align}
-\end{comment}
 
-where $D$ is the data set of all workouts for all users.
+$$s.t. \; \; \; t_{ui} \geq t_{uj} \implies e_{ui} \geq e_{uj} $$
+
+where $D$ is the data set of all workouts for all users. This objective is similar to the one described in \cite{www13}. $\Omega_1$ and $\Omega_2$ are regularizers defined as follows:
+
+$$\Omega_1(\Theta) = \sum_{e=1}^{E-1}{\|\Theta_e - \Theta_{e+1}\|_2^2}$$
+
+and
+
+$$\Omega_2(\Theta, \theta_1) = \theta_1^2 + \sum_{e=1}^{E}{\|\Theta_e \|_2^2}$$
+
+$\Omega_1$ is a smoothness function which penalizes abrupt changes between successive experience levels \cite{www13}, since in practice similar experience levels should have similar parameters \cite{www13}. $\Omega_2$ is another regularizer which penalizes complex models i.e. it penalizes models which have higher magnitudes of parameters. These regularizers are necessary to avoid overfitting, since we have a large number $(UE + E + 2)$ of parameters. $\lambda_1$ and $\lambda_2$ are regularization hyperparameters, which trade-off the importance of regularization versus prediction accuracy at training time \cite{www13}. We select $\lambda_1$ and $\lambda_2$ through a grid-search over values in the set $\{0.0, 10^{-3}, 10^{-2}, 10^{-1}, 10^0, 10^1\}$ and select the values which yield the highest prediction accuracy on a validation set.
+
+\subsection{Training the model}
+
 
 \section{Temporal Evolution of Workouts}
 \label{secTemporalModelWorkouts}
