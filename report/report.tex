@@ -126,6 +126,7 @@ Let $\beta$ denote the set of all experience parameters $e_{ui}$. Then, we need 
 %$$(\hat{\Theta}, \hat{\beta})  =  \arg\min_{\Theta,\beta}\frac{1}{|D|} \sum_{T_{ui} \in D}(T_{ui}' - T_{ui})^2 + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1) $$
 
 \begin{align}
+\label{eqnObjective}
 (\hat{\Theta}, \hat{\beta})  &= \arg\min_{\Theta,\beta}\frac{1}{N} \sum_{u,i}(T_{ui}' - T_{ui})^2 \nonumber \\
  & + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1)
 \end{align}
@@ -143,7 +144,9 @@ $$\Omega_2(\Theta, \theta_1) = \theta_1^2 + \sum_{e=1}^{E}{\|\Theta_e \|_2^2}$$
 $\Omega_1$ is a smoothness function which penalizes abrupt changes between successive experience levels \cite{www13}, since in practice similar experience levels should have similar parameters \cite{www13}. $\Omega_2$ is another regularizer which penalizes complex models i.e. it penalizes models which have higher magnitudes of parameters. These regularizers are necessary to avoid overfitting, since we have a large number $(UE + E + 2)$ of parameters. $\lambda_1$ and $\lambda_2$ are regularization hyperparameters, which trade-off the importance of regularization versus prediction accuracy at training time \cite{www13}. We select $\lambda_1$ and $\lambda_2$ through a grid-search over values in the set $\{0.0, 10^{-3}, 10^{-2}, 10^{-1}, 10^0, 10^1\}$ and select the values which yield the highest prediction accuracy on a validation set.
 
 \subsection{Training the model}
+We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cite{coordinateDescentWiki} i.e. we alternately optimize equation \ref{eqnObjective} for $\Theta$ given $\beta$ and $\beta$ given $\Theta$. We optimize the model parameters $\Theta$ given $\beta$ using L-BFGS \cite{lbfgs} available in the SciPy library \cite{scipy}. Optimizing $\beta$ given $\Theta$ means assigning a experience level to each workout so that the mean-squared-error is minimized, subject to the monotonicity constraint \cite{www13}. Since the experience levels are discrete, this problem can be solved efficiently using dynamic programming, as is done in \cite{www13}.
 
+We alternately optimize $\Theta$ given $\beta$ and $\beta$ given $\Theta$ until $\beta$ does not change.
 
 \section{Temporal Evolution of Workouts}
 \label{secTemporalModelWorkouts}
