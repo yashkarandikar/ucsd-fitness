@@ -34,7 +34,7 @@ Yashodhan Hemant Karandikar\\
 
 \maketitle
 \begin{abstract}
-The goal of this project is to model temporal evolution of runners' capacity across workouts as well as within each workout. We study this temporal evolution over 2 predictive tasks - prediction of duration of the next workout given previous workouts and prediction of average and instantaneous heart-rates. We show that accounting for temporal evolution improves results on these predictive tasks.
+The goal of this project is to model temporal evolution of runners' capacity across workouts as well as within each workout. We study this temporal evolution over 2 predictive tasks - prediction of duration of the next workout given previous workouts and prediction of average and instantaneous heart-rates. We show that accounting for temporal evolution improves results on these predictive tasks on the Endomondo fitness data set.
 \end{abstract}
 
 \section{Introduction}
@@ -96,11 +96,13 @@ This section describes a baseline model to predict the duration of a workout giv
 This section describes a model that attempts to account for temporal evolution of users across workouts. First, we describe the model and then describe the training algorithm.
 
 \subsection{Model Specification}
-In order to account for evolution in the fitness level or capability of a user over time,  we associate a \emph{experience level} or \emph{fitness level} $e$ with each workout $w$. This can be seen as a way of encoding how fit the user is at the time of the workout $w$. The value $e$ is an integer in the interval $[0, E)$ where $E$ is the number of experience levels. 
+In order to account for evolution in the fitness level or capability of a user over time,  we associate a \emph{experience level} or \emph{fitness level} $e_{uw}$ with each workout $w$ of user $u$. This can be seen as a way of encoding how fit the user is at the time of the workout $w$. The value $e_{uw}$ is an integer in the interval $[0, E)$ where $E$ is the number of experience levels. 
 
 Intuitively, we expect the experience level of a user to either stay the same or increase with each workout. We encode this intuition in the form of a monotonicity constraint on the experience levels of workouts for each user, as given below \cite{www13}:
 
 $$\forall u,i,j \;\;\;\;\; t_{ui} \geq t_{uj} \implies e_{ui} \geq e_{uj}$$
+
+where $t_{ui}$ is the time at which workout $i$ of user $u$ occurs.
 
 Then, given the total distance $d_{ui}$ for the $i$'th workout of user $u$, the predicted duration $T_{ui}'$ of the workout is given by:
 
@@ -109,6 +111,10 @@ $$T_{ui}' = (\alpha_{e_{ui}} + \alpha_{ue_{ui}})(\theta_0 + \theta_1 d_{ui})$$
 where $e_{ui}$ is the experience level of the user $u$ at the $i$'th workout. Thus, we have one parameter $\alpha_{ue}$ per user $u$ per experience level $e$. Further, we have an intercept term $\alpha_e$ for every experience level $e$, common to all users. The terms $\theta_0$ and $\theta_1$ are global to all users and experience levels. Thus, given $U$ users and $E$ experience levels, we have a total of $UE + E + 2$ parameters.
 
 Note that setting $E = 1$ reduces the model to the baseline model described in section \ref{secBaselineModel}.
+
+We can specify a similar model for the predicted average heart rate $H_{ui}'$ of the user $u$ during the workout $i$:
+
+$$H_{ui}' = (\alpha_{e_{ui}} + \alpha_{ue_{ui}})(\theta_0 + \theta_1 d_{ui})$$
 
 \subsection{Objective Function}
 As explained above, we have a different model for each of the $E$ experience levels. Each of the $E$ models has the following parameters:
@@ -127,7 +133,7 @@ Let $\beta$ denote the set of all experience parameters $e_{ui}$. Then, we need 
 
 \begin{align}
 \label{eqnObjective}
-(\hat{\Theta}, \hat{\beta})  &= \arg\min_{\Theta,\beta}\frac{1}{N} \sum_{u,i}(T_{ui}' - T_{ui})^2 \nonumber \\
+(\hat{\Theta}, \hat{\beta})  &= \arg\min_{\Theta,\beta}\frac{1}{|D|} \sum_{T_{ui} \in D}(T_{ui}' - T_{ui})^2 \nonumber \\
  & + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1)
 \end{align}
 
@@ -143,6 +149,8 @@ $$\Omega_2(\Theta, \theta_1) = \theta_1^2 + \sum_{e=1}^{E}{\|\Theta_e \|_2^2}$$
 
 $\Omega_1$ is a smoothness function which penalizes abrupt changes between successive experience levels \cite{www13}, since in practice similar experience levels should have similar parameters \cite{www13}. $\Omega_2$ is another regularizer which penalizes complex models i.e. it penalizes models which have higher magnitudes of parameters. These regularizers are necessary to avoid overfitting, since we have a large number $(UE + E + 2)$ of parameters. $\lambda_1$ and $\lambda_2$ are regularization hyperparameters, which trade-off the importance of regularization versus prediction accuracy at training time \cite{www13}. We select $\lambda_1$ and $\lambda_2$ through a grid-search over values in the set $\{0.0, 10^{-3}, 10^{-2}, 10^{-1}, 10^0, 10^1\}$ and select the values which yield the highest prediction accuracy on a validation set.
 
+For the task of predicting the average heart rate instead of the duration of the workout, the objective function remains the same as in equation \ref{eqnObjective}, except that the term $T_{ui}' - T_{ui}$ is replaced by $H_{ui}' - H_{ui}$.
+
 \subsection{Training the model}
 We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cite{coordinateDescentWiki} i.e. we alternately optimize equation \ref{eqnObjective} for $\Theta$ given $\beta$ and $\beta$ given $\Theta$. We optimize the model parameters $\Theta$ given $\beta$ using L-BFGS \cite{lbfgs} available in the SciPy library \cite{scipy}. Optimizing $\beta$ given $\Theta$ means assigning a experience level to each workout so that the mean-squared-error is minimized, subject to the monotonicity constraint \cite{www13}. Since the experience levels are discrete, this problem can be solved efficiently using dynamic programming, as is done in \cite{www13}.
 
@@ -150,6 +158,58 @@ We alternately optimize $\Theta$ given $\beta$ and $\beta$ given $\Theta$ until 
 
 \section{Temporal Evolution of Workouts}
 \label{secTemporalModelWorkouts}
+We now consider temporal evolution of a runner's capacity \emph{during} a workout and use it to predict the runner's instantaneous heart rate in the future. 
+
+\subsection{Model Specification}
+
+Given the heart-rate at various instants in a workout, we associate a \emph{tiredness level} $e_{wi}$ with heart-rate sample $i$ in the workout $w$. As before, the value $e_{wt}$ is an integer in the interval $[0, E)$, where $E$ is the number of tiredness levels. We expect the tiredness level of the user to either stay the same or increase with each sample in the workout. We encode this in the form of a monotonicity constraint as before:
+
+$$\forall w,i,j \;\;\;\;\; t_{wi} \geq t_{wj} \implies e_{wi} \geq e_{wj}$$
+
+where $t_{wi}$ is the time at which sample $i$ in workout $w$ was sampled.
+
+Then, given the distance covered $d_{wt}$ at sample $t$ for the $w$'th workout, the predicted instantaneous heart-rate $h_{wt}'$ of the user is given by:
+
+$$h_{wt}' = (\alpha_{e_{wt}} + \alpha_{ue_{wt}})(\theta_0 + \theta_1 d_{wt})$$
+
+where $e_{wt}$ is the tiredness level of the user at the $t$'th sample in workout $w$. Thus, as before, we have one parameter $\alpha_{we}$ per workout $w$ per tiredness level $e$ and an intercept term $\alpha_e$ for every tiredness level $e$, common to all workouts. The terms $\theta_0$ and $\theta_1$ are global to all workouts and tiredness levels. Thus, given $W$ workouts and $E$ tiredness levels, we have a total of $WE + E + 2$ parameters.
+
+
+\subsection{Objective Function}
+As before, we have a different model for each of the $W$ tiredness levels. Each of the $E$ models has the following parameters:
+
+$$\Theta_e = (\alpha_e; \alpha_{1e}...\alpha_{We})$$
+
+where $1 \leq e \leq E$ is the experience level and $W$ is the number of workouts in the data set.
+
+Thus, all the parameters in all of the $E$ models together can be written as:
+
+$$\Theta = (\Theta_1, \Theta_2,..., \Theta_E)$$
+
+Let $\beta$ denote the set of all experience parameters $e_{wt}$. Then, we need to choose the optimal parameters $(\hat{\Theta}, \hat{\beta})$ according to the objective
+
+\begin{align}
+\label{eqnObjective2}
+(\hat{\Theta}, \hat{\beta})  &= \arg\min_{\Theta,\beta}\frac{1}{|D|} \sum_{h_{wt} \in D}(h_{wt}' - h_{wt})^2 \nonumber \\
+ & + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1)
+\end{align}
+
+$$s.t. \; \; \; t_{wi} \geq t_{wj} \implies e_{wi} \geq e_{wj} $$
+
+where $D$ is the data set of all workouts for all users. This objective is similar to the one described in \cite{www13}.
+
+As before, $\Omega_1$ and $\Omega_2$ are regularizers defined as follows:
+
+$$\Omega_1(\Theta) = \sum_{e=1}^{E-1}{\|\Theta_e - \Theta_{e+1}\|_2^2}$$
+
+$$\Omega_2(\Theta, \theta_1) = \theta_1^2 + \sum_{e=1}^{E}{\|\Theta_e \|_2^2}$$
+
+$\Omega_1$ is a smoothness function which penalizes abrupt changes between successive tiredness levels \cite{www13}, since in practice similar tiredness levels should have similar parameters \cite{www13}. $\Omega_2$ is another regularizer which penalizes complex models i.e. it penalizes models which have higher magnitudes of parameters. These regularizers are necessary to avoid overfitting, since we have a large number $(WE + E + 2)$ of parameters. $\lambda_1$ and $\lambda_2$ are regularization hyperparameters, which trade-off the importance of regularization versus prediction accuracy at training time \cite{www13}. We select $\lambda_1$ and $\lambda_2$ through a grid-search over values in the set $\{0.0, 10^{-3}, 10^{-2}, 10^{-1}, 10^0, 10^1\}$ and select the values which yield the highest prediction accuracy on a validation set.
+
+\subsection{Training the model}
+The training algorithm is identical to the training algorithm described in section \ref{secTemporalModelUsers}.
+
+\section{Prediction of several instantaneous heart rate values}
 
 %\needspace{2\baselineskip}
 \section{Evaluation}
