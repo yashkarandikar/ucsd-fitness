@@ -65,6 +65,9 @@ In order to study temporal evolution of a runner \emph{within} \emph{each} worko
 \label{expAnalysis}
 In this section, we introduce the Endomondo fitness data set. \cite{mldataset}. 
 
+\subsection{Extracting relevant data}
+\subsection{Exploratory Analysis}
+
 \begin{comment}
 \begin{figure}[h]
 \centering
@@ -106,7 +109,11 @@ where $t_{ui}$ is the time at which workout $i$ of user $u$ occurs.
 
 Then, given the total distance $d_{ui}$ for the $i$'th workout of user $u$, the predicted duration $T_{ui}'$ of the workout is given by:
 
-$$T_{ui}' = (\alpha_{e_{ui}} + \alpha_{ue_{ui}})(\theta_0 + \theta_1 d_{ui})$$
+\begin{equation}
+\label{eqnModelDuration}
+T_{ui}' = (\alpha_{e_{ui}} + \alpha_{ue_{ui}})(\theta_0 + \theta_1 d_{ui})
+\end{equation}
+
 
 where $e_{ui}$ is the experience level of the user $u$ at the $i$'th workout. Thus, we have one parameter $\alpha_{ue}$ per user $u$ per experience level $e$. Further, we have an intercept term $\alpha_e$ for every experience level $e$, common to all users. The terms $\theta_0$ and $\theta_1$ are global to all users and experience levels. Thus, given $U$ users and $E$ experience levels, we have a total of $UE + E + 2$ parameters.
 
@@ -114,7 +121,10 @@ Note that setting $E = 1$ reduces the model to the baseline model described in s
 
 We can specify a similar model for the predicted average heart rate $H_{ui}'$ of the user $u$ during the workout $i$:
 
-$$H_{ui}' = (\alpha_{e_{ui}} + \alpha_{ue_{ui}})(\theta_0 + \theta_1 d_{ui})$$
+\begin{equation}
+\label{eqnModelAvgHr}
+H_{ui}' = (\alpha_{e_{ui}} + \alpha_{ue_{ui}})(\theta_0 + \theta_1 d_{ui})
+\end{equation}
 
 \subsection{Objective Function}
 As explained above, we have a different model for each of the $E$ experience levels. Each of the $E$ models has the following parameters:
@@ -157,6 +167,13 @@ We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cit
 We alternately optimize $\Theta$ given $\beta$ and $\beta$ given $\Theta$ until $\beta$ does not change.
 
 \subsection{Inference}
+Once the model parameters and experience levels have been learned, we infer i.e. predict the duration or average heart rate for the next workout $w$ using equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr}. Note that we need to estimate the experience level for workout $w$ in order to be able to use equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr} to predict the duration or average heart-rate. We estimate this experience level in 2 different modes of inference, namely \emph{final} and \emph{random}. 
+
+In the \emph{final} mode of inference, we use the first $N-2$ workouts as the training set, the $N-1$'th workout as the validation set and the $N$'th workout as the test set, where $N$ is the total number of workouts for a user $u$ in the data set. We assume $e_{u(N)} = e_{u(N-1)} = e_{u(N-2)}$ and use these experience levels to predict the duration (using equation \ref{eqnModelDuration}) or average heart rate (using equation \ref{eqnModelAvgHr}).
+
+In the \emph{random} mode of inference, we randomly select 1 workout as the validation set and 1 workout as the test set. The experience levels for these workouts is assumed to be equal to those of the workouts closest in time in the training set. 
+
+We present results for both modes of inference in section \ref{secEvaluation}.
 
 \section{Temporal Evolution of Workouts}
 \label{secTemporalModelWorkouts}
@@ -172,7 +189,10 @@ where $t_{wi}$ is the time at which sample $i$ in workout $w$ was sampled.
 
 Then, given the distance covered $d_{wt}$ at sample $t$ for the $w$'th workout, the predicted instantaneous heart-rate $h_{wt}'$ of the user is given by:
 
-$$h_{wt}' = (\alpha_{e_{wt}} + \alpha_{ue_{wt}})(\theta_0 + \theta_1 d_{wt})$$
+\begin{equation}
+\label{eqnModelInstHr}
+h_{wt}' = (\alpha_{e_{wt}} + \alpha_{ue_{wt}})(\theta_0 + \theta_1 d_{wt})
+\end{equation}
 
 where $e_{wt}$ is the tiredness level of the user at the $t$'th sample in workout $w$. Thus, as before, we have one parameter $\alpha_{we}$ per workout $w$ per tiredness level $e$ and an intercept term $\alpha_e$ for every tiredness level $e$, common to all workouts. The terms $\theta_0$ and $\theta_1$ are global to all workouts and tiredness levels. Thus, given $W$ workouts and $E$ tiredness levels, we have a total of $WE + E + 2$ parameters.
 
@@ -211,14 +231,26 @@ $\Omega_1$ is a smoothness function which penalizes abrupt changes between succe
 The training algorithm is identical to the training algorithm described in section \ref{secTemporalModelUsers}.
 
 \subsection{Inference}
+Once the model parameters and tiredness levels have been learned, we infer i.e. predict the instantaneous heart rate at 1 instant in each workout $w$ using equation \ref{eqnModelInstHr}. As before, we need to estimate the tiredness level at that instant in order to be able to use equation \ref{eqnModelInstHr} to predict the instantaneous heart-rate. We estimate this tiredness levels in 2 different modes of inference, namely \emph{final} and \emph{random}. 
+
+In the \emph{final} mode of inference, we use the first $N-2$ samples in each workout as the training set, the $N-1$'th sample from each workout as the validation set and the $N$'th sample as the test set, where $N$ is the total number of samples in a workout. We assume $e_{wN} = e_{w(N-1)} = e_{w(N-2)}$ and use these tiredness levels to predict the instantaneous heart-rate using equation \ref{eqnModelInstHr}.
+
+In the \emph{random} mode of inference, we randomly select 1 sample from each workout as the validation set and 1 sample from each workout as the test set. The tiredness level for these samples is assumed to be equal to those of the samples closest in time in the training set. 
+
+We present results for both modes of inference in section \ref{secEvaluation}.
 
 \subsection{Prediction of several instantaneous heart rate values}
-We now generalize the problem of predicting 1 instantaneous heart-rate value to predicting the heart-rate values for the last $f$ fraction of the workout. We use the same model as in section \ref{secTemporalModelWorkouts}. Let $e_{wn}$ be the tiredness level of the last sample in the training set. In order to predict the instantaneous heart-rate values in the remaining part of the workout, we assume $e_{w(n+1)} = e{w(n+2)} = ... = e{w(N)}$ where $N$ is the total number of samples in workout $w$. In other words, we assume that the last tiredness level of the workout fitted during training stays the same for the remaining part of the workout. In practice, this is not a valid assumption, but this provides us with a conservative estimate of how well the model performs on the remaining part of the workout i.e. on the validation and test sets.
+We now generalize the problem of predicting 1 instantaneous heart-rate value to predicting the heart-rate values for the last $f$ fraction of the workout. We use the same model as in section \ref{secTemporalModelWorkouts}. Let $e_{wn}$ be the tiredness level of the last sample in the training set. In order to predict the instantaneous heart-rate values in the remaining part of the workout, we assume $e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$. In other words, we assume that the last tiredness level of the workout fitted during training stays the same for the remaining part of the workout. In practice, this is not a valid assumption, but this provides us with a conservative estimate of how well the model performs on the remaining part of the workout i.e. on the validation and test sets.
 
 Also note that the difficulty is not only that of estimating the tiredness levels accurately, but also not having learned model parameters for tiredness levels beyond the last tiredness level fitted during training. Thus, even if the true tiredness levels for the remaining part of the workout are known, these cannot be used for prediction of heart-rate values.
 
+\section{Implementation Details}
+\subsection{Verifying correctness}
+\subsection{Performance}
+
 %\needspace{2\baselineskip}
 \section{Evaluation}
+\label{secEvaluation}
 
 \subsection{Temporal evolution in users}
 \subsubsection{Prediction of duration}
