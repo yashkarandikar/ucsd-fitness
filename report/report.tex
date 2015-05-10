@@ -34,7 +34,7 @@ Yashodhan Hemant Karandikar\\
 
 \maketitle
 \begin{abstract}
-The goal of this project is to model temporal evolution of runners' capacity across workouts as well as within each workout. We study this temporal evolution over 2 predictive tasks - prediction of duration of the next workout given previous workouts and prediction of average and instantaneous heart-rates. We show that accounting for temporal evolution improves results on these predictive tasks on the Endomondo fitness data set.
+The goal of this project is to model temporal evolution of runners' capacity across workouts as well as within each workout. We study this temporal evolution over 2 predictive tasks - prediction of duration of the next workout given previous workouts and prediction of average and instantaneous heart-rates. We show that accounting for temporal evolution improves results on these predictive tasks on the Endomondo fitness data set \cite{endomondo}.
 \end{abstract}
 
 \section{Introduction}
@@ -156,6 +156,8 @@ We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cit
 
 We alternately optimize $\Theta$ given $\beta$ and $\beta$ given $\Theta$ until $\beta$ does not change.
 
+\subsection{Inference}
+
 \section{Temporal Evolution of Workouts}
 \label{secTemporalModelWorkouts}
 We now consider temporal evolution of a runner's capacity \emph{during} a workout and use it to predict the runner's instantaneous heart rate in the future. 
@@ -173,7 +175,6 @@ Then, given the distance covered $d_{wt}$ at sample $t$ for the $w$'th workout, 
 $$h_{wt}' = (\alpha_{e_{wt}} + \alpha_{ue_{wt}})(\theta_0 + \theta_1 d_{wt})$$
 
 where $e_{wt}$ is the tiredness level of the user at the $t$'th sample in workout $w$. Thus, as before, we have one parameter $\alpha_{we}$ per workout $w$ per tiredness level $e$ and an intercept term $\alpha_e$ for every tiredness level $e$, common to all workouts. The terms $\theta_0$ and $\theta_1$ are global to all workouts and tiredness levels. Thus, given $W$ workouts and $E$ tiredness levels, we have a total of $WE + E + 2$ parameters.
-
 
 \subsection{Objective Function}
 As before, we have a different model for each of the $W$ tiredness levels. Each of the $E$ models has the following parameters:
@@ -209,7 +210,12 @@ $\Omega_1$ is a smoothness function which penalizes abrupt changes between succe
 \subsection{Training the model}
 The training algorithm is identical to the training algorithm described in section \ref{secTemporalModelUsers}.
 
-\section{Prediction of several instantaneous heart rate values}
+\subsection{Inference}
+
+\subsection{Prediction of several instantaneous heart rate values}
+We now generalize the problem of predicting 1 instantaneous heart-rate value to predicting the heart-rate values for the last $f$ fraction of the workout. We use the same model as in section \ref{secTemporalModelWorkouts}. Let $e_{wn}$ be the tiredness level of the last sample in the training set. In order to predict the instantaneous heart-rate values in the remaining part of the workout, we assume $e_{w(n+1)} = e{w(n+2)} = ... = e{w(N)}$ where $N$ is the total number of samples in workout $w$. In other words, we assume that the last tiredness level of the workout fitted during training stays the same for the remaining part of the workout. In practice, this is not a valid assumption, but this provides us with a conservative estimate of how well the model performs on the remaining part of the workout i.e. on the validation and test sets.
+
+Also note that the difficulty is not only that of estimating the tiredness levels accurately, but also not having learned model parameters for tiredness levels beyond the last tiredness level fitted during training. Thus, even if the true tiredness levels for the remaining part of the workout are known, these cannot be used for prediction of heart-rate values.
 
 %\needspace{2\baselineskip}
 \section{Evaluation}
@@ -318,8 +324,6 @@ $E = 10$ & & & \\ \hline
 \label{tableInstManyHr}
 \end{table}
 
-
-\subsection{Prediction of several instantaneous heart rate values}
 
 \section{Conclusion and Future Work}
 
