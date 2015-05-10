@@ -214,18 +214,112 @@ The training algorithm is identical to the training algorithm described in secti
 %\needspace{2\baselineskip}
 \section{Evaluation}
 
-\begin{table*}
+\subsection{Temporal evolution in users}
+\subsubsection{Prediction of duration}
+We now present result for prediction of duration (final mode of evaluation).
+\begin{table}[h]
 \centering
-\begin{tabular}{|c|c|c|c|c|c|c|} \hline
-& \# Examples & Variance & Linear Predictor & Collaborative Filtering & Latent Factor & Mahout ALS \\ \hline
-Training & 640135 & 0.049970 & 0.029748 {\bf(0.404688)} & 0.023681 {\bf(0.526092)} & 0.020354 {\bf(0.592680)} & {\bf(0.586866)} \\ \hline
-Validation & 160033 & 0.049826 & 0.033429 {\bf(0.329085)}  & 0.033488 {\bf(0.327886)} & 0.030545 {\bf(0.386954)} & {\bf(0.392062)} \\ \hline
-Test & 200041 & 0.049818 & 0.033776 {\bf(0.322010)} & 0.033779 {\bf(0.321948)} & 0.030765 {\bf(0.382451)} & {\bf(0.388799)}\\ \hline
+\begin{tabular}{|c|c|c|c|} \hline
+& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+\# Examples &  &  &  \\ \hline
+Baseline ($E = 1$) & & & \\ \hline
+$E = 2$ & & & \\ \hline
+$E = 3$ & & & \\ \hline
 \end{tabular}
-\caption{MSE and $R^2$ obtained using the 3 predictors discussed in this work and Mahout's ALS recommender on the MovieLens dataset. Values in boldface/brackets are $R^2$ values.}
-\label{tableResults}
-\end{table*}
-% end the environment with {table*}, NOTE not {table}!
+\caption{Prediction of duration - \emph{Final} mode of evaluation }
+\label{tableDurationFinal}
+\end{table}
+
+We now present result for prediction of duration (random mode of evaluation).
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|} \hline
+& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+\# Examples &  &  &  \\ \hline
+Baseline ($E = 1$) & & & \\ \hline
+$E = 2$ & & & \\ \hline
+$E = 3$ & & & \\ \hline
+\end{tabular}
+\caption{Prediction of duration - \emph{Random} mode of evaluation }
+\label{tableDurationRandom}
+\end{table}
+
+\subsubsection{Prediction of average heart-rate}
+
+We now present result for prediction of average heart-rate (final mode of evaluation).
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|} \hline
+& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+\# Examples &  &  &  \\ \hline
+Baseline ($E = 1$) & & & \\ \hline
+$E = 2$ & & & \\ \hline
+$E = 3$ & & & \\ \hline
+\end{tabular}
+\caption{Prediction of avg. heart-rate - \emph{Final} mode of evaluation }
+\label{tableAvgHrFinal}
+\end{table}
+
+We now present result for prediction of average heart-rate (random mode of evaluation).
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|} \hline
+& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+\# Examples &  &  &  \\ \hline
+Baseline ($E = 1$) & & & \\ \hline
+$E = 2$ & & & \\ \hline
+$E = 3$ & & & \\ \hline
+\end{tabular}
+\caption{Prediction of avg. heart-rate - \emph{Random} mode of evaluation }
+\label{tableAvgHrRandom}
+\end{table}
+
+\subsection{Temporal evolution in workouts}
+\subsubsection{Prediction of 1 heart-rate value}
+We now present result for prediction of the last instantaneous heart-rate value (final mode of evaluation)
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|} \hline
+& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+\# Examples &  &  &  \\ \hline
+Baseline ($E = 1$) & & & \\ \hline
+$E = 10$ & & & \\ \hline
+\end{tabular}
+\caption{Prediction of instantaneous heart-rate - \emph{Final} mode of evaluation }
+\label{tableInstHrFinal}
+\end{table}
+
+We now present result for prediction of the last instantaneous heart-rate value (final mode of evaluation)
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|} \hline
+& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+\# Examples &  &  &  \\ \hline
+Baseline ($E = 1$) & & & \\ \hline
+$E = 10$ & & & \\ \hline
+\end{tabular}
+\caption{Prediction of instantaneous heart-rate - \emph{Random} mode of evaluation }
+\label{tableInstHrRandom}
+\end{table}
+
+\subsubsection{Prediction of last several heart-rate values}
+
+We now present result for prediction of the last several instantaneous heart-rate value (final mode of evaluation)
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|} \hline
+& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+\# Examples &  &  &  \\ \hline
+Baseline ($E = 1$) & & & \\ \hline
+$E = 10$ & & & \\ \hline
+\end{tabular}
+\caption{Prediction of several instantaneous heart-rates}
+\label{tableInstManyHr}
+\end{table}
+
+
+\subsection{Prediction of several instantaneous heart rate values}
 
 \section{Conclusion and Future Work}
 
