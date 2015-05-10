@@ -7,7 +7,7 @@ ctypedef np.float64_t DTYPE_t
 def E_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.float64_t lam):
     # error function to be minimized
     # assumes data has 4 columns : user_id, user_number, distance, duration and that it is sorted
-    cdef double t1 = time.time()
+    #cdef double t1 = time.time()
     cdef int i = 0
     cdef int N = data.shape[0]
     cdef double e = 0, alpha, d, t, temp
@@ -25,16 +25,16 @@ def E_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, n
             temp = (alpha + alpha_all) * (theta_0 + theta_1 * d) - t 
             e += temp * temp
             i += 1
+    e = e / float(N)
     # add regularization norm
     e += lam * theta[:-3].dot(theta[:-3])
-    e = e / float(N)
-    cdef double t2 = time.time()
+    #cdef double t2 = time.time()
     #print "E = %f, time taken = %f" % (e, t2 - t1)
     return e
 
 def Eprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, np.float64_t lam):
     from predictor_duration_user import get_user_count
-    cdef double t1 = time.time()
+    #cdef double t1 = time.time()
     cdef int N = data.shape[0]
     #n_users = int(data[-1, 0]) + 1
     cdef int n_users = get_user_count(data)
@@ -43,7 +43,7 @@ def Eprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
     cdef double theta_0 = theta[-2]
     cdef double theta_1 = theta[-1]
     #dE = np.array([0.0] * len(theta))
-    dE = [0.0] * len(theta)
+    cdef np.ndarray[DTYPE_t, ndim=1] dE = np.array([0.0] * len(theta))
     cdef int i = 0
     cdef np.ndarray col0 = np.ravel(data[:, 0])
     cdef np.ndarray uins = np.array(range(0, n_users))
@@ -80,16 +80,16 @@ def Eprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
         
     dE[-2] = dE_theta0
     dE[-1] = dE_theta1
+    
+    #dE = np.array(dE)
+    dE = dE / float(N)
 
     # regularization
     #dE = dE + lam * np.multiply(dE, (2 * theta))
     for u in xrange(0, n_users):
         dE[u] += 2 * lam * theta[u]
 
-    dE = np.array(dE)
-    dE = dE / float(N)
-
-    cdef double t2 = time.time()
+    #cdef double t2 = time.time()
     #print "E prime : time taken = ", t2 - t1
     #return np.array(dE)
     return dE
