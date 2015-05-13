@@ -68,7 +68,55 @@ In this section, we introduce the Endomondo fitness data set \cite{endomondo}. E
 \subsection{Extracting relevant data}
 We developed a parser in Python to extract the relevant data from the HTML document. We use parallelization to speed-up the extraction of the data. Each line of the SQL dump contains data for multiple workouts in the form of HTML documents. A `master' process reads each line, extracts the HTML documents and hands them over to `worker' processes. Each `worker' process takes 1 HTML document at a time, parses it to extract the user id, sport type, trace data and the summarized information and encodes it into a dictionary in JSON format. The worker queues this workout data into a global queue. A separate `writer' process dequeues workout information and writes it to a single file in the form of 1 line per workout. Having a separate writer process to write the workouts extracted by worker processes eliminates disk contention among workers. It also allows data for all workouts to be written to a single large file instead of millions of small files, without any need for synchronization between processes since only a single process is performing the writes. All of the extracted data is written to a file of size around 30 GB after compression.
 
-\subsection{Exploratory Analysis}
+\subsection{Data set}
+
+We now list some basic statistics of the data set. Table \ref{tableStatsTotal} lists the total number of workouts, the total number of users in the data set and the average number of workouts per user.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|} \hline
+Total number of workouts & 10320194  \\ \hline
+Total number of users  &  2083006 \\ \hline
+Avg. number of workouts per user & 4.95 \\ \hline
+\end{tabular}
+\caption{Number of workouts and users in the data set}
+\label{tableStatsTotal}
+\end{table}
+
+Although the average number of workouts per user is only 4.95, the distribution of workouts among users is skewed, so that there are many users with more than 10 workouts. Table \ref{tableStatsUsers} lists number of users with more than 10, 40, 70, 100 workouts.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|} \hline
+\bf{$n$} & \bf{Number of users with more than $n$ workouts}  \\ \hline
+10  &  271004        \\ \hline
+40  &  11679   \\ \hline
+70  &  2191  \\ \hline
+100 &  768 \\ \hline
+\end{tabular}
+\caption{Number of users having more than 10, 40, 70, 100 workouts}
+\label{tableStatsUsers}
+\end{table}
+
+Table \ref{tableStatsByActivity} lists the number of workouts for some of the activities (such as running, walking, cycling etc). The number of workouts for running is the highest and it is significantly more than that for other activities. Hence, in this work we use data from workouts for running only.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|} \hline
+\bf{Activity} & \bf{Number of Workouts}  \\ \hline
+Running  &           4413262 \\ \hline
+Walking  &           2154563 \\ \hline
+Cycling, sport  &     938108 \\ \hline
+Cycling, transport & 816808 \\ \hline
+Mountain biking  &   429906 \\ \hline
+Step counter     &   265403 \\ \hline
+Fitness walking   &  172440 \\ \hline
+Hiking &   147061 \\ \hline
+\end{tabular}
+\caption{Number of workouts by activity}
+\label{tableStatsByActivity}
+\end{table}
+
 
 \begin{comment}
 \begin{figure}[h]
