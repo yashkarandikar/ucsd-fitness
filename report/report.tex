@@ -63,9 +63,11 @@ In order to study temporal evolution of a runner \emph{within} \emph{each} worko
 
 \section{Endomondo Fitness data set}
 \label{expAnalysis}
-In this section, we introduce the Endomondo fitness data set. \cite{mldataset}. 
+In this section, we introduce the Endomondo fitness data set \cite{endomondo}. Endomondo \cite{endomondo} is a free app and website that allows users to keep track of their workouts. The data extracted from the Endomondo website \cite{endomondo} is available in the form of a SQL dump of size 200 GB approximately after compression. It contains data for around 10 million workouts. Data for each workout is in the form of a HTML document string. This HTML document contains information about the workout such as the sport (such as running, walking, cycling etc.), user id, total distance, duration, wind, weather, hydration, date \& time etc. The HTML document also contains embedded JSON data. This JSON data contains GPS co-ordinates (latitude, longitude and altitude), distance, duration, heart-rate, speed / pace sampled throughout the duration of the workout. The `duration' trace indicates the time instants at which the remaining attributes were sampled.
 
 \subsection{Extracting relevant data}
+We developed a parser in Python to extract the relevant data from the HTML document. We use parallelization to speed-up the extraction of the data. Each line of the SQL dump contains data for multiple workouts in the form of HTML documents. A `master' process reads each line, extracts the HTML documents and hands them over to `worker' processes. Each `worker' process takes 1 HTML document at a time, parses it to extract the user id, sport type, trace data and the summarized information and encodes it into a dictionary in JSON format. The worker queues this workout data into a global queue. A separate `writer' process dequeues workout information and writes it to a single file in the form of 1 line per workout. Having a separate writer process to write the workouts extracted by worker processes eliminates disk contention among workers. It also allows data for all workouts to be written to a single large file instead of millions of small files, without any need for synchronization between processes since only a single process is performing the writes. All of the extracted data is written to a file of size around 30 GB after compression.
+
 \subsection{Exploratory Analysis}
 
 \begin{comment}
@@ -90,7 +92,7 @@ In this section, we introduce the Endomondo fitness data set. \cite{mldataset}.
 \end{figure*}
 \end{comment}
 
-\section{Baseline Models}
+\section{Baseline Model}
 \label{secBaselineModel}
 This section describes a baseline model to predict the duration of a workout given the distance. Given the total distance $d_{ui}$ for the $i$'th workout of user $u$, the predicted duration $T_{ui}'$ of the workout is given by:
 
