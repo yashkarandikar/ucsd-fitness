@@ -1,0 +1,63 @@
+Data matrix dimensions = 39545 x 5
+@E = 3,lam1 = 10000.000000,lam2 = 0.010000
+U = 2384 , E = 3 , nparams = 7157
+Super Iteration 0..Iteration 1: 
+@fx = 4187088.056918
+LBFGS terminated with status 0
+Super Iteration 1..Iteration 1: 
+@fx = 122.351828
+LBFGS terminated with status 0
+Super Iteration 2..Iteration 1: 
+@fx = 105.985613
+LBFGS terminated with status 0
+Super Iteration 3..Iteration 1: 
+@fx = 101.029499
+LBFGS terminated with status 0
+Super Iteration 4..Iteration 1: 
+@fx = 100.026121
+LBFGS terminated with status 0
+Super Iteration 5..Iteration 1: 
+@fx = 99.744210
+LBFGS terminated with status 0
+Super Iteration 6..Iteration 1: 
+@fx = 99.659698
+LBFGS terminated with status 0
+Super Iteration 7..Iteration 1: 
+@fx = 99.613218
+LBFGS terminated with status 0
+Super Iteration 8..Iteration 1: 
+@fx = 99.598317
+LBFGS terminated with status 0
+Super Iteration 9..Iteration 1: 
+@fx = 99.594239
+LBFGS terminated with status 0
+Super Iteration 10..Iteration 1: 
+@fx = 99.593312
+LBFGS terminated with status 0
+Super Iteration 11..Iteration 1: 
+@fx = 99.593186
+LBFGS terminated with status 0
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of users =  2384
+Training set has 39545 examples
+Validation set has 2384 examples
+Training..
+Running command ./predictor_duration_evolving_user_cpp data.txt 10000.0 0.01 model.txt 3
+Done with learning..
+Reading learned model from file..
+Loading model..
+Adding experience levels to data matrices
+Mode :  random
+Mode :  random
+Making predictions..
+{'hr(avg)': 3, 'Distance': 2, 'user_id': 1, 'experience': 5, 'user_number': 0, 'date-time': 4}
+Computing statistics
+
+@Training Examples = 39545,MSE = 97.412450,Variance = 267.548911,FVU = 0.364092,R2 = 1 - FVU = 0.635908
+
+@Validation Examples = 2384,MSE = 152.940214,Variance = 249.316168,FVU = 0.613439,R2 = 1 - FVU = 0.386561
+
+@Test Examples = 2384,MSE = 165.475067,Variance = 239.894395,FVU = 0.689783,R2 = 1 - FVU = 0.310217
+
+@Total time taken =  26.2613480091

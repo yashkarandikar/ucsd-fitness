@@ -1,0 +1,45 @@
+Data matrix dimensions = 39545 x 5
+@E = 2,lam1 = 100000.000000,lam2 = 0.010000
+U = 2384 , E = 2 , nparams = 4772
+Super Iteration 0..Iteration 1: 
+@fx = 16793478.729120
+LBFGS terminated with status 0
+Super Iteration 1..Iteration 1: 
+@fx = 125.058588
+LBFGS terminated with status 0
+Super Iteration 2..Iteration 1: 
+@fx = 119.443627
+LBFGS terminated with status 0
+Super Iteration 3..Iteration 1: 
+@fx = 119.057972
+LBFGS terminated with status 0
+Super Iteration 4..Iteration 1: 
+@fx = 118.970463
+LBFGS terminated with status 0
+Super Iteration 5..Iteration 1: 
+@fx = 118.954136
+LBFGS terminated with status 0
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of users =  2384
+Training set has 39545 examples
+Validation set has 2384 examples
+Training..
+Running command ./predictor_duration_evolving_user_cpp data.txt 100000.0 0.01 model.txt 2
+Done with learning..
+Reading learned model from file..
+Loading model..
+Adding experience levels to data matrices
+Mode :  final
+Mode :  final
+Making predictions..
+{'hr(avg)': 3, 'Distance': 2, 'user_id': 1, 'experience': 5, 'user_number': 0, 'date-time': 4}
+Computing statistics
+
+@Training Examples = 39545,MSE = 117.612368,Variance = 267.385653,FVU = 0.439860,R2 = 1 - FVU = 0.560140
+
+@Validation Examples = 2384,MSE = 150.115488,Variance = 243.646746,FVU = 0.616119,R2 = 1 - FVU = 0.383881
+
+@Test Examples = 2384,MSE = 154.402370,Variance = 247.782062,FVU = 0.623138,R2 = 1 - FVU = 0.376862
+
+@Total time taken =  22.547098875

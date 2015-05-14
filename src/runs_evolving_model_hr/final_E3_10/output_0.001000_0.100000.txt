@@ -1,29 +1,29 @@
-Data matrix dimensions = 39891 x 5
+Data matrix dimensions = 39545 x 5
 @E = 3,lam1 = 0.001000,lam2 = 0.100000
-U = 2392 , E = 3 , nparams = 7181
+U = 2384 , E = 3 , nparams = 7157
 Super Iteration 0..Iteration 1: 
-@fx = 10268.797130
+@fx = 10302.854805
 LBFGS terminated with status 0
 Super Iteration 1..Iteration 1: 
-@fx = 469.901969
+@fx = 100.043696
 LBFGS terminated with status 0
 Super Iteration 2..Iteration 1: 
-@fx = 455.563540
+@fx = 86.976728
 LBFGS terminated with status 0
 Super Iteration 3..Iteration 1: 
-@fx = 453.227548
+@fx = 84.952976
 LBFGS terminated with status 0
 Super Iteration 4..Iteration 1: 
-@fx = 452.938132
+@fx = 84.434358
 LBFGS terminated with status 0
 Super Iteration 5..Iteration 1: 
-@fx = 452.896532
+@fx = 84.397556
 LBFGS terminated with status 0
 Loading data from file..
 Doing sorted check on train and val sets..
-Number of users =  2392
-Training set has 39891 examples
-Validation set has 2392 examples
+Number of users =  2384
+Training set has 39545 examples
+Validation set has 2384 examples
 Training..
 Running command ./predictor_duration_evolving_user_cpp data.txt 0.001 0.1 model.txt 3
 Done with learning..
@@ -31,13 +31,15 @@ Reading learned model from file..
 Loading model..
 Adding experience levels to data matrices
 Mode :  final
+Mode :  final
 Making predictions..
 {'hr(avg)': 3, 'Distance': 2, 'user_id': 1, 'experience': 5, 'user_number': 0, 'date-time': 4}
 Computing statistics
-[13750.0, 12895.0, 13246.0]
 
-@Training Examples = 39891,MSE = 452.524506,Variance = 885.448934,FVU = 0.511068,R2 = 1 - FVU = 0.488932
+@Training Examples = 39545,MSE = 84.133427,Variance = 267.385653,FVU = 0.314652,R2 = 1 - FVU = 0.685348
 
-@Validation Examples = 2392,MSE = 204.599912,Variance = 326.083435,FVU = 0.627447,R2 = 1 - FVU = 0.372553
+@Validation Examples = 2384,MSE = 206.429791,Variance = 243.646746,FVU = 0.847250,R2 = 1 - FVU = 0.152750
 
-@Total time taken =  12.4189400673
+@Test Examples = 2384,MSE = 206.443026,Variance = 247.782062,FVU = 0.833164,R2 = 1 - FVU = 0.166836
+
+@Total time taken =  8.47976994514

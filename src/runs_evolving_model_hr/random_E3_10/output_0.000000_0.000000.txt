@@ -1,32 +1,29 @@
-Data matrix dimensions = 39891 x 5
+Data matrix dimensions = 39545 x 5
 @E = 3,lam1 = 0.000000,lam2 = 0.000000
-U = 2392 , E = 3 , nparams = 7181
+U = 2384 , E = 3 , nparams = 7157
 Super Iteration 0..Iteration 1: 
-@fx = 9951.499942
+@fx = 10000.007191
 LBFGS terminated with status 0
 Super Iteration 1..Iteration 1: 
-@fx = 469.428987
+@fx = 100.983202
 LBFGS terminated with status 0
 Super Iteration 2..Iteration 1: 
-@fx = 454.972260
+@fx = 87.489350
 LBFGS terminated with status 0
 Super Iteration 3..Iteration 1: 
-@fx = 452.882788
+@fx = 85.230386
 LBFGS terminated with status 0
 Super Iteration 4..Iteration 1: 
-@fx = 452.726717
+@fx = 84.868404
 LBFGS terminated with status 0
 Super Iteration 5..Iteration 1: 
-@fx = 452.633633
-LBFGS terminated with status 0
-Super Iteration 6..Iteration 1: 
-@fx = 452.609142
+@fx = 84.819690
 LBFGS terminated with status 0
 Loading data from file..
 Doing sorted check on train and val sets..
-Number of users =  2392
-Training set has 39891 examples
-Validation set has 2392 examples
+Number of users =  2384
+Training set has 39545 examples
+Validation set has 2384 examples
 Training..
 Running command ./predictor_duration_evolving_user_cpp data.txt 0.0 0.0 model.txt 3
 Done with learning..
@@ -34,13 +31,15 @@ Reading learned model from file..
 Loading model..
 Adding experience levels to data matrices
 Mode :  random
+Mode :  random
 Making predictions..
 {'hr(avg)': 3, 'Distance': 2, 'user_id': 1, 'experience': 5, 'user_number': 0, 'date-time': 4}
 Computing statistics
-[13627.0, 13122.0, 13142.0]
 
-@Training Examples = 39891,MSE = 452.607619,Variance = 881.286144,FVU = 0.513576,R2 = 1 - FVU = 0.486424
+@Training Examples = 39545,MSE = 84.818587,Variance = 267.548911,FVU = 0.317021,R2 = 1 - FVU = 0.682979
 
-@Validation Examples = 2392,MSE = 183.588814,Variance = 354.721021,FVU = 0.517558,R2 = 1 - FVU = 0.482442
+@Validation Examples = 2384,MSE = 169.504544,Variance = 249.316168,FVU = 0.679878,R2 = 1 - FVU = 0.320122
 
-@Total time taken =  11.2581460476
+@Test Examples = 2384,MSE = 175.491918,Variance = 239.894395,FVU = 0.731538,R2 = 1 - FVU = 0.268462
+
+@Total time taken =  9.93274092674

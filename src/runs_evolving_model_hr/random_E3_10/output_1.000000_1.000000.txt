@@ -1,29 +1,26 @@
-Data matrix dimensions = 39891 x 5
+Data matrix dimensions = 39545 x 5
 @E = 3,lam1 = 1.000000,lam2 = 1.000000
-U = 2392 , E = 3 , nparams = 7181
+U = 2384 , E = 3 , nparams = 7157
 Super Iteration 0..Iteration 1: 
-@fx = 13093.567969
+@fx = 13119.003249
 LBFGS terminated with status 0
 Super Iteration 1..Iteration 1: 
-@fx = 471.409546
+@fx = 102.406163
 LBFGS terminated with status 0
 Super Iteration 2..Iteration 1: 
-@fx = 456.953078
+@fx = 89.136458
 LBFGS terminated with status 0
 Super Iteration 3..Iteration 1: 
-@fx = 454.850779
+@fx = 86.958485
 LBFGS terminated with status 0
 Super Iteration 4..Iteration 1: 
-@fx = 454.539294
-LBFGS terminated with status 0
-Super Iteration 5..Iteration 1: 
-@fx = 454.515608
+@fx = 86.607567
 LBFGS terminated with status 0
 Loading data from file..
 Doing sorted check on train and val sets..
-Number of users =  2392
-Training set has 39891 examples
-Validation set has 2392 examples
+Number of users =  2384
+Training set has 39545 examples
+Validation set has 2384 examples
 Training..
 Running command ./predictor_duration_evolving_user_cpp data.txt 1.0 1.0 model.txt 3
 Done with learning..
@@ -31,13 +28,15 @@ Reading learned model from file..
 Loading model..
 Adding experience levels to data matrices
 Mode :  random
+Mode :  random
 Making predictions..
 {'hr(avg)': 3, 'Distance': 2, 'user_id': 1, 'experience': 5, 'user_number': 0, 'date-time': 4}
 Computing statistics
-[13800.0, 12694.0, 13397.0]
 
-@Training Examples = 39891,MSE = 452.844958,Variance = 881.286144,FVU = 0.513846,R2 = 1 - FVU = 0.486154
+@Training Examples = 39545,MSE = 85.254657,Variance = 267.548911,FVU = 0.318651,R2 = 1 - FVU = 0.681349
 
-@Validation Examples = 2392,MSE = 183.590116,Variance = 354.721021,FVU = 0.517562,R2 = 1 - FVU = 0.482438
+@Validation Examples = 2384,MSE = 170.468428,Variance = 249.316168,FVU = 0.683744,R2 = 1 - FVU = 0.316256
 
-@Total time taken =  7.54254221916
+@Test Examples = 2384,MSE = 175.891288,Variance = 239.894395,FVU = 0.733203,R2 = 1 - FVU = 0.266797
+
+@Total time taken =  5.63573408127

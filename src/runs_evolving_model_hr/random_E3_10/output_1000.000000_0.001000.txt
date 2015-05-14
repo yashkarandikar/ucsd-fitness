@@ -1,0 +1,78 @@
+Data matrix dimensions = 39545 x 5
+@E = 3,lam1 = 1000.000000,lam2 = 0.001000
+U = 2384 , E = 3 , nparams = 7157
+Super Iteration 0..Iteration 1: 
+@fx = 437515.137937
+LBFGS terminated with status 0
+Super Iteration 1..Iteration 1: 
+@fx = 116.821823
+LBFGS terminated with status 0
+Super Iteration 2..Iteration 1: 
+@fx = 113.538456
+LBFGS terminated with status 0
+Super Iteration 3..Iteration 1: 
+@fx = 113.233113
+LBFGS terminated with status 0
+Super Iteration 4..Iteration 1: 
+@fx = 112.937697
+LBFGS terminated with status 0
+Super Iteration 5..Iteration 1: 
+@fx = 112.267977
+LBFGS terminated with status 0
+Super Iteration 6..Iteration 1: 
+@fx = 110.317386
+LBFGS terminated with status 0
+Super Iteration 7..Iteration 1: 
+@fx = 106.211202
+LBFGS terminated with status 0
+Super Iteration 8..Iteration 1: 
+@fx = 101.590174
+LBFGS terminated with status 0
+Super Iteration 9..Iteration 1: 
+@fx = 98.422683
+LBFGS terminated with status 0
+Super Iteration 10..Iteration 1: 
+@fx = 97.022416
+LBFGS terminated with status 0
+Super Iteration 11..Iteration 1: 
+@fx = 96.341295
+LBFGS terminated with status 0
+Super Iteration 12..Iteration 1: 
+@fx = 96.129215
+LBFGS terminated with status 0
+Super Iteration 13..Iteration 1: 
+@fx = 96.018511
+LBFGS terminated with status 0
+Super Iteration 14..Iteration 1: 
+@fx = 95.996087
+LBFGS terminated with status 0
+Super Iteration 15..Iteration 1: 
+@fx = 95.968796
+LBFGS terminated with status 0
+Super Iteration 16..Iteration 1: 
+@fx = 95.953444
+LBFGS terminated with status 0
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of users =  2384
+Training set has 39545 examples
+Validation set has 2384 examples
+Training..
+Running command ./predictor_duration_evolving_user_cpp data.txt 1000.0 0.001 model.txt 3
+Done with learning..
+Reading learned model from file..
+Loading model..
+Adding experience levels to data matrices
+Mode :  random
+Mode :  random
+Making predictions..
+{'hr(avg)': 3, 'Distance': 2, 'user_id': 1, 'experience': 5, 'user_number': 0, 'date-time': 4}
+Computing statistics
+
+@Training Examples = 39545,MSE = 91.843268,Variance = 267.548911,FVU = 0.343277,R2 = 1 - FVU = 0.656723
+
+@Validation Examples = 2384,MSE = 155.083760,Variance = 249.316168,FVU = 0.622037,R2 = 1 - FVU = 0.377963
+
+@Test Examples = 2384,MSE = 164.843137,Variance = 239.894395,FVU = 0.687149,R2 = 1 - FVU = 0.312851
+
+@Total time taken =  29.038520813
