@@ -9,7 +9,7 @@ Computing predictions and statistics
 
 @Test Examples = 52109,MSE = 0.202101,Variance = 0.631191,FVU = 0.320189,R2 = 1 - FVU = 0.679811
 
-@Total time taken =  2.93663907051
+@Total time taken =  3.01780891418
 RUNNING THE L-BFGS-B CODE
 
            * * *
