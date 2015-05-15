@@ -1,0 +1,110 @@
+@lam1 =  1000.0
+Loading data from file.. ../../data/all_workouts_condensed.gzfinal.npz
+Training..
+Computing predictions and statistics
+
+@Training Examples = 743987,MSE = 0.216242,Variance = 0.485242,FVU = 0.445637,R2 = 1 - FVU = 0.554363
+
+@Validation Examples = 52109,MSE = 0.204909,Variance = 0.493200,FVU = 0.415468,R2 = 1 - FVU = 0.584532
+
+@Test Examples = 52109,MSE = 0.202101,Variance = 0.631191,FVU = 0.320190,R2 = 1 - FVU = 0.679810
+
+@Total time taken =  3.49199819565
+RUNNING THE L-BFGS-B CODE
+
+           * * *
+
+Machine precision = 2.220D-16
+ N =        52112     M =           10
+ This problem is unconstrained.
+
+At X0         0 variables are exactly at the bounds
+
+At iterate    0    f=  5.21092D+07    |proj g|=  2.00063D+03
+
+At iterate    1    f=  2.05275D+07    |proj g|=  1.25549D+03
+
+At iterate    2    f=  1.96154D+01    |proj g|=  5.25366D+01
+
+At iterate    3    f=  9.68726D+00    |proj g|=  3.23352D+01
+
+At iterate    4    f=  2.45288D+00    |proj g|=  1.18433D+01
+
+At iterate    5    f=  1.54692D+00    |proj g|=  8.78177D+00
+
+At iterate    6    f=  5.49257D-01    |proj g|=  4.02461D+00
+
+At iterate    7    f=  2.60575D-01    |proj g|=  1.25469D+00
+
+At iterate    8    f=  2.26739D-01    |proj g|=  3.24418D-01
+
+At iterate    9    f=  2.26217D-01    |proj g|=  6.79682D-01
+
+At iterate   10    f=  2.24413D-01    |proj g|=  4.12291D-02
+
+At iterate   11    f=  2.24396D-01    |proj g|=  4.58010D-02
+
+At iterate   12    f=  2.24334D-01    |proj g|=  5.58260D-02
+
+At iterate   13    f=  2.24046D-01    |proj g|=  8.42104D-02
+
+At iterate   14    f=  2.23925D-01    |proj g|=  4.28384D-01
+
+At iterate   15    f=  2.23391D-01    |proj g|=  3.02825D-01
+
+At iterate   16    f=  2.22163D-01    |proj g|=  1.89178D-01
+
+At iterate   17    f=  2.20579D-01    |proj g|=  1.99556D-01
+
+At iterate   18    f=  2.20002D-01    |proj g|=  6.16635D-01
+
+At iterate   19    f=  2.17986D-01    |proj g|=  3.37282D-01
+
+At iterate   20    f=  2.17030D-01    |proj g|=  8.06712D-02
+
+At iterate   21    f=  2.16629D-01    |proj g|=  3.56392D-01
+
+At iterate   22    f=  2.16375D-01    |proj g|=  1.07583D-01
+
+At iterate   23    f=  2.16321D-01    |proj g|=  4.12391D-02
+
+At iterate   24    f=  2.16272D-01    |proj g|=  2.62612D-02
+
+At iterate   25    f=  2.16247D-01    |proj g|=  5.99485D-03
+
+At iterate   26    f=  2.16246D-01    |proj g|=  1.53540D-02
+
+At iterate   27    f=  2.16243D-01    |proj g|=  5.14711D-03
+
+At iterate   28    f=  2.16243D-01    |proj g|=  1.14415D-02
+
+At iterate   29    f=  2.16243D-01    |proj g|=  5.97057D-03
+
+At iterate   30    f=  2.16243D-01    |proj g|=  2.36167D-04
+
+At iterate   31    f=  2.16243D-01    |proj g|=  5.39048D-05
+
+           * * *
+
+Tit   = total number of iterations
+Tnf   = total number of function evaluations
+Tnint = total number of segments explored during Cauchy searches
+Skip  = number of BFGS updates skipped
+Nact  = number of active bounds at final generalized Cauchy point
+Projg = norm of the final projected gradient
+F     = final function value
+
+           * * *
+
+   N    Tit     Tnf  Tnint  Skip  Nact     Projg        F
+52112     31     43      1     0     0   5.390D-05   2.162D-01
+  F =  0.21624256369080988     
+
+CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH             
+
+ Cauchy                time 0.000E+00 seconds.
+ Subspace minimization time 0.000E+00 seconds.
+ Line search           time 0.000E+00 seconds.
+
+ Total User time 0.000E+00 seconds.
+
