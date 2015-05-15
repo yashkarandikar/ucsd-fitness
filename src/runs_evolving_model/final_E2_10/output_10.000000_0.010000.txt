@@ -1,0 +1,67 @@
+Data matrix dimensions = 743987 x 5
+@E = 2,lam1 = 10.000000,lam2 = 0.010000
+U = 52109 , E = 2 , nparams = 104222
+Super Iteration 0..Iteration 1: 
+@fx = 41030.440709
+LBFGS terminated with status 0
+Super Iteration 1..Iteration 1: 
+@fx = 0.194678
+LBFGS terminated with status 0
+Super Iteration 2..Iteration 1: 
+@fx = 0.191496
+LBFGS terminated with status 0
+Super Iteration 3..Iteration 1: 
+@fx = 0.191278
+LBFGS terminated with status 0
+Super Iteration 4..Iteration 1: 
+@fx = 0.191179
+LBFGS terminated with status 0
+Super Iteration 5..Iteration 1: 
+@fx = 0.191130
+LBFGS terminated with status 0
+Super Iteration 6..Iteration 1: 
+@fx = 0.191103
+LBFGS terminated with status 0
+Super Iteration 7..Iteration 1: 
+@fx = 0.191088
+LBFGS terminated with status 0
+Super Iteration 8..Iteration 1: 
+@fx = 0.191083
+LBFGS terminated with status 0
+Super Iteration 9..Iteration 1: 
+@fx = 0.191079
+LBFGS terminated with status 0
+Super Iteration 10..Iteration 1: 
+@fx = 0.191078
+LBFGS terminated with status 0
+Super Iteration 11..Iteration 1: 
+@fx = 0.191077
+LBFGS terminated with status 0
+Super Iteration 12..Iteration 1: 
+@fx = 0.191076
+LBFGS terminated with status 0
+Super Iteration 13..LBFGS terminated with status 2
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of users =  52109
+Training set has 743987 examples
+Validation set has 52109 examples
+Training..
+Running command ./predictor_duration_evolving_user_cpp data.txt 10.0 0.01 model.txt 2
+Done with learning..
+Reading learned model from file..
+Loading model..
+Adding experience levels to data matrices
+Mode :  final
+Mode :  final
+Making predictions..
+{'Distance': 2, 'user_id': 1, 'experience': 5, 'Duration': 3, 'user_number': 0, 'date-time': 4}
+Computing statistics
+
+@Training Examples = 743987,MSE = 0.154908,Variance = 0.485242,FVU = 0.319239,R2 = 1 - FVU = 0.680761
+
+@Validation Examples = 52109,MSE = 0.181401,Variance = 0.493200,FVU = 0.367804,R2 = 1 - FVU = 0.632196
+
+@Test Examples = 52109,MSE = 0.170287,Variance = 0.631191,FVU = 0.269787,R2 = 1 - FVU = 0.730213
+
+@Total time taken =  55.0964798927
