@@ -1,0 +1,64 @@
+Data matrix dimensions = 743987 x 5
+@E = 3,lam1 = 100.000000,lam2 = 0.001000
+U = 52109 , E = 3 , nparams = 156332
+Super Iteration 0..Iteration 1: 
+@fx = 984130.401466
+LBFGS terminated with status 0
+Super Iteration 1..Iteration 1: 
+@fx = 0.134712
+LBFGS terminated with status 0
+Super Iteration 2..Iteration 1: 
+@fx = 0.133905
+LBFGS terminated with status 0
+Super Iteration 3..Iteration 1: 
+@fx = 0.133850
+LBFGS terminated with status 0
+Super Iteration 4..Iteration 1: 
+@fx = 0.133835
+LBFGS terminated with status 0
+Super Iteration 5..Iteration 1: 
+@fx = 0.133828
+LBFGS terminated with status 0
+Super Iteration 6..Iteration 1: 
+@fx = 0.133824
+LBFGS terminated with status 0
+Super Iteration 7..Iteration 1: 
+@fx = 0.133822
+LBFGS terminated with status 0
+Super Iteration 8..Iteration 1: 
+@fx = 0.133821
+LBFGS terminated with status 0
+Super Iteration 9..Iteration 1: 
+@fx = 0.133821
+LBFGS terminated with status 0
+Super Iteration 10..Iteration 1: 
+@fx = 0.133820
+LBFGS terminated with status 0
+Super Iteration 11..Iteration 1: 
+@fx = 0.133820
+LBFGS terminated with status 0
+Super Iteration 12..LBFGS terminated with status 2
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of users =  52109
+Training set has 743987 examples
+Validation set has 52109 examples
+Training..
+Running command ./predictor_duration_evolving_user_cpp data.txt 100.0 0.001 model.txt 3
+Done with learning..
+Reading learned model from file..
+Loading model..
+Adding experience levels to data matrices
+Mode :  final
+Mode :  final
+Making predictions..
+{'Distance': 2, 'user_id': 1, 'experience': 5, 'Duration': 3, 'user_number': 0, 'date-time': 4}
+Computing statistics
+
+@Training Examples = 743987,MSE = 0.105425,Variance = 0.485242,FVU = 0.217264,R2 = 1 - FVU = 0.782736
+
+@Validation Examples = 52109,MSE = 0.159255,Variance = 0.493200,FVU = 0.322902,R2 = 1 - FVU = 0.677098
+
+@Test Examples = 52109,MSE = 0.177486,Variance = 0.631191,FVU = 0.281192,R2 = 1 - FVU = 0.718808
+
+@Total time taken =  454.827749014

@@ -352,19 +352,22 @@ $E = 3$ & & & \\ \hline
 
 \subsubsection{Prediction of average heart-rate}
 
-We now present result for prediction of average heart-rate (final mode of evaluation).
-\begin{table}[h]
+Tables \ref{tableAvgHrFinal} and \ref{tableAvgHrRandom} show results for prediction of average heart-rate, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}, which is a measure of the fraction of variance in the data explained by the model. The tables also shows the optimal values of hyper-parameters found using grid search.
+
+As seen from the results, the model which accounts for temporal evolution of users does not perform better than the baseline model ($E = 1$). This is further seen from the high optimal values of $\lambda_1$ resulting from the grid search. Recall from section \ref{secTemporalModelUsers} that $\lambda_1$ is a hyper-parameter which penalizes drastic changes in parameters of similar experience levels. A high value of $\lambda_1$ means that the experience levels are very similar to each other and this essentially reduces the models with $E = 2$ and $E = 3$ to the baseline model $E = 1$.
+
+\begin{table*}[h]
 \centering
-\begin{tabular}{|c|c|c|c|} \hline
-& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
-\# Examples &  &  &  \\ \hline
-Baseline ($E = 1$) & & & \\ \hline
-$E = 2$ & & & \\ \hline
-$E = 3$ & & & \\ \hline
+\begin{tabular}{|c|c|c|c|c|} \hline
+& Optimal hyper-parameters & Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+Number of Examples & n/a & 39545 & 2384 & 2384  \\ \hline
+Baseline ($E = 1$) & $\lambda = 0.01$ & 0.520887 & 0.422324 & 0.423512 \\ \hline
+$E = 2$ & $\lambda_1 = 10^4$, $\lambda_2 = 0.0$ & 0.520928 & 0.422081 & 0.423318 \\ \hline
+$E = 3$ & $\lambda_1 = 10^5$, $\lambda_2 = 0.0$ & 0.520927 & 0.422085 & 0.423312 \\ \hline
 \end{tabular}
 \caption{Prediction of avg. heart-rate - \emph{Final} mode of evaluation }
 \label{tableAvgHrFinal}
-\end{table}
+\end{table*}
 
 We now present result for prediction of average heart-rate (random mode of evaluation).
 \begin{table}[h]

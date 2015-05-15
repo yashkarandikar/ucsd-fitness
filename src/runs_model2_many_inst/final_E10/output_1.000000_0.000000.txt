@@ -1,3 +1,4 @@
+use_features = 1
 Data matrix dimensions = 9841317 x 5
 @E = 10,lam1 = 1.000000,lam2 = 0.000000, lbfgs_max_iterations = 200
 U = 83423 , E = 10 , nparams = 834242
@@ -10,13 +11,35 @@ LBFGS terminated with status -997
 Super Iteration 2..Iteration 1: 
 @fx = 59.276567
 LBFGS terminated with status -997
+Super Iteration 3..Iteration 1: 
+@fx = 51.550284
+LBFGS terminated with status -997
+Super Iteration 4..Iteration 1: 
+@fx = 47.463439
+LBFGS terminated with status -997
+Super Iteration 5..Iteration 1: 
+@fx = 44.949853
+LBFGS terminated with status -997
+Super Iteration 6..Iteration 1: 
+@fx = 43.353544
+LBFGS terminated with status -997
+Super Iteration 7..Iteration 1: 
+@fx = 42.302854
+LBFGS terminated with status -997
+Super Iteration 8..Iteration 1: 
+@fx = 41.600186
+LBFGS terminated with status -997
+Super Iteration 9..Iteration 1: 
+@fx = 41.073831
+LBFGS terminated with status -997
 Loading data from file..
 Doing sorted check on train and val sets..
 Number of workouts =  83423
 Training set has 9841317 examples
 Validation set has 7352229 examples
 Training..
-Running command ./predictor_insthr_evolving_cpp data.txt 1.0 0.0 model.txt 10 200
+Use features =  True
+Running command ./predictor_insthr_evolving_cpp data.txt 1.0 0.0 model.txt 10 200 1
 Done with learning..
 Reading learned model from file..
 	Reading E..
@@ -42,12 +65,21 @@ Making predictions..
 5000000 data points done..
 6000000 data points done..
 7000000 data points done..
+1000000 data points done..
+2000000 data points done..
+3000000 data points done..
+4000000 data points done..
+5000000 data points done..
+6000000 data points done..
+7000000 data points done..
 {'distance': 2, 'hr': 3, 'workout_number': 0, 'experience': 5, 'workout_id': 1, 'duration': 4}
 Computing statistics
 
-@Training Examples = 9841317,MSE = 51.973402,Variance = 454.327908,FVU = 0.114396,R2 = 1 - FVU = 0.885604, E = 10
+@Training Examples = 9841317,MSE = 39.652676,Variance = 454.327908,FVU = 0.087278,R2 = 1 - FVU = 0.912722, E = 10
 
-@Validation Examples = 7352229,MSE = 135.377487,Variance = 348.064883,FVU = 0.388943,R2 = 1 - FVU = 0.611057, E = 10
+@Validation Examples = 7352229,MSE = 143.195444,Variance = 348.064883,FVU = 0.411404,R2 = 1 - FVU = 0.588596, E = 10
 
-@Total time taken =  254.260938168
-[ -0.24  -0.24  -0.24 ...,   2.84  48.59  -0.32]
+@Test Examples = 7321065,MSE = 248.096061,Variance = 398.075182,FVU = 0.623239,R2 = 1 - FVU = 0.376761, E = 10
+
+@Total time taken =  690.306694031
+[ -0.15  -0.15  -0.15 ...,   2.78  51.18  -0.41]

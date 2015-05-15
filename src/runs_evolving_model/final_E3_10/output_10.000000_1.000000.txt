@@ -52,4 +52,4 @@ Computing statistics
 
 @Test Examples = 52109,MSE = 0.614235,Variance = 0.631191,FVU = 0.973136,R2 = 1 - FVU = 0.026864
 
-@Total time taken =  194.973706961
+@Total time taken =  230.650337934
