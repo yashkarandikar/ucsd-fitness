@@ -1,5 +1,10 @@
-time series
+duration E = 2 and E = 3 runs with higher values of lambda (final and random)
+duration runs E = 1 (confirm if new runs had been taken)
+avg hr E = 1 random runs
 
+timeseries:
+    - change number of examples in print statements
+    - linear interpolation for missing values
 
 other ways of using time evolution (maybe linear interpolation between first and last)
 other features
