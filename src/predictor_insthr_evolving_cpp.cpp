@@ -701,7 +701,7 @@ void learn(char *infile, double lam1, double lam2, char* outfile, int E, int lbf
 
     int n_iter = 0;
     bool changed = true;
-    while (changed && n_iter < 3) {
+    while (changed && n_iter < 10) {
         printf("Super Iteration %d..", n_iter);
 
         // 1. optimize theta
