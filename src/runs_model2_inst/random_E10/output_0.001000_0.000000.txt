@@ -11,6 +11,27 @@ LBFGS terminated with status -997
 Super Iteration 2..Iteration 1: 
 @fx = 140.864489
 LBFGS terminated with status -997
+Super Iteration 3..Iteration 1: 
+@fx = 110.351872
+LBFGS terminated with status -997
+Super Iteration 4..Iteration 1: 
+@fx = 96.140518
+LBFGS terminated with status -997
+Super Iteration 5..Iteration 1: 
+@fx = 87.702687
+LBFGS terminated with status -997
+Super Iteration 6..Iteration 1: 
+@fx = 82.533474
+LBFGS terminated with status -997
+Super Iteration 7..Iteration 1: 
+@fx = 79.195454
+LBFGS terminated with status -997
+Super Iteration 8..Iteration 1: 
+@fx = 76.887932
+LBFGS terminated with status -997
+Super Iteration 9..Iteration 1: 
+@fx = 74.997680
+LBFGS terminated with status -997
 Loading data from file..
 Doing sorted check on train and val sets..
 Number of workouts =  83423
@@ -26,6 +47,7 @@ Reading learned model from file..
 	Reading sigma..
 Loading model..
 Adding experience levels to data matrices
+Mode :  random
 Mode :  random
 Making predictions..
 1000000 data points done..
@@ -55,9 +77,11 @@ Making predictions..
 {'distance': 2, 'hr': 3, 'workout_number': 0, 'experience': 5, 'workout_id': 1, 'duration': 4}
 Computing statistics
 
-@Training Examples = 24347765,MSE = 107.480759,Variance = 417.442223,FVU = 0.257475,R2 = 1 - FVU = 0.742525, E = 10
+@Training Examples = 24347765,MSE = 71.316466,Variance = 417.442223,FVU = 0.170842,R2 = 1 - FVU = 0.829158, E = 10
 
-@Validation Examples = 83423,MSE = 113.475366,Variance = 422.280046,FVU = 0.268721,R2 = 1 - FVU = 0.731279, E = 10
+@Validation Examples = 83423,MSE = 77.756509,Variance = 422.280046,FVU = 0.184135,R2 = 1 - FVU = 0.815865, E = 10
 
-@Total time taken =  555.786241055
-[  -0.08   -0.03   -0.02 ...,  105.72    1.64   -0.  ]
+@Test Examples = 83423,MSE = 75.315838,Variance = 417.768574,FVU = 0.180281,R2 = 1 - FVU = 0.819719, E = 10
+
+@Total time taken =  1025.93903399
+[  0.14   0.1    0.06 ...,  95.16   1.92  -0.01]
