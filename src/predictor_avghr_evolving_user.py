@@ -37,7 +37,7 @@ def remove_outliers(data, params, param_indices, scale_factors):
     c = param_indices["Distance"]; cols.append(c); lower_bounds.append(0.1 / scale_factors[c]); upper_bounds.append(100.0 / scale_factors[c])
 
     # remove rows with hr <  10 bpm and hr > 500
-    #c = param_indices["hr(avg)"]; cols.append(c); lower_bounds.append(10.0 / scale_factors[c]); upper_bounds.append(500.0)
+    c = param_indices["hr(avg)"]; cols.append(c); lower_bounds.append(10.0 / scale_factors[c]); upper_bounds.append(500.0 / scale_factors[c])
 
     data = utils.remove_rows_by_condition(data, cols, lower_bounds, upper_bounds)
     
@@ -523,7 +523,7 @@ def experience_check(theta, data, E):
 
 def learn_cpp(data, lam1, lam2):
     # write data to file
-    E = 2
+    E = 3
     data_file = "data.txt"
     np.savetxt(data_file, data)
 
@@ -786,25 +786,36 @@ def plot_mse_by_experience_level(data, errors, sigma, param_indices, E):
 def plot_avghr_by_workout_number(data, param_indices):
     ind_u = param_indices["user_number"]
     hr_ind = param_indices["hr(avg)"]
-    max_workout_number = 50
+    max_workout_number = 9
     avghr_by_workout_number = [0.0] * max_workout_number
     counts_by_workout_number = [0.0] * max_workout_number
     i = 0
     N = data.shape[0]
+    workouts_per_user = get_workouts_per_user(data)
+    U = get_user_count(data)
+    for u in range(0, U):
+        assert(workouts_per_user[u] >= max_workout_number)
     while (i < N):
         u = data[i, ind_u]
-        w = 0
-        while (i < N and data[i, ind_u] == u and w < max_workout_number):
-            avghr_by_workout_number[w] += data[i, hr_ind]
-            counts_by_workout_number[w] += 1.0
-            w += 1
-            i += 1
+        if (workouts_per_user[int(u)] >= max_workout_number):
+            w = 0
+            while (i < N and data[i, ind_u] == u):
+                if (w < max_workout_number):
+                    avghr_by_workout_number[w] += data[i, hr_ind]
+                    counts_by_workout_number[w] += 1.0
+                w += 1
+                i += 1
+        else:
+            assert(False)
+            i += workouts_per_user[int(u)]
     for i in range(0, max_workout_number):
         avghr_by_workout_number[i] /= counts_by_workout_number[i]
+    print counts_by_workout_number
     plt.figure()
-    plt.plot(range(0, max_workout_number), avghr_by_workout_number)
+    plt.plot(range(0, max_workout_number), avghr_by_workout_number, marker = "o")
     plt.xlabel("Workout number")
     plt.ylabel("Average avg. heart rate (bpm)")
+    plt.ylim(135, 155)
 
 def plot_avghr_by_experience(data, param_indices, E):
     hr_ind = param_indices["hr(avg)"]
@@ -825,6 +836,20 @@ def plot_avghr_by_experience(data, param_indices, E):
     plt.xlabel("Experience")
     plt.ylabel("Average avg. heart rate (bpm)")
 
+def plot_avghr_by_distance_sliding(data, param_indices):
+    hr_ind = param_indices["hr(avg)"]
+    dist_ind = param_indices["Distance"]
+    hr = list(data[:, hr_ind].A1)
+    for h in hr:
+        print h
+        assert(h > 0)
+    dist = list(data[:, dist_ind].A1)
+    from plot_data import DataForPlot
+    p = DataForPlot(sport = "Running", xparam = "Distance", yparam = "hr(avg)", xvals = dist, yvals = hr)
+    p.plot_sliding(windowSize = 50)
+    #from barplot import barplot
+    #barplot(dist, hr, 50, xparam = "Distance", yparam = "hr(avg)")
+
 
 if __name__ == "__main__":
     t1 = time.time()
@@ -835,7 +860,7 @@ if __name__ == "__main__":
     
     #infile = "endoMondo5000_workouts_condensed.gz"
     infile = "../../data/all_workouts_condensed.gz"
-    mode = "final"  # can be "final" or "random"
+    mode = "random"  # can be "final" or "random"
     outfile = infile + mode + ".npz"
 
     #prepare(infile, outfile, mode)
@@ -886,6 +911,7 @@ if __name__ == "__main__":
     #plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
     #plot_avghr_by_workout_number(train_set, param_indices)
     #plot_avghr_by_experience(train_set, param_indices, E)
+    #plot_avghr_by_distance_sliding(train_set, param_indices)
     [mse, var, fvu, r2, errors] = compute_stats(train_set[:, param_indices["hr(avg)"]], train_pred)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f\n" % (train_set.shape[0],mse, var, fvu, r2)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["hr(avg)"]], val_pred)
