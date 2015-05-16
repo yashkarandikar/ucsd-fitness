@@ -308,7 +308,7 @@ In the \emph{random} mode of inference, we randomly select 1 sample from each wo
 We present results for both modes of inference in section \ref{secEvaluation}.
 
 \subsection{Prediction of several instantaneous heart rate values}
-We now generalize the problem of predicting 1 instantaneous heart-rate value to predicting the heart-rate values for the last $f$ fraction of the workout. We use the same model as in section \ref{secTemporalModelWorkouts}. Let $e_{wn}$ be the tiredness level of the last sample in the training set. In order to predict the instantaneous heart-rate values in the remaining part of the workout, we assume $e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$. In other words, we assume that the last tiredness level of the workout fitted during training stays the same for the remaining part of the workout. In practice, this is not a valid assumption, but this provides us with a conservative estimate of how well the model performs on the remaining part of the workout i.e. on the validation and test sets.
+We now generalize the problem of predicting 1 instantaneous heart-rate value to predicting the heart-rate values for the last $f$ fraction of the workout. We use the same model as in section \ref{secTemporalModelWorkouts}. Let $e_{wn}$ be the tiredness level of the last sample in workout $w$ the training set. In order to predict the instantaneous heart-rate values in the remaining part of the workout, we assume $e_{wn} = e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$. In other words, we assume that the last tiredness level of the workout fitted during training stays the same for the remaining part of the workout. In practice, this is not a valid assumption, but this provides us with a conservative estimate of how well the model performs on the remaining part of the workout i.e. on the validation and test sets.
 
 Also note that the difficulty is not only that of estimating the tiredness levels accurately, but also not having learned model parameters for tiredness levels beyond the last tiredness level fitted during training. Thus, even if the true tiredness levels for the remaining part of the workout are known, these cannot be used for prediction of heart-rate values.
 
@@ -321,34 +321,6 @@ Also note that the difficulty is not only that of estimating the tiredness level
 \label{secEvaluation}
 
 \subsection{Temporal evolution in users}
-\subsubsection{Prediction of duration}
-We now present result for prediction of duration (final mode of evaluation).
-\begin{table}[h]
-\centering
-\begin{tabular}{|c|c|c|c|} \hline
-& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
-\# Examples &  &  &  \\ \hline
-Baseline ($E = 1$) & & & \\ \hline
-$E = 2$ & & & \\ \hline
-$E = 3$ & & & \\ \hline
-\end{tabular}
-\caption{Prediction of duration - \emph{Final} mode of evaluation }
-\label{tableDurationFinal}
-\end{table}
-
-We now present result for prediction of duration (random mode of evaluation).
-\begin{table}[h]
-\centering
-\begin{tabular}{|c|c|c|c|} \hline
-& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
-\# Examples &  &  &  \\ \hline
-Baseline ($E = 1$) & & & \\ \hline
-$E = 2$ & & & \\ \hline
-$E = 3$ & & & \\ \hline
-\end{tabular}
-\caption{Prediction of duration - \emph{Random} mode of evaluation }
-\label{tableDurationRandom}
-\end{table}
 
 \subsubsection{Prediction of average heart-rate}
 
@@ -395,9 +367,58 @@ $E = 3$ (random) & $10^4$ & $0.0$ \\ \hline
 \label{tableAvgHrHyperparams}
 \end{table}
 
+\subsubsection{Prediction of duration}
+Tables \ref{tableDurationFinal} and \ref{tableDurationRandom} show results for the prediction of the duration og the workout, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}. Table \ref{tableDurationHyperparams} shows the optimal values of hyper-parameters found using grid search.
+
+The model which accounts for temporal evolution of users performs marginally better than the baseline model in the \emph{final} mode of evaluation, but this is not true in the \emph{random} mode of evaluation. Further, as is seen from table \ref{tableDurationHyperparams}, grid search yields relatively high optimal values of $\lambda_1$, indicating that the experience levels are very similar to each other and this essentially reduces the models with $E = 2$ and $E = 3$ to the baseline model $E = 1$.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|} \hline
+& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+\# Examples & 743987 & 52109 & 52109 \\ \hline
+Baseline ($E = 1$) & 0.785361 & 0.677276 & 0.696565 \\ \hline
+$E = 2$ & 0.775247 & 0.677833 & 0.714295 \\ \hline
+$E = 3$ & 0.782736 & 0.677098 & 0.718808 \\ \hline
+\end{tabular}
+\caption{Prediction of duration - \emph{Final} mode of evaluation }
+\label{tableDurationFinal}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|} \hline
+& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+\# Examples & 743987 & 52109 & 52109  \\ \hline
+Baseline ($E = 1$) & 0.736994 & 0.627867 & 0.596432 \\ \hline
+$E = 2$ & 0.691232 & 0.627357 & 0.578873 \\ \hline
+$E = 3$ & 0.705088 & 0.634563 & 0.581045 \\ \hline
+\end{tabular}
+\caption{Prediction of duration - \emph{Random} mode of evaluation }
+\label{tableDurationRandom}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|} \hline
+& $\lambda_1$ & $\lambda_2$ \\ \hline
+$E = 2$ (final) & $10^4$ & $0.001$ \\ \hline
+$E = 3$ (final) & $10^2$ & $0.001$ \\ \hline
+$E = 2$ (random) & $10$ & $0.01$ \\ \hline
+$E = 3$ (random) & $10$ & $0.01$ \\ \hline
+\end{tabular}
+\caption{Optimal values of hyper-parameters $\lambda_1$ and $\lambda_2$ for prediction of duration of the workout}
+\label{tableDurationHyperparams}
+\end{table}
+
 \subsection{Temporal evolution in workouts}
+
+We now discuss results for temporal evolution \emph{within} workouts. First, we discuss results for the task of predicting a single instantaneous heart-rate value in each workout, followed by prediction of several instantaneous heart-rate values.
+
 \subsubsection{Prediction of 1 heart-rate value}
-We now present result for prediction of the last instantaneous heart-rate value (final mode of evaluation)
+
+Tables \ref{tableInstHrFinal} and \ref{tableInstHrRandom} show results for the task of predicting a single instantaneous heart-rate value in each workout, using the \emph{final} and \emph{random} modes of evaluation respectively. Accounting for temporal evolution within each workout significantly improves the prediction accuracy over the baseline ($E = 1$), for both modes of evaluation.
+
 \begin{table}[h]
 \centering
 \begin{tabular}{|c|c|c|c|} \hline
@@ -410,7 +431,6 @@ $E = 10$ & 0.887163 & 0.839256 & 0.799058 \\ \hline
 \label{tableInstHrFinal}
 \end{table}
 
-We now present result for prediction of the last instantaneous heart-rate value (final mode of evaluation)
 \begin{table}[h]
 \centering
 \begin{tabular}{|c|c|c|c|} \hline
@@ -425,8 +445,8 @@ $E = 10$ & 0.907340 & 0.894736 & 0.897766 \\ \hline
 
 \subsubsection{Prediction of last several heart-rate values}
 
-We now present result for prediction of the last several instantaneous heart-rate value (final mode of evaluation)
-
+Table \ref{tableInstManyHr} shows results for the task of predicting last several instantaneous heart-rate values in each workout. The results indicate that accounting for temporal evolution significantly improves results compared to the baseline. We observe that the $R^2$ scores on the validation set are much higher than those for the test set. This is expected due to the fact that the samples in the test set are further in time than the samples in the validation set, which in turn are further in time than the samples in the training set. Recall from section \ref{secTemporalModelWorkouts} that we assume $e_{wn} = e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$ and $e_{wn}$ is the last sample in workout $w$ in the training set. This assumption is lesser likely to hold for samples further and further in time. Thus, this assumption is less likely to hold for the test set than for the validation set. Hence, the $R^2$ scores on the test set
+are lower than on the validation set, which in turn are lower than on the training set.
 \begin{table}[h]
 \centering
 \begin{tabular}{|c|c|c|c|} \hline
@@ -435,10 +455,9 @@ We now present result for prediction of the last several instantaneous heart-rat
 Baseline ($E = 1$) & 0.567424 & 0.451540 & 0.356603 \\ \hline
 $E = 10$ & 0.911437 & 0.632749 & 0.464435 \\ \hline
 \end{tabular}
-\caption{Prediction of several instantaneous heart-rates}
+\caption{Prediction of several instantaneous heart-rates in each workout}
 \label{tableInstManyHr}
 \end{table}
-
 
 \section{Conclusion and Future Work}
 
