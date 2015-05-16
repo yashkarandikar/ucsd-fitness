@@ -1595,7 +1595,7 @@ Computing predictions and statistics
 
 @Test Examples = 2384,MSE = 136.521608,Variance = 239.894395,FVU = 0.569090,R2 = 1 - FVU = 0.430910
 
-@Total time taken =  1.61574292183
+@Total time taken =  1.64787101746
 At iterate  788    f=  1.29075D+02    |proj g|=  1.87579D-02
 
 At iterate  789    f=  1.29075D+02    |proj g|=  2.21739D-02

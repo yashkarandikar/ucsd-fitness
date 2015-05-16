@@ -2123,7 +2123,7 @@ Computing predictions and statistics
 
 @Test Examples = 2384,MSE = 136.659973,Variance = 239.894395,FVU = 0.569667,R2 = 1 - FVU = 0.430333
 
-@Total time taken =  2.09145498276
+@Total time taken =  1.94184398651
 Tnint = total number of segments explored during Cauchy searches
 Skip  = number of BFGS updates skipped
 Nact  = number of active bounds at final generalized Cauchy point

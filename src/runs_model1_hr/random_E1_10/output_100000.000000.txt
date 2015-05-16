@@ -538,7 +538,7 @@ Computing predictions and statistics
 
 @Test Examples = 2384,MSE = 874.799915,Variance = 239.894395,FVU = 3.646604,R2 = 1 - FVU = -2.646604
 
-@Total time taken =  0.661179065704
+@Total time taken =  0.668041944504
 At iterate  258    f=  9.55720D+02    |proj g|=  2.60224D+02
 
 At iterate  259    f=  9.55719D+02    |proj g|=  1.89236D+02
