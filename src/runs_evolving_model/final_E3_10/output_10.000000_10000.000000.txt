@@ -1,0 +1,70 @@
+Data matrix dimensions = 743987 x 5
+@E = 3,lam1 = 10.000000,lam2 = 10000.000000
+U = 52109 , E = 3 , nparams = 156332
+Super Iteration 0..Iteration 1: 
+@fx = 204849922.599879
+LBFGS terminated with status -1001
+Super Iteration 1..Iteration 1: 
+@fx = 1.111370
+LBFGS terminated with status 0
+Super Iteration 2..Iteration 1: 
+@fx = 0.316077
+LBFGS terminated with status 0
+Super Iteration 3..Iteration 1: 
+@fx = 0.285388
+LBFGS terminated with status 0
+Super Iteration 4..Iteration 1: 
+@fx = 0.275411
+LBFGS terminated with status 0
+Super Iteration 5..Iteration 1: 
+@fx = 0.271675
+LBFGS terminated with status 0
+Super Iteration 6..Iteration 1: 
+@fx = 0.270436
+LBFGS terminated with status 0
+Super Iteration 7..Iteration 1: 
+@fx = 0.270013
+LBFGS terminated with status 0
+Super Iteration 8..Iteration 1: 
+@fx = 0.269826
+LBFGS terminated with status 0
+Super Iteration 9..Iteration 1: 
+@fx = 0.269773
+LBFGS terminated with status 0
+Super Iteration 10..Iteration 1: 
+@fx = 0.269760
+LBFGS terminated with status 0
+Super Iteration 11..Iteration 1: 
+@fx = 0.269754
+LBFGS terminated with status 0
+Super Iteration 12..Iteration 1: 
+@fx = 0.269752
+LBFGS terminated with status 0
+Super Iteration 13..Iteration 1: 
+@fx = 0.269748
+LBFGS terminated with status 0
+Super Iteration 14..LBFGS terminated with status 2
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of users =  52109
+Training set has 743987 examples
+Validation set has 52109 examples
+Training..
+Running command ./predictor_duration_evolving_user_cpp data.txt 10.0 10000.0 model.txt 3
+Done with learning..
+Reading learned model from file..
+Loading model..
+Adding experience levels to data matrices
+Mode :  final
+Mode :  final
+Making predictions..
+{'Distance': 2, 'user_id': 1, 'experience': 5, 'Duration': 3, 'user_number': 0, 'date-time': 4}
+Computing statistics
+
+@Training Examples = 743987,MSE = 0.266038,Variance = 0.485242,FVU = 0.548257,R2 = 1 - FVU = 0.451743
+
+@Validation Examples = 52109,MSE = 0.589593,Variance = 0.493200,FVU = 1.195444,R2 = 1 - FVU = -0.195444
+
+@Test Examples = 52109,MSE = 0.697659,Variance = 0.631191,FVU = 1.105306,R2 = 1 - FVU = -0.105306
+
+@Total time taken =  210.237615824
