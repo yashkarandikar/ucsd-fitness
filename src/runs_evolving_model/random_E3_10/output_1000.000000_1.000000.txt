@@ -1,46 +1,50 @@
 Data matrix dimensions = 743987 x 5
-@E = 2,lam1 = 1000.000000,lam2 = 10.000000
-U = 52109 , E = 2 , nparams = 104222
+@E = 3,lam1 = 1000.000000,lam2 = 1.000000
+U = 52109 , E = 3 , nparams = 156332
 Super Iteration 0..Iteration 1: 
-@fx = 4393532.135980
+@fx = 9889432.284075
 LBFGS terminated with status 0
 Super Iteration 1..Iteration 1: 
-@fx = 0.329708
+@fx = 0.486909
 LBFGS terminated with status 0
 Super Iteration 2..Iteration 1: 
-@fx = 0.323054
+@fx = 0.323017
 LBFGS terminated with status 0
 Super Iteration 3..Iteration 1: 
-@fx = 0.319329
+@fx = 0.317605
 LBFGS terminated with status 0
 Super Iteration 4..Iteration 1: 
-@fx = 0.317130
+@fx = 0.316402
 LBFGS terminated with status 0
 Super Iteration 5..Iteration 1: 
-@fx = 0.316229
+@fx = 0.316097
 LBFGS terminated with status 0
 Super Iteration 6..Iteration 1: 
-@fx = 0.315948
+@fx = 0.316013
 LBFGS terminated with status 0
 Super Iteration 7..Iteration 1: 
-@fx = 0.315849
+@fx = 0.315989
 LBFGS terminated with status 0
 Super Iteration 8..Iteration 1: 
-@fx = 0.315823
+@fx = 0.315981
 LBFGS terminated with status 0
 Super Iteration 9..Iteration 1: 
-@fx = 0.315802
+@fx = 0.315978
 LBFGS terminated with status 0
 Super Iteration 10..Iteration 1: 
-@fx = 0.315799
+@fx = 0.315972
 LBFGS terminated with status 0
+Super Iteration 11..Iteration 1: 
+@fx = 0.315971
+LBFGS terminated with status 0
+Super Iteration 12..LBFGS terminated with status 2
 Loading data from file..
 Doing sorted check on train and val sets..
 Number of users =  52109
 Training set has 743987 examples
 Validation set has 52109 examples
 Training..
-Running command ./predictor_duration_evolving_user_cpp data.txt 1000.0 10.0 model.txt 2
+Running command ./predictor_duration_evolving_user_cpp data.txt 1000.0 1.0 model.txt 3
 Done with learning..
 Reading learned model from file..
 Loading model..
@@ -51,10 +55,10 @@ Making predictions..
 {'Distance': 2, 'user_id': 1, 'experience': 5, 'Duration': 3, 'user_number': 0, 'date-time': 4}
 Computing statistics
 
-@Training Examples = 743987,MSE = 0.305962,Variance = 0.494746,FVU = 0.618422,R2 = 1 - FVU = 0.381578
+@Training Examples = 743987,MSE = 0.310439,Variance = 0.494746,FVU = 0.627470,R2 = 1 - FVU = 0.372530
 
-@Validation Examples = 52109,MSE = 0.378571,Variance = 0.458879,FVU = 0.824991,R2 = 1 - FVU = 0.175009
+@Validation Examples = 52109,MSE = 0.383071,Variance = 0.458879,FVU = 0.834798,R2 = 1 - FVU = 0.165202
 
-@Test Examples = 52109,MSE = 0.479007,Variance = 0.552386,FVU = 0.867160,R2 = 1 - FVU = 0.132840
+@Test Examples = 52109,MSE = 0.484192,Variance = 0.552386,FVU = 0.876546,R2 = 1 - FVU = 0.123454
 
-@Total time taken =  146.777390003
+@Total time taken =  200.613031149
