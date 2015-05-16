@@ -352,35 +352,47 @@ $E = 3$ & & & \\ \hline
 
 \subsubsection{Prediction of average heart-rate}
 
-Tables \ref{tableAvgHrFinal} and \ref{tableAvgHrRandom} show results for prediction of average heart-rate, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}, which is a measure of the fraction of variance in the data explained by the model. The tables also shows the optimal values of hyper-parameters found using grid search.
+Tables \ref{tableAvgHrFinal} and \ref{tableAvgHrRandom} show results for prediction of average heart-rate, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}, which is a measure of the fraction of variance in the data explained by the model. Table \ref{tableAvgHrHyperparams} shows the optimal values of hyper-parameters found using grid search.
 
-As seen from the results, the model which accounts for temporal evolution of users does not perform better than the baseline model ($E = 1$). This is further seen from the high optimal values of $\lambda_1$ resulting from the grid search. Recall from section \ref{secTemporalModelUsers} that $\lambda_1$ is a hyper-parameter which penalizes drastic changes in parameters of similar experience levels. A high value of $\lambda_1$ means that the experience levels are very similar to each other and this essentially reduces the models with $E = 2$ and $E = 3$ to the baseline model $E = 1$.
+As seen from the results, the model which accounts for temporal evolution of users does not perform better than the baseline model ($E = 1$). A closer look at the hyper-parameters resulting from the grid search, as shown in table \ref{tableAvgHrHyperparams}, gives us some insight into this result. As is seen from table \ref{tableAvgHrHyperparams}, grid search yields high optimal values of $\lambda_1$. Recall from section \ref{secTemporalModelUsers} that $\lambda_1$ is a hyper-parameter which penalizes drastic changes in parameters of similar experience levels. A high value of $\lambda_1$ means that the experience levels are very similar to each other and this essentially reduces the models with $E = 2$ and $E = 3$ to the baseline model $E = 1$.
 
-\begin{table*}[h]
-\centering
-\begin{tabular}{|c|c|c|c|c|} \hline
-& Optimal hyper-parameters & Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
-Number of Examples & n/a & 39545 & 2384 & 2384  \\ \hline
-Baseline ($E = 1$) & $\lambda = 0.01$ & 0.520887 & 0.422324 & 0.423512 \\ \hline
-$E = 2$ & $\lambda_1 = 10^4$, $\lambda_2 = 0.0$ & 0.520928 & 0.422081 & 0.423318 \\ \hline
-$E = 3$ & $\lambda_1 = 10^5$, $\lambda_2 = 0.0$ & 0.520927 & 0.422085 & 0.423312 \\ \hline
-\end{tabular}
-\caption{Prediction of avg. heart-rate - \emph{Final} mode of evaluation }
-\label{tableAvgHrFinal}
-\end{table*}
-
-We now present result for prediction of average heart-rate (random mode of evaluation).
 \begin{table}[h]
 \centering
 \begin{tabular}{|c|c|c|c|} \hline
 & Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
-\# Examples &  &  &  \\ \hline
-Baseline ($E = 1$) & & & \\ \hline
-$E = 2$ & & & \\ \hline
-$E = 3$ & & & \\ \hline
+\# Examples & 39545 & 2384 & 2384  \\ \hline
+Baseline($E = 1$)& 0.520887 & 0.422324 & 0.423512 \\ \hline
+$E = 2$ & 0.520928 & 0.422081 & 0.423318 \\ \hline
+$E = 3$ & 0.520927 & 0.422085 & 0.423312 \\ \hline
+\end{tabular}
+\caption{Prediction of avg. heart-rate - \emph{Final} mode of evaluation }
+\label{tableAvgHrFinal}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|} \hline
+& Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
+\# Examples & 39545 & 2384  &  2384 \\ \hline
+Baseline ($E = 1$) & 0.517636 & 0.481049 & 0.430987 \\ \hline
+$E = 2$  & 0.517645 & 0.480964 & 0.430880 \\ \hline
+$E = 3$  & 0.517692 & 0.480968 & 0.430886 \\ \hline
 \end{tabular}
 \caption{Prediction of avg. heart-rate - \emph{Random} mode of evaluation }
 \label{tableAvgHrRandom}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|} \hline
+& $\lambda_1$ & $\lambda_2$ \\ \hline
+$E = 2$ (final) & $10^4$ & $0.0$ \\ \hline
+$E = 3$ (final) & $10^5$ & $0.0$ \\ \hline
+$E = 2$ (random) & $10^5$ & $0.0$ \\ \hline
+$E = 3$ (random) & $10^4$ & $0.0$ \\ \hline
+\end{tabular}
+\caption{Optimal values of hyper-parameters $\lambda_1$ and $\lambda_2$ for prediction of average heart-rate}
+\label{tableAvgHrHyperparams}
 \end{table}
 
 \subsection{Temporal evolution in workouts}
@@ -390,9 +402,9 @@ We now present result for prediction of the last instantaneous heart-rate value 
 \centering
 \begin{tabular}{|c|c|c|c|} \hline
 & Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
-\# Examples &  &  &  \\ \hline
-Baseline ($E = 1$) & & & \\ \hline
-$E = 10$ & & & \\ \hline
+\# Examples & 24347765 & 83423  & 83423  \\ \hline
+Baseline ($E = 1$) & 0.608874 & 0.585329 & 0.560480 \\ \hline
+$E = 10$ & 0.887163 & 0.839256 & 0.799058 \\ \hline
 \end{tabular}
 \caption{Prediction of instantaneous heart-rate - \emph{Final} mode of evaluation }
 \label{tableInstHrFinal}
@@ -403,9 +415,9 @@ We now present result for prediction of the last instantaneous heart-rate value 
 \centering
 \begin{tabular}{|c|c|c|c|} \hline
 & Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
-\# Examples &  &  &  \\ \hline
-Baseline ($E = 1$) & & & \\ \hline
-$E = 10$ & & & \\ \hline
+\# Examples & 24347765  & 83423  & 83423  \\ \hline
+Baseline ($E = 1$) & 0.613856 & 0.608207 & 0.615789 \\ \hline
+$E = 10$ & 0.907340 & 0.894736 & 0.897766 \\ \hline
 \end{tabular}
 \caption{Prediction of instantaneous heart-rate - \emph{Random} mode of evaluation }
 \label{tableInstHrRandom}
@@ -419,9 +431,9 @@ We now present result for prediction of the last several instantaneous heart-rat
 \centering
 \begin{tabular}{|c|c|c|c|} \hline
 & Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
-\# Examples &  &  &  \\ \hline
-Baseline ($E = 1$) & & & \\ \hline
-$E = 10$ & & & \\ \hline
+\# Examples &  9841317 & 7352229 & 7321065 \\ \hline
+Baseline ($E = 1$) & 0.567424 & 0.451540 & 0.356603 \\ \hline
+$E = 10$ & 0.911437 & 0.632749 & 0.464435 \\ \hline
 \end{tabular}
 \caption{Prediction of several instantaneous heart-rates}
 \label{tableInstManyHr}
