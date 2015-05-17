@@ -458,6 +458,14 @@ $E = 10$ & 0.907340 & 0.894736 & 0.897766 \\ \hline
 \label{tableInstHrRandom}
 \end{table}
 
+Figure \ref{figR2vsTirednessLevels} shows how the prediction accuracy on the training and validation sets increases as we increase the number of tiredness levels $E$. The optimal value of $E$ is $E = 20$, beyond which the prediction accuracy decreases. This plot is done using the \emph{final} mode of evaluation.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.4]{../src/plots/r2_vs_num_tiredness_levels}
+\caption{\label{figR2vsTirednessLevels} $R^2$ score on training and validation sets with varying number of tiredness levels.}
+\end{figure}
+
 \subsubsection{Prediction of last several heart-rate values}
 
 For this task, we consider only workouts with at least 200 samples of instantaneous heart-rate values and distance values. Given a workout of $N \geq 200$ samples of instantaneous heart-rate and distance values, we split $N$ (distance, heart-rate) samples as training, validation and test sets of sizes $0.4N$, $0.3N$, $0.3N$ respectively. Table \ref{tableInstManyHr} shows results for the task of predicting last several instantaneous heart-rate values in each workout. The results indicate that accounting for temporal evolution significantly improves results compared to the baseline. We observe that the $R^2$ scores on the validation set are much higher than those for the test set. This is expected due to the fact that the samples in the test set are further in time than the samples in the validation set, which in turn are further in time than the samples in the training set. Recall from section \ref{secTemporalModelWorkouts} that we assume $e_{wn} = e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$ and $e_{wn}$ is the last sample in workout $w$ in the training set. This assumption is lesser likely to hold for samples further and further in time. Thus, this assumption is less likely to hold for the test set than for the validation set. Hence, the $R^2$ scores on the test set
