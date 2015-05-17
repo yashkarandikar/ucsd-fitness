@@ -76,10 +76,7 @@ Auto-regressive models \cite{autoRegressiveModelWiki} for time-series prediction
 
 \section{Endomondo Fitness data set}
 \label{secDataset}
-In this section, we introduce the Endomondo fitness data set \cite{endomondo}. Endomondo \cite{endomondo} is a free app and website that allows users to keep track of their workouts. The data extracted from the Endomondo website \cite{endomondo} is available in the form of a SQL dump of size 200 GB approximately after compression. It contains data for around 10 million workouts. Data for each workout is in the form of a HTML document string. This HTML document contains information about the workout such as the sport (such as running, walking, cycling etc.), user id, total distance, duration, wind, weather, hydration, date \& time etc. The HTML document also contains embedded JSON data. This JSON data contains GPS co-ordinates (latitude, longitude and altitude), distance, duration, heart-rate, speed / pace sampled throughout the duration of the workout. The `duration' trace indicates the time instants at which the remaining attributes were sampled.
-
-\subsection{Extracting relevant data}
-We developed a parser in Python to extract the relevant data from each HTML document. We use parallelization to speed-up the extraction of the data. Each line of the SQL dump contains data for multiple workouts in the form of HTML documents. A `master' process reads each line, extracts the HTML documents and hands them over to `worker' processes. Each `worker' process takes 1 HTML document at a time, parses it to extract the relevant information about the workout and encodes it into a dictionary in JSON format. The worker then queues this workout data into a global queue. A separate `writer' process dequeues workout information and writes it to a single file in the form of 1 line per workout. Having a separate writer process to write the workouts extracted by worker processes eliminates disk contention among workers. It also allows data for all workouts to be written to a single large file instead of millions of small files, without any need for synchronization between processes since only a single process is performing the writes. All of the extracted data is written to a file of size around 30 GB after compression.
+In this section, we introduce the Endomondo fitness data set \cite{endomondo}. Endomondo \cite{endomondo} is a free app and website that allows users to keep track of their workouts. The data extracted from the Endomondo website \cite{endomondo} is available in the form of a SQL dump of size 200 GB approximately after compression. It contains data for around 10 million workouts. Data for each workout is in the form of a HTML document string. This HTML document contains information about the workout such as the sport (such as running, walking, cycling etc.), user id, total distance, duration, wind, weather, hydration, date \& time etc. The HTML document also contains embedded JSON data. This JSON data contains GPS co-ordinates (latitude, longitude and altitude), distance, duration, heart-rate, speed / pace sampled throughout the duration of the workout. The `duration' trace indicates the time instants at which the remaining attributes were sampled. We developed a parser in Python to extract the relevant data from each HTML document, details of which are discussed in section \ref{secImplementationDetails}.
 
 \subsection{Data set statistics}
 
@@ -226,7 +223,7 @@ We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cit
 We alternately optimize $\Theta$ given $\beta$ and $\beta$ given $\Theta$ until $\beta$ does not change or a maximum number of iterations has been reached.
 
 \subsection{Inference}
-Once the model parameters and experience levels have been learned, we infer i.e. predict the duration or average heart rate for the next workout $w$ using equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr}. Note that we need to estimate the experience level for workout $w$ in order to be able to use equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr} to predict the duration or average heart-rate. We estimate this experience level in 2 different modes of inference, namely \emph{final} and \emph{random}. 
+Once the model parameters and experience levels have been learned, we infer i.e. predict the duration or average heart rate for the next workout $w$ using equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr}. Note that we need to estimate the experience level for workout $w$ in order to be able to use equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr} to predict the duration or average heart-rate. We perform inference in different 2 modes, namely \emph{final} and \emph{random}. 
 
 In the \emph{final} mode of inference, we use the first $N-2$ workouts as the training set, the $N-1$'th workout as the validation set and the $N$'th workout as the test set, where $N$ is the total number of workouts for a user $u$ in the data set. We assume $e_{u(N)} = e_{u(N-1)} = e_{u(N-2)}$ and use these experience levels to predict the duration (using equation \ref{eqnModelDuration}) or average heart rate (using equation \ref{eqnModelAvgHr}) for the examples in the validation and test set.
 
@@ -240,7 +237,7 @@ We now consider temporal evolution of a runner's capacity \emph{during} a workou
 
 \subsection{Model Specification}
 
-Given the heart-rate at various instants in a workout, we associate a \emph{tiredness level} $e_{wi}$ with heart-rate sample $i$ in the workout $w$. As before, the value $e_{wt}$ is an integer in the interval $[0, E)$, where $E$ is the number of tiredness levels. We expect the tiredness level of the user to either stay the same or increase with each sample in the workout. We encode this in the form of a monotonicity constraint as before:
+Given the heart-rate at various instants in a workout, we associate a \emph{tiredness level} $e_{wi}$ with heart-rate sample $i$ in the workout $w$. As before, the value $e_{wi}$ is an integer in the interval $[0, E)$, where $E$ is the number of tiredness levels. We expect the tiredness level of the user to either stay the same or increase with each sample in the workout. We encode this in the form of a monotonicity constraint as before:
 
 $$\forall w,i,j \;\;\;\;\; t_{wi} \geq t_{wj} \implies e_{wi} \geq e_{wj}$$
 
@@ -250,23 +247,23 @@ Then, given the distance covered $d_{wt}$ at sample $t$ for the $w$'th workout, 
 
 \begin{equation}
 \label{eqnModelInstHr}
-h_{wt}' = (\alpha_{e_{wt}} + \alpha_{ue_{wt}})(\theta_0 + \theta_1 d_{wt})
+h_{wt}' = (\alpha_{e_{wt}} + \alpha_{we_{wt}})(\theta_0 + \theta_1 d_{wt})
 \end{equation}
 
-where $e_{wt}$ is the tiredness level of the user at the $t$'th sample in workout $w$. Thus, as before, we have one parameter $\alpha_{we}$ per workout $w$ per tiredness level $e$ and an intercept term $\alpha_e$ for every tiredness level $e$, common to all workouts. The terms $\theta_0$ and $\theta_1$ are global to all workouts and tiredness levels. Thus, given $W$ workouts and $E$ tiredness levels, we have a total of $WE + E + 2$ parameters.
+where $e_{wt}$ is the tiredness level at the $t$'th sample in workout $w$. Thus, as before, we have one parameter $\alpha_{we}$ per workout $w$ per tiredness level $e$ and an intercept term $\alpha_e$ for every tiredness level $e$, common to all workouts. The terms $\theta_0$ and $\theta_1$ are global to all workouts and tiredness levels. Thus, given $W$ workouts and $E$ tiredness levels, we have a total of $WE + E + 2$ parameters.
 
 \subsection{Objective Function}
-As before, we have a different model for each of the $W$ tiredness levels. Each of the $E$ models has the following parameters:
+As before, we have a different model for each of the $E$ tiredness levels. Each of the $E$ models has the following parameters:
 
 $$\Theta_e = (\alpha_e; \alpha_{1e}...\alpha_{We})$$
 
-where $1 \leq e \leq E$ is the experience level and $W$ is the number of workouts in the data set.
+where $1 \leq e \leq E$ is the tiredness level and $W$ is the number of workouts in the data set.
 
 Thus, all the parameters in all of the $E$ models together can be written as:
 
 $$\Theta = (\Theta_1, \Theta_2,..., \Theta_E)$$
 
-Let $\beta$ denote the set of all experience parameters $e_{wt}$. Then, we need to choose the optimal parameters $(\hat{\Theta}, \hat{\beta})$ according to the objective
+Let $\beta$ denote the set of all tiredness levels $e_{wt}$. Then, we need to choose the optimal parameters $(\hat{\Theta}, \hat{\beta})$ according to the objective
 
 \begin{align}
 \label{eqnObjective2}
@@ -276,7 +273,7 @@ Let $\beta$ denote the set of all experience parameters $e_{wt}$. Then, we need 
 
 $$s.t. \; \; \; t_{wi} \geq t_{wj} \implies e_{wi} \geq e_{wj} $$
 
-where $D$ is the data set of all workouts for all users. This objective is similar to the one described in \cite{www13}.
+where $D$ is the data set of all samples in all workouts. This objective is similar to the one described in \cite{www13}.
 
 As before, $\Omega_1$ and $\Omega_2$ are regularizers defined as follows:
 
@@ -284,32 +281,38 @@ $$\Omega_1(\Theta) = \sum_{e=1}^{E-1}{\|\Theta_e - \Theta_{e+1}\|_2^2}$$
 
 $$\Omega_2(\Theta, \theta_1) = \theta_1^2 + \sum_{e=1}^{E}{\|\Theta_e \|_2^2}$$
 
-$\Omega_1$ is a smoothness function which penalizes abrupt changes between successive tiredness levels \cite{www13}, since in practice similar tiredness levels should have similar parameters \cite{www13}. $\Omega_2$ is another regularizer which penalizes complex models i.e. it penalizes models which have higher magnitudes of parameters. These regularizers are necessary to avoid overfitting, since we have a large number $(WE + E + 2)$ of parameters. $\lambda_1$ and $\lambda_2$ are regularization hyperparameters, which trade-off the importance of regularization versus prediction accuracy at training time \cite{www13}. We select $\lambda_1$ and $\lambda_2$ through a grid-search over values in the set $\{0.0, 10^{-3}, 10^{-2}, 10^{-1}, 10^0, 10^1\}$ and select the values which yield the highest prediction accuracy on a validation set.
+$\Omega_1$ is a smoothness function which penalizes abrupt changes between successive tiredness levels \cite{www13}, since in practice similar tiredness levels should have similar parameters \cite{www13}. $\Omega_2$ is another regularizer which penalizes complex models i.e. it penalizes models which have higher magnitudes of parameters. These regularizers are necessary to avoid overfitting, since we have a large number $(WE + E + 2)$ of parameters. $\lambda_1$ and $\lambda_2$ are regularization hyperparameters, which trade-off the importance of regularization versus prediction accuracy at training time \cite{www13}. We select $\lambda_1$ and $\lambda_2$ through a grid-search over values in the set $\{0.0, 10^{-4}, 10^{-3}, 10^{-2}, 10^{-1}, 10^{0}\}$ and select the values which yield the highest prediction accuracy on a validation set.
 
 \subsection{Training the model}
 The training algorithm is identical to the training algorithm described in section \ref{secTemporalModelUsers}.
 
 \subsection{Inference}
-Once the model parameters and tiredness levels have been learned, we infer i.e. predict the instantaneous heart rate at 1 instant in each workout $w$ using equation \ref{eqnModelInstHr}. As before, we need to estimate the tiredness level at that instant in order to be able to use equation \ref{eqnModelInstHr} to predict the instantaneous heart-rate. We estimate this tiredness levels in 2 different modes of inference, namely \emph{final} and \emph{random}. 
+Once the model parameters and tiredness levels have been learned, we infer i.e. predict the instantaneous heart rate at 1 instant in each workout $w$ using equation \ref{eqnModelInstHr}. As before, we need to estimate the tiredness level at that instant in order to be able to use equation \ref{eqnModelInstHr} to predict the instantaneous heart-rate. We perform inference in different 2 modes, namely \emph{final} and \emph{random}. 
 
 In the \emph{final} mode of inference, we use the first $N-2$ samples in each workout as the training set, the $N-1$'th sample from each workout as the validation set and the $N$'th sample as the test set, where $N$ is the total number of samples in a workout. We assume $e_{wN} = e_{w(N-1)} = e_{w(N-2)}$ and use these tiredness levels to predict the instantaneous heart-rate using equation \ref{eqnModelInstHr}.
 
-In the \emph{random} mode of inference, we randomly select 1 sample from each workout as the validation set and 1 sample from each workout as the test set. The tiredness level for these samples is assumed to be equal to those of the samples closest in time in the training set. 
+In the \emph{random} mode of inference, we randomly select 1 sample from each workout as the validation set and 1 sample from each workout as the test set. The tiredness levels for these samples is assumed to be equal to those of the samples closest in time in the training set. 
 
 We present results for both modes of inference in section \ref{secEvaluation}.
 
 \subsection{Prediction of several instantaneous heart rate values}
-We now generalize the problem of predicting 1 instantaneous heart-rate value to predicting the heart-rate values for the last $f$ fraction of the workout. We use the same model as in section \ref{secTemporalModelWorkouts}. Let $e_{wn}$ be the tiredness level of the last sample in workout $w$ the training set. In order to predict the instantaneous heart-rate values in the remaining part of the workout, we assume $e_{wn} = e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$. In other words, we assume that the last tiredness level of the workout fitted during training stays the same for the remaining part of the workout. In practice, this is not a valid assumption, but this provides us with a conservative estimate of how well the model performs on the remaining part of the workout i.e. on the validation and test sets.
+We now generalize the problem of predicting 1 instantaneous heart-rate value to the problem of predicting the heart-rate values for the last $f$ fraction of the workout. We use the same model as described earlier in this section. Let $e_{wn}$ be the tiredness level of the last sample in workout $w$ in the training set. In order to predict the instantaneous heart-rate values in the remaining part of the workout, we assume $e_{wn} = e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$. In other words, we assume that the last tiredness level of the workout fitted during training stays the same for the remaining part of the workout. In practice, this is not a valid assumption, but this provides us with a conservative estimate of how well the model performs on the remaining part of the workout i.e. on the validation and test sets.
 
-Also note that the difficulty is not only that of estimating the tiredness levels accurately, but also not having learned model parameters for tiredness levels beyond the last tiredness level fitted during training. Thus, even if the true tiredness levels for the remaining part of the workout are known, these cannot be used for prediction of heart-rate values.
+Note that the difficulty here is not only that of estimating the tiredness levels accurately, but also not having learned model parameters for tiredness levels beyond the last tiredness level fitted during training. Thus, even if the true tiredness levels for the remaining part of the workout are known, these cannot be used for prediction of heart-rate values.
 
 \section{Implementation Details}
 \label{secImplementationDetails}
-This section describes some of the techniques used to verify correctness of the implementation and achieve reasonably good performance to allow running multiple experiments.
+
+\subsection{Extracting relevant data}
+As mentioned in section \ref{secDataset}, the data extracted from the Endomondo website \cite{endomondo} is available in the form of a SQL dump of size 200 GB approximately after compression. It contains data for around 10 million workouts. Data for each workout is in the form of a HTML document string. We developed a parser in Python to extract the relevant data from each HTML document.  We use parallelization to speed-up the extraction of the data. Each line of the SQL dump contains data for multiple workouts in the form of HTML documents. A `master' process reads each line, extracts the HTML documents and hands them over to `worker' processes. Each `worker' process takes 1 HTML document at a time, parses it to extract the relevant information about the workout and encodes it into a dictionary in JSON format. The worker then queues this workout data into a global queue. A separate `writer' process dequeues workout information and writes it to a single file in the form of 1 line per workout. Having a separate writer process to write the workouts extracted by worker processes eliminates disk contention among workers. It also allows data for all workouts to be written to a single large file instead of millions of small files, without any need for synchronization between processes since only a single process is performing the writes. All of the extracted data is written to a file of size around 30 GB after compression.
+
+\subsection{Performance optimizations}
+
+We use Python for most of the data processing tasks, with NumPy \cite{numpy} and SciPy \cite{scipy} libraries. We observe that the training is computationally the most intensive part of the execution. We first speed-up the training using Cython \cite{cythonNumpy}. This gives considerable speed-ups and scales well for the tasks of predicting duration and average heart-rate for the next workout of a user. However, even with this optimization, training still remained prohibitively expensive for the large data sets involved in the task of predicting instantaneous heart-rate values (see  section \ref{secEvaluation} for details of the data sets). Hence, we port the training part of these tasks to C++. This gives much higher speed-ups and enables the training process for a single run to complete in a few minutes on a personal laptop machine.
+
+\subsection{Verifying Correctness}
 
 We verify that our implementations of derivative functions are correct by comparing their outputs to those obtained by computing numerical derivatives. We use functions provided in \cite{scipy} and \cite{dlib} to compute numerical derivatives.
-
-We use Python for most of the data processing tasks, with NumPy \cite{numpy} and SciPy \cite{scipy} libraries. We observe that the training is the computationally most intensive part of the execution. We first speed-up the training using Cython \cite{cythonNumpy}. This gives considerable speed-ups and scales well for the tasks of predicting duration and average heart-rate for the next workout of a user. However, even with this optimization, training still remained prohibitively expensive for the large data sets involved in the task of predicting instantaneous heart-rate values (see \ref{secEvaluation} for details of the data sets). Hence, we port the training part of these tasks to C++. This gives much higher speed-ups and enables the training process for a single run to complete in a few minutes on a personal laptop machine.
 
 %\needspace{2\baselineskip}
 \section{Evaluation}
@@ -317,13 +320,13 @@ We use Python for most of the data processing tasks, with NumPy \cite{numpy} and
 This section describes the results of the models described in sections \ref{secTemporalModelUsers} and \ref{secTemporalModelWorkouts} on the predictive tasks described in section \ref{secPredictiveTasks}. 
 
 \subsection{Temporal evolution across workouts}
-This section discusses results of the model described in section \ref{secTemporalModelUsers} on the tasks of predicting the average heart-rate and total duration of a user's next workout.
+This section discusses results of the model described in section \ref{secTemporalModelUsers} on the tasks of predicting the average heart-rate and total duration of a runner's next workout.
 
 \subsubsection{Prediction of average heart-rate}
 
-For this task, we consider only workouts of users having more than 10 workouts. Further, we discard workouts with invalid date/time, extremely long or short workouts and workouts with extremely low or extremely high average heart-rate value since these indicate workouts with invalid data.
+For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time, extremely long or short workouts and workouts with extremely low or extremely high average heart-rate value since these indicate workouts with invalid data.
 
-Tables \ref{tableAvgHrFinal} and \ref{tableAvgHrRandom} show results for prediction of average heart-rate, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. As discussed in section \ref{secTemporalModelUsers}, we have 1 workout in the validation set and 1 workout in the test set for each user in the data set, for both modes of evaluation. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}, which is a measure of the fraction of variance in the data explained by the model. Table \ref{tableAvgHrHyperparams} shows the optimal values of hyper-parameters found using grid search.
+Tables \ref{tableAvgHrFinal} and \ref{tableAvgHrRandom} show results for prediction of average heart-rate, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. As discussed in section \ref{secTemporalModelUsers}, we have 1 workout in the validation set and 1 workout in the test set for each runner in the data set, for both modes of evaluation. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}, which is a measure of the fraction of variance in the data explained by the model. Table \ref{tableAvgHrHyperparams} shows the optimal values of hyper-parameters found using grid search.
 
 As seen from the results, the model which accounts for temporal evolution of users does not perform better than the baseline model ($E = 1$). A closer look at the hyper-parameters resulting from the grid search, as shown in table \ref{tableAvgHrHyperparams}, gives us some insight into this result. As is seen from table \ref{tableAvgHrHyperparams}, grid search yields high optimal values of $\lambda_1$. Recall from section \ref{secTemporalModelUsers} that $\lambda_1$ is a hyper-parameter which penalizes drastic changes in parameters of similar experience levels. A high value of $\lambda_1$ means that the experience levels are very similar to each other and this essentially reduces the models with $E = 2$ and $E = 3$ to the baseline model $E = 1$.
 
@@ -368,11 +371,11 @@ $E = 3$ (random) & $10^4$ & $0.0$ \\ \hline
 
 \subsubsection{Prediction of duration}
 
-For this task, we consider only workouts of users having more than 10 workouts. Further, we discard workouts with invalid date/time, extremely long or short workouts (in distance or duration) since these indicate workouts with invalid data.
+For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time, extremely long or short workouts (in distance or duration) since these indicate workouts with invalid data.
 
-Tables \ref{tableDurationFinal} and \ref{tableDurationRandom} show results for the prediction of the duration og the workout, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. As discussed in section \ref{secTemporalModelUsers}, we have 1 workout in the validation set and 1 workout in the test set for each user in the data set, for both modes of evaluation. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}. Table \ref{tableDurationHyperparams} shows the optimal values of hyper-parameters found using grid search.
+Tables \ref{tableDurationFinal} and \ref{tableDurationRandom} show results for the prediction of the duration of the workout, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. As discussed in section \ref{secTemporalModelUsers}, we have 1 workout in the validation set and 1 workout in the test set for each runner in the data set, for both modes of evaluation. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}. Table \ref{tableDurationHyperparams} shows the optimal values of hyper-parameters found using grid search.
 
-The model which accounts for temporal evolution of users performs marginally better than the baseline model in the \emph{final} mode of evaluation, but this is not true in the \emph{random} mode of evaluation. Further, as is seen from table \ref{tableDurationHyperparams}, grid search yields relatively high optimal values of $\lambda_1$, indicating that the experience levels are very similar to each other and this essentially reduces the models with $E = 2$ and $E = 3$ to the baseline model $E = 1$.
+The model which accounts for temporal evolution of runners performs marginally better than the baseline model in the \emph{final} mode of evaluation, but this is not true in the \emph{random} mode of evaluation. Further, as is seen from table \ref{tableDurationHyperparams}, grid search yields relatively high optimal values of $\lambda_1$, indicating that the experience levels are very similar to each other and this essentially reduces the models with $E = 2$ and $E = 3$ to the baseline model $E = 1$.
 
 \begin{table}[H]
 \centering
@@ -413,11 +416,11 @@ $E = 3$ (random) & $10$ & $0.01$ \\ \hline
 \label{tableDurationHyperparams}
 \end{table}
 
-The lack of improvement in the prediction accuracy after accounting for temporal evolution across workouts seem to suggest that we need data for many more workouts per user and over much longer periods of time in order to be able to notice a reasonably strong evolution of the user across workouts.
+The lack of improvement in the prediction accuracy after accounting for temporal evolution across workouts seem to suggest that we need data for many more workouts per runner and over much longer periods of time in order to be able to notice a reasonably strong evolution of the runner across workouts.
 
 \subsection{Temporal evolution in workouts}
 
-We now discuss results for temporal evolution \emph{within} workouts. First, we discuss results for the task of predicting a single instantaneous heart-rate value in each workout, followed by prediction of several instantaneous heart-rate values.
+We now discuss results for temporal evolution \emph{within} workouts. First, we discuss results for the task of predicting a single instantaneous heart-rate value in each workout, followed by prediction of several instantaneous heart-rate values in each workout.
 
 \subsubsection{Prediction of 1 heart-rate value}
 
@@ -459,8 +462,7 @@ Figure \ref{figR2vsTirednessLevels} shows how the prediction accuracy on the tra
 
 \subsubsection{Prediction of last several heart-rate values}
 
-For this task, we consider only workouts with at least 200 samples of instantaneous heart-rate values and distance values. Given a workout of $N \geq 200$ samples of instantaneous heart-rate and distance values, we split $N$ (distance, heart-rate) samples as training, validation and test sets of sizes $0.4N$, $0.3N$, $0.3N$ respectively. Table \ref{tableInstManyHr} shows results for the task of predicting last several instantaneous heart-rate values in each workout. The results indicate that accounting for temporal evolution significantly improves results compared to the baseline. We observe that the $R^2$ scores on the validation set are much higher than those for the test set. This is expected due to the fact that the samples in the test set are further in time than the samples in the validation set, which in turn are further in time than the samples in the training set. Recall from section \ref{secTemporalModelWorkouts} that we assume $e_{wn} = e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$ and $e_{wn}$ is the last sample in workout $w$ in the training set. This assumption is lesser likely to hold for samples further and further in time. Thus, this assumption is less likely to hold for the test set than for the validation set. Hence, the $R^2$ scores on the test set
-are lower than on the validation set, which in turn are lower than on the training set.
+For this task, we consider only workouts with at least 200 samples of instantaneous heart-rate values and distance values. Given a workout of $N \geq 200$ samples of instantaneous heart-rate and distance values, we split $N$ (distance, heart-rate) samples into training, validation and test sets of sizes $0.4N$, $0.3N$, $0.3N$ respectively. Table \ref{tableInstManyHr} shows results for the task of predicting last several instantaneous heart-rate values in each workout. The results indicate that accounting for temporal evolution significantly improves results compared to the baseline. We observe that the $R^2$ scores on the validation set are much higher than those for the test set. This is expected due to the fact that the samples in the test set are further in time than the samples in the validation set, which in turn are further in time than the samples in the training set. Recall from section \ref{secTemporalModelWorkouts} that we assume $e_{wn} = e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$ and $e_{wn}$ is the last sample in workout $w$ in the training set. This assumption is lesser likely to hold for samples further and further in time. Thus, this assumption is less likely to hold for the test set than for the validation set. Hence, the $R^2$ scores on the test set are lower than on the validation set, which in turn are lower than on the training set.
 \begin{table}[H]
 \centering
 \begin{tabular}{|c|c|c|c|} \hline
@@ -475,9 +477,9 @@ $E = 20$ &  0.926065 & 0.633388 & 0.458077 \\ \hline
 \end{table}
 
 \section{Conclusion and Future Work}
-We describe and evaluate 2 different ways of accounting for temporal evolution of users' physical capacities for running workouts - one \emph{across} workouts and the other \emph{within} workouts. Results indicate that accounting for temporal evolution across workouts does not improve prediction accuracy, perhaps due to the relatively small number of workouts per user in the data set. On the other hand, accounting for temporal evolution \emph{within} each workout significantly improves results over the baseline model.
+We describe and evaluate 2 different ways of accounting for temporal evolution of runners' physical capacities for running workouts - one \emph{across} workouts and the other \emph{within} workouts. Results indicate that accounting for temporal evolution across workouts does not improve prediction accuracy, perhaps due to the relatively small number of workouts per runner in the data set. On the other hand, accounting for temporal evolution \emph{within} each workout significantly improves results over the baseline model.
 
-Future work includes training and evaluating these models for other types of workouts, such as cycling, walking etc. The results on these types of workouts might give some interesting insights about the nature of these activities and users evolve with time in each of these activities. It might be interesting to repeat this work for a much larger data set with many workouts per user, since temporal evolution across workouts might be more prominent in such a data set. Models for time series prediction such as auto-regression \cite{autoRegressiveModelWiki} can also be used to predict the instantaneous heart-rate in the remaining workout.
+Future work includes evaluating these models for other types of workouts, such as cycling, walking etc. The results on these types of workouts might give some interesting insights about the nature of these activities and about how users evolve with time in each of these activities. It might be interesting to repeat this work for a much larger data set with many workouts per user, since temporal evolution across workouts might be more prominent in such a data set. Models for time series prediction such as auto-regression \cite{autoRegressiveModelWiki} can also be used to predict the instantaneous heart-rate in the remaining workout.
 
 
 \bibliographystyle{abbrv}
