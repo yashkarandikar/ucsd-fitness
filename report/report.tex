@@ -34,42 +34,52 @@ Yashodhan Hemant Karandikar\\
 
 \maketitle
 \begin{abstract}
-The goal of this project is to model temporal evolution of runners' capacity across workouts as well as within each workout. We study this temporal evolution over 2 predictive tasks - prediction of duration of the next workout given previous workouts and prediction of average and instantaneous heart-rates. We show that accounting for temporal evolution improves results on these predictive tasks on the Endomondo fitness data set \cite{endomondo}.
+The goal of this project is to model temporal evolution of runners' capacities across workouts as well as within each workout. We study this temporal evolution over 2 predictive tasks - prediction of duration and average-heart rate of the next workout given data of previous workouts and prediction of the next instantaneous heart-rate values in each workout. We evaluate these models on the Endomondo fitness data set \cite{endomondo} and provide some insight into the results.
 \end{abstract}
 
+% A category with the (minimum) three required fields
+%\category{H.4}{Information Systems Applications}{Miscellaneous}
+%A category including the fourth, optional field follows...
+%\category{D.2.8}{Software Engineering}{Metrics}[complexity measures, performance measures]
+
+%\terms{Theory}
+
+%\keywords{Temporal evolution, fitness data sets, user modeling, heart-rate prediction} % NOT required for Proceedings
+
 \section{Introduction}
-People work out with the goal of becoming fitter. Regularly working out enables a person to take on more challenging work outs. For example, a runner training for long distance running can gradually attempt runs of longer durations. Thus, the running capacity or the fitness level of the person increases gradually with practice. Modeling this fitness level can be useful in order to be able to predict the duration of the next workout that the runner attempts. Such a prediction can be useful both as a goal and as a guide to the runner while planning the run.
+People work out with the goal of becoming fitter. Regularly working out enables a person to take on more challenging work outs. For example, a runner training for long distance running can gradually attempt runs of longer durations. Thus, the running capacity or the fitness level of a runner increases gradually with practice. Modeling this fitness level can be useful in predicting the duration of the next workout that the runner attempts. Such a prediction can be useful both as a goal and as a guide to the runner while planning the run.
 
-Alternatively, runners often monitor their heart-rate while running and set goals of keeping the heart-rate below or above a certain value, either for improving their fitness level or for their own safety. The heart-rate at future instants in the run depends on how tired the runner is currently, among other factors. Further, this relationship between the heart-rate and how tired the runner is, varies from one runner to another. For example, an experienced runner might experience only a slight increase in heart-rate as he or she is more tired, while the heart-rate of an amateur runner might shoot up soon after the run starts.
+Alternatively, runners often monitor their heart-rate while running and set goals of keeping the heart-rate below or above a certain value, either for improving their fitness level or for their safety. The heart-rate at future instants in the run depends on how tired the runner currently is, among other factors. Further, this relationship between the heart-rate and how tired the runner is, varies from one runner to another. For example, an experienced runner might experience only a slight increase in heart-rate as he or she feels more tired, while the heart-rate of an amateur runner might shoot up soon after the run starts.
 
-The examples above highlight the temporal evolution of a runner's capacity, both across workouts and within each workout. We attempt to model both these forms of temporal evolution in this work.
+The examples above highlight the temporal evolution of a runner's capacity, both across workouts and within each workout. We attempt to model both these forms of temporal evolution in this work. The rest of the report is organized as follows. Section \ref{secPredictiveTasks} describes the predictive tasks we will use to evaluate our models. Section \ref{secRelatedWork} describes some of the work in the literature which is relevant to temporal evolution of individuals and to these tasks. Section \ref{secDataset} describes the Endomondo data set \cite{endomondo}. Sections \ref{secBaselineModel}, \ref{secTemporalModelUsers} and \ref{secTemporalModelWorkouts} describe our models and the training and inference algorithms. Section \ref{secImplementationDetails} provides some implementation details of verifying correctness and achieving reasonable performance with our implementation. Section \ref{secEvaluation} discusses results of our models on the predictive tasks described in section \ref{secPredictiveTasks}. 
 
 \section{Predictive Tasks}
 \label{secPredictiveTasks}
 In order to study temporal evolution of a runner \emph{across} several workouts, we choose the following 2 predictive tasks as follows:
 \begin{enumerate}
-\item Given the distance $d_i$ and duration $T_i$ for each workout $i$ among first $n$ workouts of a user $u$ and given the distance $d_{n+1}$ for the $(n+1)$'th workout, predict the duration $T_{n+1}$ of the $(n+1)$'th workout.
-\item Given the distance $d_i$ and average heart-rate $H_i$ for each workout $i$ among first $n$ workouts of a user $u$ and given the distance $d_{n+1}$ for the $(n+1)$'th workout, predict the average heart-rate $H_{n+1}$ of the $(n+1)$'th workout.
+\item Given the distance $d_i$ and duration $T_i$ for each workout $i$ for the first $n$ workouts of a runner $u$ and given the distance $d_{n+1}$ for the $(n+1)$'th workout, predict the duration $T_{n+1}$ of the $(n+1)$'th workout.
+\item Given the distance $d_i$ and average heart-rate $H_i$ for each workout $i$ for the first $n$ workouts of a runner $u$ and given the distance $d_{n+1}$ for the $(n+1)$'th workout, predict the average heart-rate $H_{n+1}$ of the $(n+1)$'th workout.
 \end{enumerate}
 
 In order to study temporal evolution of a runner \emph{within} \emph{each} workout, we choose the following 2 predictive tasks as follows:
 
 \begin{enumerate}
-\item Given the first $n$ instantaneous heart-rates of a workout, predict the $(n+1)$'th instantaneous heart-rate.
-\item Given the instantaneous heart-rates of the first $f$ fraction of a workout, predict the heart-rates of the remaining $1-f$ fraction of the workout. This task is a generalization of the first.
+\item Given the first $n$ instantaneous heart-rate values of a runner in a workout, predict the $(n+1)$'th instantaneous heart-rate.
+\item Given the instantaneous heart-rate values of the first $f$ fraction of a workout, predict the heart-rates of the remaining $1-f$ fraction of the workout. This task is a generalization of the first.
 \end{enumerate}
 
 \section{Related Work}
-\cite{www13} describes 4 different models which account for temporal evolution of user expertise through online reviews on websites such as Amazon, BeerAdvocate, RateBeer, CellarTracker. \cite{www13} describes these models along 2 orthogonal directions: individual/community evolution and evolution at uniform / learned intervals, for a total of 4 models. Of these, the model for individual evolution at learned intervals is the most general. Individuals improve their physical capacities for working out at very different rates and independently of other users, unlike general evolving trends in entire communities of users. Hence, the model for individual evolution at learned intervals makes most sense in the context of temporal evolution of users' physical capacities for working out. The work in this project is based on this model.
+\label{secRelatedWork}
+\cite{www13} describes 4 different models accounting for temporal evolution of user expertise through online reviews on websites such as Amazon, BeerAdvocate, RateBeer, CellarTracker. \cite{www13} describes these models along 2 orthogonal directions: individual/community evolution and evolution at uniform / learned intervals, for a total of 4 models. Of these, the model for individual evolution at learned intervals is the most general. Runners improve their physical capacities for working out at very different rates and independently of other runners, unlike general evolving trends in entire communities of users. Hence, the model for individual evolution at learned intervals makes most sense in the context of temporal evolution of runners' physical capacities for working out. The work in this project is based on this model.
 
 Auto-regressive models \cite{autoRegressiveModelWiki} for time-series prediction are useful for the task of predicting the instantaneous heart-rate values in the remaining workout.
 
 \section{Endomondo Fitness data set}
-\label{expAnalysis}
+\label{secDataset}
 In this section, we introduce the Endomondo fitness data set \cite{endomondo}. Endomondo \cite{endomondo} is a free app and website that allows users to keep track of their workouts. The data extracted from the Endomondo website \cite{endomondo} is available in the form of a SQL dump of size 200 GB approximately after compression. It contains data for around 10 million workouts. Data for each workout is in the form of a HTML document string. This HTML document contains information about the workout such as the sport (such as running, walking, cycling etc.), user id, total distance, duration, wind, weather, hydration, date \& time etc. The HTML document also contains embedded JSON data. This JSON data contains GPS co-ordinates (latitude, longitude and altitude), distance, duration, heart-rate, speed / pace sampled throughout the duration of the workout. The `duration' trace indicates the time instants at which the remaining attributes were sampled.
 
 \subsection{Extracting relevant data}
-We developed a parser in Python to extract the relevant data from the HTML document. We use parallelization to speed-up the extraction of the data. Each line of the SQL dump contains data for multiple workouts in the form of HTML documents. A `master' process reads each line, extracts the HTML documents and hands them over to `worker' processes. Each `worker' process takes 1 HTML document at a time, parses it to extract the user id, sport type, trace data and the summarized information and encodes it into a dictionary in JSON format. The worker queues this workout data into a global queue. A separate `writer' process dequeues workout information and writes it to a single file in the form of 1 line per workout. Having a separate writer process to write the workouts extracted by worker processes eliminates disk contention among workers. It also allows data for all workouts to be written to a single large file instead of millions of small files, without any need for synchronization between processes since only a single process is performing the writes. All of the extracted data is written to a file of size around 30 GB after compression.
+We developed a parser in Python to extract the relevant data from each HTML document. We use parallelization to speed-up the extraction of the data. Each line of the SQL dump contains data for multiple workouts in the form of HTML documents. A `master' process reads each line, extracts the HTML documents and hands them over to `worker' processes. Each `worker' process takes 1 HTML document at a time, parses it to extract the relevant information about the workout and encodes it into a dictionary in JSON format. The worker then queues this workout data into a global queue. A separate `writer' process dequeues workout information and writes it to a single file in the form of 1 line per workout. Having a separate writer process to write the workouts extracted by worker processes eliminates disk contention among workers. It also allows data for all workouts to be written to a single large file instead of millions of small files, without any need for synchronization between processes since only a single process is performing the writes. All of the extracted data is written to a file of size around 30 GB after compression.
 
 \subsection{Data set statistics}
 
@@ -121,64 +131,42 @@ Hiking &   147061 \\ \hline
 \end{table}
 
 
-\begin{comment}
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.4]{plots/rating_vs_age}
-\caption{\label{plotRatingVsAge}Average rating for different age groups}
-\end{figure}
-
-\begin{figure*}
-\centering
-\includegraphics[scale=0.4]{plots/rating_vs_occupation}
-\caption{\label{plotRatingVsOcc} Average rating for various occupations}
-\end{figure*}
-\end{comment}
-
-\begin{comment}
-\begin{figure*}
-\centering
-\includegraphics[scale=0.4]{plots/rating_vs_genre}
-\caption{\label{plotRatingVsGenre} Average rating for various movie genres}
-\end{figure*}
-\end{comment}
-
 \section{Baseline Model}
 \label{secBaselineModel}
-This section describes a baseline model to predict the duration of a workout given the distance. Given the total distance $d_{ui}$ for the $i$'th workout of user $u$, the predicted duration $T_{ui}'$ of the workout is given by:
+This section describes a baseline model to predict the duration of a workout given the distance. Given the total distance $d_{ui}$ for the $i$'th workout of runner $u$, the predicted duration $T_{ui}'$ of the workout is given by:
 
 \begin{equation}
 \label{eqnBaselineDuration}
 T_{ui}' = (\alpha + \alpha_{u})(\theta_0 + \theta_1 d_{ui})
 \end{equation}
 
-We have one parameter $\alpha_u$ per user $u$, which is learned during the training using user $u$'s workouts. The parameter $\alpha$ is global to all users. Thus we have a total of $U + 3$ parameters, where $U$ is the number of distinct users in the data set. 
+We have one parameter $\alpha_u$ per runner $u$, which is learned during training using runner $u$'s workouts. The parameters $\alpha, \theta_0, \theta_1$ are global to all runner. Thus, we have a total of $U + 3$ parameters, where $U$ is the number of distinct runners in the data set. 
 
 Let $\Theta = (\alpha, \alpha_1, ... , \alpha_U, \theta_0, \theta_1)$. We need to find $\Theta$ which satisfies the following objective:
 
 $$\hat{\Theta} = \arg\min_{\Theta}\frac{1}{|D|} \sum_{T_{ui} \in D}(T_{ui}' - T_{ui})^2 + \lambda \|\Theta \|_2^2 $$
 
-where $D$ is the data set of all workouts for all users, $T_{ui}$ is the true distance of workout $i$ of user $u$. The term $\lambda \|\Theta \|_2^2$ is a regularizer. $\lambda$ is the regularization hyper-parameter, which we select by performing a line search over values in the set $\{0, 10^{-5}, 10^{-4}, 10^{-3}, 10^{-2}, 10^{-1}, 10^0, 10^1\}$ and choosing the $\lambda$ which minimizes the error on a validation set. We find the $\Theta$ which satisfies the objective using the L-BFGS \cite{lbfgs} implementation available in SciPy \cite{scipy}.
+where $D$ is the data set of all workouts for all runners, $T_{ui}$ is the true distance of workout $i$ of runner $u$. The term $\lambda \|\Theta \|_2^2$ is a regularizer. $\lambda$ is the regularization hyper-parameter, which we select by performing a line search over values in the set $\{0, 10^{-5}, 10^{-4},...,10^3, 10^{4}\}$ and choosing the $\lambda$ which minimizes the error on a validation set. We find the $\Theta$ which satisfies the objective using the L-BFGS \cite{lbfgs} implementation available in SciPy \cite{scipy}.
 
 If the task is to predict the average heart-rate instead of the duration, we use the same model specification as equation \ref{eqnBaselineDuration} by replacing $T_{ui}'$ by $H_{ui}'$. Thus, the predicted average heart-rate is given by
 
 $$H_{ui}' = (\alpha + \alpha_{u})(\theta_0 + \theta_1 d_{ui})$$
 
 
-\section{Temporal Evolution of Users}
+\section{Temporal Evolution Across Workouts}
 \label{secTemporalModelUsers}
-This section generalizes the baseline model described in section \ref{secBaselineModel} and attempts to account for temporal evolution of users across workouts. We describe the model, the training algorithm and finally inference.
+This section generalizes the baseline model described in section \ref{secBaselineModel} and attempts to account for temporal evolution of runners across workouts. We describe the model, the training algorithm and finally the inference algorithm.
 
 \subsection{Model Specification}
-In order to account for evolution in the fitness level or capability of a user over time,  we associate a \emph{experience level} or \emph{fitness level} $e_{uw}$ with each workout $w$ of user $u$. This can be seen as a way of encoding how fit the user is at the time of the workout $w$. The value $e_{uw}$ is an integer in the interval $[0, E)$ where $E$ is the number of experience levels. 
+In order to account for evolution in the fitness level or capability of a runner over time,  we associate an \emph{experience level} or \emph{fitness level} $e_{uw}$ with each workout $w$ of runner $u$. This can be seen as a way of encoding how experienced the runner is at the time of the workout $w$. The value $e_{uw}$ is an integer in the interval $[0, E)$ where $E$ is the number of experience levels. 
 
-Intuitively, we expect the experience level of a user to either stay the same or increase with each workout. We encode this intuition in the form of a monotonicity constraint on the experience levels of workouts for each user, as given below \cite{www13}:
+Intuitively, we expect the experience level of a runner to either stay the same or increase with each workout. We encode this intuition in the form of a monotonicity constraint on the experience levels of workouts for each runner, as given below \cite{www13}:
 
 $$\forall u,i,j \;\;\;\;\; t_{ui} \geq t_{uj} \implies e_{ui} \geq e_{uj}$$
 
-where $t_{ui}$ is the time at which workout $i$ of user $u$ occurs.
+where $t_{ui}$ is the time at which workout $i$ of runner $u$ occurs.
 
-Then, given the total distance $d_{ui}$ for the $i$'th workout of user $u$, the predicted duration $T_{ui}'$ of the workout is given by:
+Then, given the total distance $d_{ui}$ for the $i$'th workout of runner $u$, the predicted duration $T_{ui}'$ of the workout is given by:
 
 \begin{equation}
 \label{eqnModelDuration}
@@ -186,11 +174,11 @@ T_{ui}' = (\alpha_{e_{ui}} + \alpha_{ue_{ui}})(\theta_0 + \theta_1 d_{ui})
 \end{equation}
 
 
-where $e_{ui}$ is the experience level of the user $u$ at the $i$'th workout. Thus, we have one parameter $\alpha_{ue}$ per user $u$ per experience level $e$. Further, we have an intercept term $\alpha_e$ for every experience level $e$, common to all users. The terms $\theta_0$ and $\theta_1$ are global to all users and experience levels. Thus, given $U$ users and $E$ experience levels, we have a total of $UE + E + 2$ parameters.
+where $e_{ui}$ is the experience level of the runner $u$ at the $i$'th workout. Thus, we have one parameter $\alpha_{ue}$ per runner $u$ per experience level $e$. Further, we have an intercept term $\alpha_e$ for every experience level $e$, common to all runners. The terms $\theta_0$ and $\theta_1$ are global to all runners and experience levels. Thus, given $U$ runners and $E$ experience levels, we have a total of $UE + E + 2$ parameters.
 
 Note that setting $E = 1$ reduces the model to the baseline model described in section \ref{secBaselineModel}.
 
-We can specify a similar model for the predicted average heart rate $H_{ui}'$ of the user $u$ during the workout $i$:
+We can specify a similar model for the predicted average heart rate $H_{ui}'$ of the runner $u$ during the workout $i$:
 
 \begin{equation}
 \label{eqnModelAvgHr}
@@ -202,7 +190,7 @@ As explained above, we have a different model for each of the $E$ experience lev
 
 $$\Theta_e = (\alpha_e; \alpha_{1e}...\alpha_{Ue})$$
 
-where $1 \leq e \leq E$ is the experience level and $U$ is the number of distinct users.
+where $1 \leq e \leq E$ is the experience level and $U$ is the number of distinct runners.
 
 Thus, all the parameters in all of the $E$ models together can be written as:
 
@@ -220,7 +208,7 @@ Let $\beta$ denote the set of all experience parameters $e_{ui}$. Then, we need 
 
 $$s.t. \; \; \; t_{ui} \geq t_{uj} \implies e_{ui} \geq e_{uj} $$
 
-where $D$ is the data set of all workouts for all users. This objective is similar to the one described in \cite{www13}. $\Omega_1$ and $\Omega_2$ are regularizers defined as follows:
+where $D$ is the data set of all workouts for all runners. This objective is similar to the one described in \cite{www13}. $\Omega_1$ and $\Omega_2$ are regularizers defined as follows:
 
 $$\Omega_1(\Theta) = \sum_{e=1}^{E-1}{\|\Theta_e - \Theta_{e+1}\|_2^2}$$
 
@@ -228,25 +216,25 @@ and
 
 $$\Omega_2(\Theta, \theta_1) = \theta_1^2 + \sum_{e=1}^{E}{\|\Theta_e \|_2^2}$$
 
-$\Omega_1$ is a smoothness function which penalizes abrupt changes between successive experience levels \cite{www13}, since in practice similar experience levels should have similar parameters \cite{www13}. $\Omega_2$ is another regularizer which penalizes complex models i.e. it penalizes models which have higher magnitudes of parameters. These regularizers are necessary to avoid overfitting, since we have a large number $(UE + E + 2)$ of parameters. $\lambda_1$ and $\lambda_2$ are regularization hyperparameters, which trade-off the importance of regularization versus prediction accuracy at training time \cite{www13}. We select $\lambda_1$ and $\lambda_2$ through a grid-search over values in the set $\{0.0, 10^{-3}, 10^{-2}, 10^{-1}, 10^0, 10^1\}$ and select the values which yield the highest prediction accuracy on a validation set.
+$\Omega_1$ is a smoothness function which penalizes abrupt changes between successive experience levels \cite{www13}, since in practice similar experience levels should have similar parameters \cite{www13}. $\Omega_2$ is another regularizer which penalizes complex models i.e. it penalizes models which have higher magnitudes of parameters. These regularizers are necessary to avoid overfitting, since we have a large number $(UE + E + 2)$ of parameters. $\lambda_1$ and $\lambda_2$ are regularization hyperparameters, which trade-off the importance of regularization versus prediction accuracy at training time \cite{www13}. We select $\lambda_1$ and $\lambda_2$ through a grid-search over values in the set $\{0.0, 10^{-4}, 10^{-3},..., 10^4, 10^5\}$ and select the values which yield the highest prediction accuracy on a validation set.
 
 For the task of predicting the average heart rate instead of the duration of the workout, the objective function remains the same as in equation \ref{eqnObjective}, except that the term $T_{ui}' - T_{ui}$ is replaced by $H_{ui}' - H_{ui}$.
 
 \subsection{Training the model}
-We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cite{coordinateDescentWiki} i.e. we alternately optimize equation \ref{eqnObjective} for $\Theta$ given $\beta$ and $\beta$ given $\Theta$. We optimize the model parameters $\Theta$ given $\beta$ using L-BFGS \cite{lbfgs} available in the SciPy library \cite{scipy}. Optimizing $\beta$ given $\Theta$ means assigning a experience level to each workout so that the mean-squared-error is minimized, subject to the monotonicity constraint \cite{www13}. Since the experience levels are discrete, this problem can be solved efficiently using dynamic programming, as is done in \cite{www13}.
+We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cite{coordinateDescentWiki} i.e. we alternately optimize equation \ref{eqnObjective} for $\Theta$ given $\beta$ and $\beta$ given $\Theta$. We optimize the model parameters $\Theta$ given $\beta$ using L-BFGS \cite{lbfgs} available in the LibLBFGS library \cite{liblbfgs}. Optimizing $\beta$ given $\Theta$ means assigning a experience level to each workout so that the mean-squared-error is minimized, subject to the monotonicity constraint \cite{www13}. Since the experience levels are discrete, this problem can be solved efficiently using dynamic programming, as is done in \cite{www13}.
 
 We alternately optimize $\Theta$ given $\beta$ and $\beta$ given $\Theta$ until $\beta$ does not change or a maximum number of iterations has been reached.
 
 \subsection{Inference}
 Once the model parameters and experience levels have been learned, we infer i.e. predict the duration or average heart rate for the next workout $w$ using equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr}. Note that we need to estimate the experience level for workout $w$ in order to be able to use equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr} to predict the duration or average heart-rate. We estimate this experience level in 2 different modes of inference, namely \emph{final} and \emph{random}. 
 
-In the \emph{final} mode of inference, we use the first $N-2$ workouts as the training set, the $N-1$'th workout as the validation set and the $N$'th workout as the test set, where $N$ is the total number of workouts for a user $u$ in the data set. We assume $e_{u(N)} = e_{u(N-1)} = e_{u(N-2)}$ and use these experience levels to predict the duration (using equation \ref{eqnModelDuration}) or average heart rate (using equation \ref{eqnModelAvgHr}).
+In the \emph{final} mode of inference, we use the first $N-2$ workouts as the training set, the $N-1$'th workout as the validation set and the $N$'th workout as the test set, where $N$ is the total number of workouts for a user $u$ in the data set. We assume $e_{u(N)} = e_{u(N-1)} = e_{u(N-2)}$ and use these experience levels to predict the duration (using equation \ref{eqnModelDuration}) or average heart rate (using equation \ref{eqnModelAvgHr}) for the examples in the validation and test set.
 
-In the \emph{random} mode of inference, we randomly select 1 workout as the validation set and 1 workout as the test set. The experience levels for these workouts is assumed to be equal to those of the workouts closest in time in the training set. 
+In the \emph{random} mode of inference, we randomly select 1 workout as the validation set and 1 workout as the test set, for each runner. The experience levels for these workouts is assumed to be equal to those of the workouts closest in time in the training set for that runner. 
 
 We present results for both modes of inference in section \ref{secEvaluation}.
 
-\section{Temporal Evolution of Workouts}
+\section{Temporal Evolution Within Workouts}
 \label{secTemporalModelWorkouts}
 We now consider temporal evolution of a runner's capacity \emph{during} a workout and use it to predict the runner's instantaneous heart rate in the future. 
 
@@ -316,6 +304,7 @@ We now generalize the problem of predicting 1 instantaneous heart-rate value to 
 Also note that the difficulty is not only that of estimating the tiredness levels accurately, but also not having learned model parameters for tiredness levels beyond the last tiredness level fitted during training. Thus, even if the true tiredness levels for the remaining part of the workout are known, these cannot be used for prediction of heart-rate values.
 
 \section{Implementation Details}
+\label{secImplementationDetails}
 This section describes some of the techniques used to verify correctness of the implementation and achieve reasonably good performance to allow running multiple experiments.
 
 We verify that our implementations of derivative functions are correct by comparing their outputs to those obtained by computing numerical derivatives. We use functions provided in \cite{scipy} and \cite{dlib} to compute numerical derivatives.
@@ -458,7 +447,7 @@ $E = 10$ & 0.907340 & 0.894736 & 0.897766 \\ \hline
 \label{tableInstHrRandom}
 \end{table}
 
-Figure \ref{figR2vsTirednessLevels} shows how the prediction accuracy on the training and validation sets increases as we increase the number of tiredness levels $E$. The optimal value of $E$ is $E = 20$, beyond which the prediction accuracy decreases. This plot is done using the \emph{final} mode of evaluation.
+Figure \ref{figR2vsTirednessLevels} shows how the prediction accuracy on the training and validation sets increases as we increase the number of tiredness levels $E$. The optimal value of $E$ is $E = 20$, beyond which the prediction accuracy decreases. This plot is	 done using the \emph{final} mode of evaluation.
 
 \begin{figure}[h]
 \centering
