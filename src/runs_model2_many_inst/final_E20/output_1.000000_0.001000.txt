@@ -1,0 +1,85 @@
+use_features = 1
+Data matrix dimensions = 9841317 x 5
+@E = 20,lam1 = 1.000000,lam2 = 0.001000, lbfgs_max_iterations = 200
+U = 83423 , E = 20 , nparams = 1668482
+Super Iteration 0..Iteration 1: 
+@fx = 154332.955967
+LBFGS terminated with status -997
+Super Iteration 1..Iteration 1: 
+@fx = 340.155119
+LBFGS terminated with status -997
+Super Iteration 2..Iteration 1: 
+@fx = 223.147177
+LBFGS terminated with status -997
+Super Iteration 3..Iteration 1: 
+@fx = 179.108722
+LBFGS terminated with status -997
+Super Iteration 4..Iteration 1: 
+@fx = 146.661965
+LBFGS terminated with status -997
+Super Iteration 5..Iteration 1: 
+@fx = 128.891537
+LBFGS terminated with status -997
+Super Iteration 6..Iteration 1: 
+@fx = 98.854125
+LBFGS terminated with status -997
+Super Iteration 7..Iteration 1: 
+@fx = 83.885907
+LBFGS terminated with status -997
+Super Iteration 8..Iteration 1: 
+@fx = 78.317359
+LBFGS terminated with status -997
+Super Iteration 9..Iteration 1: 
+@fx = 68.745919
+LBFGS terminated with status -997
+Loading data from file..
+Doing sorted check on train and val sets..
+Number of workouts =  83423
+Training set has 9841317 examples
+Validation set has 7352229 examples
+Training..
+Use features =  True
+Running command ./predictor_insthr_evolving_cpp data.txt 1.0 0.001 model.txt 20 200 1
+Done with learning..
+Reading learned model from file..
+	Reading E..
+	Reading theta..
+	Reading sigma..
+Loading model..
+Assuming last tiredness levels for validation and test sets..
+Adding experience levels to data matrices
+Making predictions..
+1000000 data points done..
+2000000 data points done..
+3000000 data points done..
+4000000 data points done..
+5000000 data points done..
+6000000 data points done..
+7000000 data points done..
+8000000 data points done..
+9000000 data points done..
+1000000 data points done..
+2000000 data points done..
+3000000 data points done..
+4000000 data points done..
+5000000 data points done..
+6000000 data points done..
+7000000 data points done..
+1000000 data points done..
+2000000 data points done..
+3000000 data points done..
+4000000 data points done..
+5000000 data points done..
+6000000 data points done..
+7000000 data points done..
+{'distance': 2, 'hr': 3, 'workout_number': 0, 'experience': 5, 'workout_id': 1, 'duration': 4}
+Computing statistics
+
+@Training Examples = 9841317,MSE = 28.736291,Variance = 454.327908,FVU = 0.063250,R2 = 1 - FVU = 0.936750, E = 20
+
+@Validation Examples = 7352229,MSE = 142.660511,Variance = 348.064883,FVU = 0.409868,R2 = 1 - FVU = 0.590132, E = 20
+
+@Test Examples = 7321065,MSE = 241.878435,Variance = 398.075182,FVU = 0.607620,R2 = 1 - FVU = 0.392380, E = 20
+
+@Total time taken =  736.51276803
+[  -0.07   -0.07   -0.07 ...,    0.91  158.19   -0.97]
