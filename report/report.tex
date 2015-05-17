@@ -60,7 +60,9 @@ In order to study temporal evolution of a runner \emph{within} \emph{each} worko
 \end{enumerate}
 
 \section{Related Work}
-\cite{www13} describes various models which account for temporal evolution of user expertise through online reviews on websites such as Amazon, BeerAdvocate, RateBeer, CellarTracker. 
+\cite{www13} describes 4 different models which account for temporal evolution of user expertise through online reviews on websites such as Amazon, BeerAdvocate, RateBeer, CellarTracker. \cite{www13} describes these models along 2 orthogonal directions: individual/community evolution and evolution at uniform / learned intervals, for a total of 4 models. Of these, the model for individual evolution at learned intervals is the most general. Individuals improve their physical capacities for working out at very different rates and independently of other users, unlike general evolving trends in entire communities of users. Hence, the model for individual evolution at learned intervals makes most sense in the context of temporal evolution of users' physical capacities for working out. The work in this project is based on this model.
+
+Auto-regressive models \cite{autoRegressiveModelWiki} for time-series prediction are useful for the task of predicting the instantaneous heart-rate values in the remaining workout.
 
 \section{Endomondo Fitness data set}
 \label{expAnalysis}
@@ -314,8 +316,11 @@ We now generalize the problem of predicting 1 instantaneous heart-rate value to 
 Also note that the difficulty is not only that of estimating the tiredness levels accurately, but also not having learned model parameters for tiredness levels beyond the last tiredness level fitted during training. Thus, even if the true tiredness levels for the remaining part of the workout are known, these cannot be used for prediction of heart-rate values.
 
 \section{Implementation Details}
-\subsection{Verifying correctness}
-\subsection{Performance}
+This section describes some of the techniques used to verify correctness of the implementation and achieve reasonably good performance to allow running multiple experiments.
+
+We verify that our implementations of derivative functions are correct by comparing their outputs to those obtained by computing numerical derivatives. We use functions provided in \cite{scipy} and \cite{dlib} to compute numerical derivatives.
+
+We use Python for most of the data processing tasks, with NumPy \cite{numpy} and SciPy \cite{scipy} libraries. We observe that the training is the computationally most intensive part of the execution. We first speed-up the training using Cython \cite{cythonNumpy}. This gives considerable speed-ups and scales well for the tasks of predicting duration and average heart-rate for the next workout of a user. However, even with this optimization, training still remained prohibitively expensive for the large data sets involved in the task of predicting instantaneous heart-rate values (see \ref{secEvaluation} for details of the data sets). Hence, we port the training part of these tasks to C++. This gives much higher speed-ups and enables the training process for a single run to complete in a few minutes on a personal laptop machine.
 
 %\needspace{2\baselineskip}
 \section{Evaluation}
