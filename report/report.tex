@@ -150,7 +150,7 @@ If the task is to predict the average heart-rate instead of the duration, we use
 $$H_{ui}' = (\alpha + \alpha_{u})(\theta_0 + \theta_1 d_{ui})$$
 
 
-\section{Temporal Evolution Across Workouts}
+\section{Temporal Evolution Across \\ Workouts}
 \label{secTemporalModelUsers}
 This section generalizes the baseline model described in section \ref{secBaselineModel} and attempts to account for temporal evolution of runners across workouts. We describe the model, the training algorithm and finally the inference algorithm.
 
@@ -231,7 +231,7 @@ In the \emph{random} mode of inference, we randomly select 1 workout as the vali
 
 We present results for both modes of inference in section \ref{secEvaluation}.
 
-\section{Temporal Evolution Within Workouts}
+\section{Temporal Evolution Within \\ Workouts}
 \label{secTemporalModelWorkouts}
 We now consider temporal evolution of a runner's capacity \emph{during} a workout and use it to predict the runner's instantaneous heart rate in the future. 
 
@@ -418,7 +418,7 @@ $E = 3$ (random) & $10$ & $0.01$ \\ \hline
 
 The lack of improvement in the prediction accuracy after accounting for temporal evolution across workouts seem to suggest that we need data for many more workouts per runner and over much longer periods of time in order to be able to notice a reasonably strong evolution of the runner across workouts.
 
-\subsection{Temporal evolution in workouts}
+\subsection{Temporal evolution within workouts}
 
 We now discuss results for temporal evolution \emph{within} workouts. First, we discuss results for the task of predicting a single instantaneous heart-rate value in each workout, followed by prediction of several instantaneous heart-rate values in each workout.
 
