@@ -72,7 +72,7 @@ In order to study temporal evolution of a runner \emph{within} \emph{each} worko
 \label{secRelatedWork}
 \cite{www13} describes 4 different models accounting for temporal evolution of user expertise through online reviews on websites such as Amazon, BeerAdvocate, RateBeer, CellarTracker. \cite{www13} describes these models along 2 orthogonal directions: individual/community evolution and evolution at uniform / learned intervals, for a total of 4 models. Of these, the model for individual evolution at learned intervals is the most general. Runners improve their physical capacities for working out at very different rates and independently of other runners, unlike general evolving trends in entire communities of users. Hence, the model for individual evolution at learned intervals makes most sense in the context of temporal evolution of runners' physical capacities for working out. The work in this project is based on this model.
 
-Auto-regressive models \cite{autoRegressiveModelWiki} for time-series prediction are useful for the task of predicting the instantaneous heart-rate values in the remaining workout.
+Time-series analysis and prediction, studied extensively in literature \cite{timeSeriesStudy, timeSeriesSurvey, autoRegressiveModelWiki} are relevant to the task of predicting the instantaneous heart-rate values in the remaining workout.
 
 \section{Endomondo Fitness data set}
 \label{secDataset}
@@ -218,7 +218,7 @@ $\Omega_1$ is a smoothness function which penalizes abrupt changes between succe
 For the task of predicting the average heart rate instead of the duration of the workout, the objective function remains the same as in equation \ref{eqnObjective}, except that the term $T_{ui}' - T_{ui}$ is replaced by $H_{ui}' - H_{ui}$.
 
 \subsection{Training the model}
-We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cite{coordinateDescentWiki} i.e. we alternately optimize equation \ref{eqnObjective} for $\Theta$ given $\beta$ and $\beta$ given $\Theta$. We optimize the model parameters $\Theta$ given $\beta$ using L-BFGS \cite{lbfgs} available in the LibLBFGS library \cite{liblbfgs}. Optimizing $\beta$ given $\Theta$ means assigning a experience level to each workout so that the mean-squared-error is minimized, subject to the monotonicity constraint \cite{www13}. Since the experience levels are discrete, this problem can be solved efficiently using dynamic programming, as is done in \cite{www13}.
+We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cite{coordinateDescentWiki} i.e. we alternately optimize equation \ref{eqnObjective} for $\Theta$ given $\beta$ and $\beta$ given $\Theta$. We optimize the model parameters $\Theta$ given $\beta$ using L-BFGS \cite{lbfgs} available in the LibLBFGS library \cite{liblbfgs}. Optimizing $\beta$ given $\Theta$ means assigning a experience level to each workout so that the mean-squared-error is minimized, subject to the monotonicity constraint \cite{www13}. Since the experience levels are discrete, this problem is related to the \emph{Longest Common Subsequence} problem \cite{lcs} and can be solved efficiently using dynamic programming. The algorithm is identical to the one described in \cite{www13}.
 
 We alternately optimize $\Theta$ given $\beta$ and $\beta$ given $\Theta$ until $\beta$ does not change or a maximum number of iterations has been reached.
 
