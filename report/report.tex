@@ -369,6 +369,14 @@ $E = 3$ (random) & $10^4$ & $0.0$ \\ \hline
 \label{tableAvgHrHyperparams}
 \end{table}
 
+To get some insight into this result, we plot the average error for each workout number, averaged over all users, as shown in figure \ref{figAvgHrAvgErrorE1}. If the data set contains a significant evolution of the user's experience from the user's 1st workout to the last, we expect to see the average error higher for some workout numbers compared to others. However, figure \ref{figAvgHrAvgErrorE1} shows that the average error is roughly constant with respect to the workout number, indicating there is no significant evolution of user experience in the data set. This explains the lack of improvement in the $R^2$ score achieved with the models with $E = 2$ and $E = 3$.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.35]{../src/plots/avghr_error_vs_workout_E1}
+\caption{\label{figAvgHrAvgErrorE1}  Average error in prediction of the average heart-rate for each workout number, averaged over all users, over the training set.}
+\end{figure}
+
 \subsubsection{Prediction of duration}
 
 For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time, extremely long or short workouts (in distance or duration) since these indicate workouts with invalid data.
@@ -415,6 +423,14 @@ $E = 3$ (random) & $10$ & $0.01$ \\ \hline
 \caption{Optimal values of hyper-parameters $\lambda_1$ and $\lambda_2$ for prediction of duration of the workout}
 \label{tableDurationHyperparams}
 \end{table}
+
+As in the case of the prediction of average heart-rate, we plot the average error for each workout number, averaged over all users, as shown in figure \ref{figDurationAvgErrorE1}. We observe that the average error is roughly constant with respect to the workout number, indicating there is no significant evolution of user experience in the data set. This explains the lack of improvement in the $R^2$ score achieved with the models with $E = 2$ and $E = 3$.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.35]{../src/plots/duration_error_vs_workout_E1}
+\caption{\label{figDurationAvgErrorE1}  Average error in prediction of the duration for each workout number, averaged over all users, over the training set.}
+\end{figure}
 
 The lack of improvement in the prediction accuracy after accounting for temporal evolution across workouts seem to suggest that we need data for many more workouts per runner and over much longer periods of time in order to be able to notice a reasonably strong evolution of the runner across workouts.
 
