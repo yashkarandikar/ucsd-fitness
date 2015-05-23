@@ -468,7 +468,15 @@ $E = 20$ & 0.944524 & 0.928297 & 0.928000 \\ \hline
 \label{tableInstHrRandom}
 \end{table}
 
-Figure \ref{figR2vsTirednessLevels} shows how the prediction accuracy on the training and validation sets increases as we increase the number of tiredness levels $E$. The optimal value of $E$ is $E = 20$, beyond which the prediction accuracy decreases. This plot is	 done using the \emph{final} mode of evaluation.
+We plot the average absolute error in the prediction of instantaneous heart-rate against the sample number within the workout, averaged over all workouts in the training set. Figure \ref{figInstHrErrorVsSample} shows this plot for both $E = 20$ and the baseline $E = 1$. We observe that the plot for $E = 1$ shows non-uniform errors for various sample numbers, unlike the plots shown in figures \ref{figAvgHrAvgErrorE1} and \ref{figDurationAvgErrorE1}. This indicates that the data set contains temporal evolution of the heart-rate within every workout and thus explains the improvement in $R^2$ score achieved by the models with $E = 10$ and $E = 20$. Figure \ref{figInstHrErrorVsSample} shows the average errors for the model with $E = 20$ as well. We observe that the average errors for $E = 20$ are significantly lesser than those for the baseline model $(E = 1)$, as expected.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.4]{../src/plots/insthr_error_vs_sample_comparison}
+\caption{\label{figInstHrErrorVsSample} Average error in prediction of the instantaneous heart-rate for each sample number, averaged over all workouts in the training set.}
+\end{figure}
+
+Figure \ref{figR2vsTirednessLevels} shows how the prediction accuracy on the training and validation sets increases as we increase the number of tiredness levels $E$. The optimal value of $E$ is $E = 20$, beyond which the prediction accuracy decreases. This plot is done using the \emph{final} mode of evaluation.
 
 \begin{figure}[h]
 \centering

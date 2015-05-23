@@ -990,6 +990,36 @@ def plot_avghr_by_tiredness(data, param_indices, E):
     plt.ylabel("Average HR (bpm)")
     plt.savefig("tiredness_vs_avhgr_E%d" % (E))
 
+def plot_error_by_sample_number(data, param_indices, pred):
+    W = get_workout_count(data)
+    samples_per_workout = get_samples_per_workout(data)
+    
+    min_sample_count = min(samples_per_workout)
+    avgerror_by_sample_number = [0.0] * min_sample_count
+    counts_by_sample_number = [0.0] * min_sample_count
+    ind_w = param_indices["workout_number"]
+    hr_ind = param_indices["hr"]
+    N = data.shape[0]
+    i = 0
+    for w in xrange(0, W):
+        nw = samples_per_workout[w]
+        for j in xrange(0, nw):
+            if (j < min_sample_count):
+                avgerror_by_sample_number[j] += abs(data[i, hr_ind] - pred[i, 0])
+                counts_by_sample_number[j] += 1.0
+            i += 1
+    assert(i == N)
+    for i in range(0, min_sample_count):
+        avgerror_by_sample_number[i] /= counts_by_sample_number[i]
+    print avgerror_by_sample_number
+    print counts_by_sample_number
+    plt.figure()
+    plt.plot(range(0, min_sample_count), avgerror_by_sample_number, marker = "o")
+    #plt.ylim(0, 10)
+    plt.xlabel("Sample number")
+    plt.ylabel("Average error (bpm)")
+    return avgerror_by_sample_number
+
 if __name__ == "__main__":
     t1 = time.time()
  
@@ -1051,6 +1081,10 @@ if __name__ == "__main__":
     #plot_mse_by_experience_level(train_set, errors, sigma, param_indices, E)
     #plot_avgpace_by_workout_number(train_set, param_indices)
     #plot_avghr_by_tiredness(train_set, param_indices, E)
+    #avg_errors = plot_error_by_sample_number(train_set, param_indices, train_pred)
+    #fname = "errors_insthr_E" + str(E) + ".txt"
+    #with open(fname, "w") as f:
+    #    f.write(str(avg_errors))
     [mse, var, fvu, r2, errors] = compute_stats(train_set[:, param_indices["hr"]], train_pred)
     print "\n@Training Examples = %d,MSE = %f,Variance = %f,FVU = %f,R2 = 1 - FVU = %f, E = %d\n" % (train_set.shape[0],mse, var, fvu, r2, E)
     [mse, var, fvu, r2, errors] = compute_stats(val_set[:, param_indices["hr"]], val_pred)
