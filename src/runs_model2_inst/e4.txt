@@ -1,22 +1,45 @@
-Data matrix dimensions = 24398086 x 5
-@E = 4,lam1 = 0.100000,lam2 = 0.001000, lbfgs_max_iterations = 200
-U = 83744 , E = 4 , nparams = 334982
+use_features = 1
+Data matrix dimensions = 24347765 x 5
+@E = 4,lam1 = 0.010000,lam2 = 0.001000, lbfgs_max_iterations = 200
+U = 83423 , E = 4 , nparams = 333698
 Super Iteration 0..Iteration 1: 
-@fx = 16529.962215
+@fx = 14266.355248
 LBFGS terminated with status -997
 Super Iteration 1..Iteration 1: 
-@fx = 191.754967
+@fx = 178.886925
 LBFGS terminated with status -997
 Super Iteration 2..Iteration 1: 
-@fx = 145.462368
+@fx = 116.603507
+LBFGS terminated with status -997
+Super Iteration 3..Iteration 1: 
+@fx = 96.489044
+LBFGS terminated with status -997
+Super Iteration 4..Iteration 1: 
+@fx = 88.103499
+LBFGS terminated with status -997
+Super Iteration 5..Iteration 1: 
+@fx = 82.949911
+LBFGS terminated with status -997
+Super Iteration 6..Iteration 1: 
+@fx = 80.111576
+LBFGS terminated with status -997
+Super Iteration 7..Iteration 1: 
+@fx = 77.141375
+LBFGS terminated with status -997
+Super Iteration 8..Iteration 1: 
+@fx = 75.774921
+LBFGS terminated with status -997
+Super Iteration 9..Iteration 1: 
+@fx = 73.653425
 LBFGS terminated with status -997
 Loading data from file..
 Doing sorted check on train and val sets..
-Number of workouts =  83744
-Training set has 24398086 examples
-Validation set has 83744 examples
+Number of workouts =  83423
+Training set has 24347765 examples
+Validation set has 83423 examples
 Training..
-Running command ./predictor_insthr_evolving_cpp data.txt 0.1 0.001 model.txt 4 200
+Use_features =  True
+Running command ./predictor_insthr_evolving_cpp data.txt 0.01 0.001 model.txt 4 200 1
 Done with learning..
 Reading learned model from file..
 	Reading E..
@@ -24,6 +47,7 @@ Reading learned model from file..
 	Reading sigma..
 Loading model..
 Adding experience levels to data matrices
+Mode :  final
 Mode :  final
 Making predictions..
 1000000 data points done..
@@ -53,8 +77,11 @@ Making predictions..
 {'distance': 2, 'hr': 3, 'workout_number': 0, 'experience': 5, 'workout_id': 1, 'duration': 4}
 Computing statistics
 
-@Training Examples = 24398086,MSE = 92.965985,Variance = 417.372554,FVU = 0.222741,R2 = 1 - FVU = 0.777259, E = 4
+@Training Examples = 24347765,MSE = 59.837652,Variance = 416.603416,FVU = 0.143632,R2 = 1 - FVU = 0.856368, E = 4
 
-@Validation Examples = 83744,MSE = 159.651998,Variance = 528.726528,FVU = 0.301956,R2 = 1 - FVU = 0.698044, E = 4
+@Validation Examples = 83423,MSE = 109.680623,Variance = 527.232861,FVU = 0.208031,R2 = 1 - FVU = 0.791969, E = 4
 
-@Total time taken =  459.518535852
+@Test Examples = 83423,MSE = 135.781964,Variance = 551.070952,FVU = 0.246397,R2 = 1 - FVU = 0.753603, E = 4
+
+@Total time taken =  913.013427973
+[  -0.09   -0.1    -0.12 ...,    0.77  175.58    0.96]

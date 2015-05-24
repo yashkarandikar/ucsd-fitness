@@ -1,36 +1,36 @@
 use_features = 1
 Data matrix dimensions = 24347765 x 5
-@E = 16,lam1 = 0.010000,lam2 = 0.001000, lbfgs_max_iterations = 200
-U = 83423 , E = 16 , nparams = 1334786
+@E = 20,lam1 = 0.010000,lam2 = 0.001000, lbfgs_max_iterations = 200
+U = 83423 , E = 20 , nparams = 1668482
 Super Iteration 0..Iteration 1: 
-@fx = 14949.579823
+@fx = 22006.190366
 LBFGS terminated with status -997
 Super Iteration 1..Iteration 1: 
-@fx = 435.696944
+@fx = 214.323595
 LBFGS terminated with status -997
 Super Iteration 2..Iteration 1: 
-@fx = 146.041179
+@fx = 111.570684
 LBFGS terminated with status -997
 Super Iteration 3..Iteration 1: 
-@fx = 98.818189
+@fx = 76.546392
 LBFGS terminated with status -997
 Super Iteration 4..Iteration 1: 
-@fx = 81.274910
+@fx = 64.657891
 LBFGS terminated with status -997
 Super Iteration 5..Iteration 1: 
-@fx = 70.931855
+@fx = 54.163217
 LBFGS terminated with status -997
 Super Iteration 6..Iteration 1: 
-@fx = 65.505321
+@fx = 50.224606
 LBFGS terminated with status -997
 Super Iteration 7..Iteration 1: 
-@fx = 62.342354
+@fx = 44.401878
 LBFGS terminated with status -997
 Super Iteration 8..Iteration 1: 
-@fx = 60.023846
+@fx = 41.749627
 LBFGS terminated with status -997
 Super Iteration 9..Iteration 1: 
-@fx = 58.298839
+@fx = 40.273346
 LBFGS terminated with status -997
 Loading data from file..
 Doing sorted check on train and val sets..
@@ -39,7 +39,7 @@ Training set has 24347765 examples
 Validation set has 83423 examples
 Training..
 Use_features =  True
-Running command ./predictor_insthr_evolving_cpp data.txt 0.01 0.001 model.txt 16 200 1
+Running command ./predictor_insthr_evolving_cpp data.txt 0.01 0.001 model.txt 20 200 1
 Done with learning..
 Reading learned model from file..
 	Reading E..
@@ -77,11 +77,11 @@ Making predictions..
 {'distance': 2, 'hr': 3, 'workout_number': 0, 'experience': 5, 'workout_id': 1, 'duration': 4}
 Computing statistics
 
-@Training Examples = 24347765,MSE = 48.750543,Variance = 416.603416,FVU = 0.117019,R2 = 1 - FVU = 0.882981, E = 16
+@Training Examples = 24347765,MSE = 23.082517,Variance = 416.603416,FVU = 0.055406,R2 = 1 - FVU = 0.944594, E = 20
 
-@Validation Examples = 83423,MSE = 81.767079,Variance = 527.232861,FVU = 0.155087,R2 = 1 - FVU = 0.844913, E = 16
+@Validation Examples = 83423,MSE = 53.137180,Variance = 527.232861,FVU = 0.100785,R2 = 1 - FVU = 0.899215, E = 20
 
-@Test Examples = 83423,MSE = 107.305864,Variance = 551.070952,FVU = 0.194722,R2 = 1 - FVU = 0.805278, E = 16
+@Test Examples = 83423,MSE = 80.535203,Variance = 551.070952,FVU = 0.146143,R2 = 1 - FVU = 0.853857, E = 20
 
-@Total time taken =  1141.09554696
-[   0.06    0.05    0.04 ...,    0.84  163.37   -0.02]
+@Total time taken =  1149.88597298
+[  -0.06   -0.08   -0.11 ...,    0.61  233.5     0.81]
