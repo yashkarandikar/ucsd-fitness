@@ -259,7 +259,7 @@ def learn(all_X, all_y, lam, E):
         #model = sm.tsa.AR(y)
         #models[w] = model.fit(maxlag = E)
         #models[w] = arma.fit(start_params = np.zeros((E+2, 1)))
-        if (w % 10000 == 0):
+        if (w % 1000 == 0):
             print "Done %d workouts out of %d" % (w, W)
     return models
     
@@ -299,6 +299,108 @@ def flatten_list(l):
     new_l = [x for sublist in l for x in sublist]
     return new_l
 
+def find_most_common_interval(a):
+    n = a.shape[0]
+    diffs = {}
+    for i in xrange(0, n - 1):
+        d = a[i+1] - a[i]
+        if (not diffs.has_key(d)):
+            diffs[d] = 0
+        diffs[d] += 1
+    max_v = 0
+    for k, v in diffs.items():
+        if (v > max_v):
+            max_k = k
+            max_v = v
+    return max_k
+
+def sort_matrix_by_2_cols(m, col1, col2):
+    key_cols = (m[:, col2], m[:, col1])
+    return m[np.lexsort(key_cols)]
+
+def correct_missing(data, param_indices):
+    ind_dur = param_indices["duration"]
+    ind_hr = param_indices["hr"]
+    N = data.shape[0]
+    W = get_workout_count(data)
+    samples_per_workout = get_samples_per_workout(data)
+    n_odd_interval_workouts = 0
+    n_missing_sample_workouts = 0
+    n_ignored = 0
+    new_rows = []
+    i = 0
+    for w in xrange(0, W):
+        nw = samples_per_workout[w]
+        interval = int(find_most_common_interval(data[i:i+nw, ind_dur]))
+        #if (w == 33205):
+        #    print "Workout ", w
+        #    print "Number of samples = ", nw
+        #    print "interval = ", interval
+        #    print list(data[i:i+nw, ind_dur])
+        #    print list(data[i:i+nw, ind_hr])
+        #i += nw
+        #continue
+        missing_samples = False
+        odd_intervals = False
+        ignored = False
+        for j in xrange(0, nw):
+            if (j < nw - 1):
+                hr_i = data[i, ind_hr]
+                hr_ipp = data[i+1, ind_hr]
+                dur_i = data[i, ind_dur]
+                dur_ipp = data[i+1, ind_dur]
+                d_dur = int(dur_ipp - dur_i)
+                if (d_dur > interval):
+                    # add intermediate points
+                    #assert(d_dur % interval == 0)
+                    if (d_dur % interval == 0):
+                        n_new = (d_dur / interval) - 1
+                        if (n_new <= 10000):
+                            t = dur_i
+                            hr = hr_i
+                            t_step = interval
+                            hr_step = (hr_ipp - hr_i) / (n_new + 1)
+                            while t < data[i+1, ind_dur]:
+                                #print "workout = %d, prev = %d, t = %d, next = %d"  % (w, dur_i, t, dur_ipp)
+                                t += t_step
+                                hr += hr_step
+                                new_row = list(data[i, :])
+                                new_row[ind_dur] = t
+                                new_row[ind_hr] = hr
+                                new_rows.append(new_row)
+                                mem_used = ps.phymem_usage().percent
+                                if (mem_used > 70):
+                                    print "Too much memory being used.."
+                                    sys.exit(0)
+                        else:
+                            ignored = True
+                        missing_samples = True
+                    elif (d_dur % interval != 0):
+                        odd_intervals = True
+                        ignored = True
+            i += 1
+            mem_used = ps.phymem_usage().percent
+            if (mem_used > 70):
+                print "Too much memory being used.."
+                sys.exit(0)
+        if (missing_samples):
+            n_missing_sample_workouts += 1
+        if (odd_intervals):
+            n_odd_interval_workouts += 1
+        if (ignored):
+            n_ignored += 1
+            print "Ignored.."
+        if (w % 10000 == 0):
+            print "Done with %d .." % (w)
+    assert(i == N)
+
+    data = np.concatenate((data, new_rows), axis = 0)
+    data = sort_matrix_by_2_cols(data, param_indices["workout_id"], param_indices["duration"])
+    print "# workouts with missing samples = ", n_missing_sample_workouts
+    print "# workouts with odd intervals = " , n_odd_interval_workouts
+    print "# workouts not corrected = ", n_ignored
+    return data
+    
 def main():
     t1 = time.time()
 
@@ -310,6 +412,7 @@ def main():
     mode = "final"  # can be "final" or "random"
     
     outfile = infile + mode + "_inst_many.npz"
+    outfile2 = outfile + ".corrected.npz"
 
     # prepare data set.. Run once and comment it out if running multiple times with same settings
     #prepare(infile, outfile, mode)
@@ -327,12 +430,31 @@ def main():
     print "Number of workouts = ", get_workout_count(train_set)
     print "Training set has %d examples" % (train_set.shape[0])
     print "Validation set has %d examples" % (val_set.shape[0])
+    
+    # correct for missing values
+    print "Correcting missing values.."
+    train_set = correct_missing(train_set, param_indices)
+    val_set = correct_missing(val_set, param_indices)
+    test_set = correct_missing(test_set, param_indices)
+    np.savez(outfile2, train_set = train_set, val_set = val_set, test_set = test_set, param_indices = param_indices)
 
+    print "Loading corrected data.."
+    data = np.load(outfile2)
+    train_set = data["train_set"]
+    val_set = data["val_set"]
+    test_set = data["test_set"]
+    param_indices = data["param_indices"][()]
+    print "Training set : ", train_set.shape
+    print "Validation set : ", val_set.shape
+    print "Testing set : ", test_set.shape
+
+    # process data
     train_X, train_y = organize(train_set, E, param_indices)
     W = len(train_X)
     for w in xrange(0, W):
         assert(train_X[w].shape[1] == E + 1)
 
+    # training
     print "Training.."
     all_models = learn(train_X, train_y, lam, E)
     
