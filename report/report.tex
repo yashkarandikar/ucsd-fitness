@@ -487,7 +487,8 @@ Figure \ref{figR2vsTirednessLevels} shows how the prediction accuracy on the tra
 
 \subsubsection{Prediction of last several heart-rate values}
 
-For this task, we consider only workouts with at least 200 samples of instantaneous heart-rate values and distance values. Given a workout of $N \geq 200$ samples of instantaneous heart-rate and distance values, we split $N$ (distance, heart-rate) samples into training, validation and test sets of sizes $0.4N$, $0.3N$, $0.3N$ respectively. Table \ref{tableInstManyHr} shows results for the task of predicting last several instantaneous heart-rate values in each workout. The results indicate that accounting for temporal evolution significantly improves results compared to the baseline. We observe that the $R^2$ scores on the validation set are much higher than those for the test set. This is expected due to the fact that the samples in the test set are further in time than the samples in the validation set, which in turn are further in time than the samples in the training set. Recall from section \ref{secTemporalModelWorkouts} that we assume $e_{wn} = e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$ and $e_{wn}$ is the last sample in workout $w$ in the training set. This assumption is lesser likely to hold for samples further and further in time. Thus, this assumption is less likely to hold for the test set than for the validation set. Hence, the $R^2$ scores on the test set are lower than on the validation set, which in turn are lower than on the training set.
+For this task, we consider only workouts with at least 200 samples of instantaneous heart-rate values and distance values. Given a workout of $N \geq 200$ samples of instantaneous heart-rate and distance values, we split $N$ (distance, heart-rate) samples into training, validation and test sets of sizes $0.4N$, $0.3N$, $0.3N$ respectively. Table \ref{tableInstManyHr} shows results for the task of predicting last several instantaneous heart-rate values in each workout. The results indicate that accounting for temporal evolution significantly improves results compared to the baseline. 
+
 \begin{table}[H]
 \centering
 \begin{tabular}{|c|c|c|c|} \hline
@@ -500,6 +501,14 @@ $E = 20$ &  0.926065 & 0.633388 & 0.458077 \\ \hline
 \caption{Prediction of several instantaneous heart-rates in each workout}
 \label{tableInstManyHr}
 \end{table}
+
+We observe that the $R^2$ scores on the validation set are much higher than those for the test set. This is expected due to the fact that the samples in the test set are further in time than the samples in the validation set, which in turn are further in time than the samples in the training set. Recall from section \ref{secTemporalModelWorkouts} that we assume $e_{wn} = e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$ and $e_{wn}$ is the last sample in workout $w$ in the training set. This assumption is lesser likely to hold for samples further and further in time. Thus, this assumption is less likely to hold for the test set than for the validation set. Hence, the $R^2$ scores on the test set are lower than on the validation set, which in turn are lower than on the training set. This can be seen from the plot shown in figure \ref{figManyInstHrErrorVsSampleNumberValTest}. The $X$ axis is the sample number since the last sample in the training set. The $Y$ axis is the absolute error averaged over all workouts. As expected, the average absolute error increases as the sample is further in time.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.4]{../src/plots/many_insthr_error_vs_sample_number}
+\caption{\label{figManyInstHrErrorVsSampleNumberValTest} Average absolute error versus the sample number in the workout after the training samples, averaged over all workouts in the validation and test set, for $E = 20$}
+\end{figure}
 
 \section{Conclusion and Future Work}
 We describe and evaluate 2 different ways of accounting for temporal evolution of runners' physical capacities for running workouts - one \emph{across} workouts and the other \emph{within} workouts. Results indicate that accounting for temporal evolution across workouts does not improve prediction accuracy, perhaps due to the relatively small number of workouts per runner in the data set. On the other hand, accounting for temporal evolution \emph{within} each workout significantly improves results over the baseline model.
