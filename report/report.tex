@@ -324,7 +324,7 @@ This section discusses results of the model described in section \ref{secTempora
 
 \subsubsection{Prediction of average heart-rate}
 
-For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time, extremely long or short workouts and workouts with extremely low or extremely high average heart-rate value since these indicate workouts with invalid data.
+For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time (i.e. a timestamp of 0), extremely long workouts (greater than 100 mi), extremely short workouts (lesser than 0.1 mi), workouts with extremely high average heart-rate (greater than 500 bpm) and workouts with extremely low average heart-rate (lesser than 10 bpm).
 
 Tables \ref{tableAvgHrFinal} and \ref{tableAvgHrRandom} show results for prediction of average heart-rate, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. As discussed in section \ref{secTemporalModelUsers}, we have 1 workout in the validation set and 1 workout in the test set for each runner in the data set, for both modes of evaluation. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}, which is a measure of the fraction of variance in the data explained by the model. Table \ref{tableAvgHrHyperparams} shows the optimal values of hyper-parameters found using grid search.
 
@@ -379,7 +379,7 @@ To get some insight into this result, we plot the average error for each workout
 
 \subsubsection{Prediction of duration}
 
-For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time, extremely long or short workouts (in distance or duration) since these indicate workouts with invalid data.
+For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time (i.e. a timestamp of 0), extremely long workouts (greater than 100 mi and/or 72 hours), extremely short workouts (lesser than 0.1 mi and/or 36 seconds).
 
 Tables \ref{tableDurationFinal} and \ref{tableDurationRandom} show results for the prediction of the duration of the workout, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. As discussed in section \ref{secTemporalModelUsers}, we have 1 workout in the validation set and 1 workout in the test set for each runner in the data set, for both modes of evaluation. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}. Table \ref{tableDurationHyperparams} shows the optimal values of hyper-parameters found using grid search.
 
