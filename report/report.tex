@@ -317,14 +317,14 @@ We verify that our implementations of derivative functions are correct by compar
 %\needspace{2\baselineskip}
 \section{Evaluation}
 \label{secEvaluation}
-This section describes the results of the models described in sections \ref{secTemporalModelUsers} and \ref{secTemporalModelWorkouts} on the predictive tasks described in section \ref{secPredictiveTasks}. 
+This section describes the results of the models described in sections \ref{secTemporalModelUsers} and \ref{secTemporalModelWorkouts} on the predictive tasks described in section \ref{secPredictiveTasks}. For all the tasks, we consider only workouts of the sport `running' in the dataset.
 
 \subsection{Temporal evolution across workouts}
 This section discusses results of the model described in section \ref{secTemporalModelUsers} on the tasks of predicting the average heart-rate and total duration of a runner's next workout.
 
 \subsubsection{Prediction of average heart-rate}
 
-For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time (i.e. a timestamp of 0), extremely long workouts (greater than 100 mi), extremely short workouts (lesser than 0.1 mi), workouts with extremely high average heart-rate (greater than 500 bpm) and workouts with extremely low average heart-rate (lesser than 10 bpm).
+For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time (i.e. a timestamp of 0), extremely long workouts (greater than 100 mi), extremely short workouts (lesser than 0.1 mi), workouts with extremely high average heart-rate (greater than 500 bpm) and workouts with extremely low average heart-rate (lesser than 10 bpm). We also discard workouts which do not have either heart-rate information or distance information.
 
 Tables \ref{tableAvgHrFinal} and \ref{tableAvgHrRandom} show results for prediction of average heart-rate, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. As discussed in section \ref{secTemporalModelUsers}, we have 1 workout in the validation set and 1 workout in the test set for each runner in the data set, for both modes of evaluation. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}, which is a measure of the fraction of variance in the data explained by the model. Table \ref{tableAvgHrHyperparams} shows the optimal values of hyper-parameters found using grid search.
 
@@ -379,7 +379,7 @@ To get some insight into this result, we plot the average error for each workout
 
 \subsubsection{Prediction of duration}
 
-For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time (i.e. a timestamp of 0), extremely long workouts (greater than 100 mi and/or 72 hours), extremely short workouts (lesser than 0.1 mi and/or 36 seconds).
+For this task, we consider only workouts of runners having more than 10 workouts. Further, we discard workouts with invalid date/time (i.e. a timestamp of 0), extremely long workouts (greater than 100 mi and/or 72 hours), extremely short workouts (lesser than 0.1 mi and/or 36 seconds). We also discard workouts which do not have either duration information or distance information.
 
 Tables \ref{tableDurationFinal} and \ref{tableDurationRandom} show results for the prediction of the duration of the workout, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in \ref{secTemporalModelUsers}. As discussed in section \ref{secTemporalModelUsers}, we have 1 workout in the validation set and 1 workout in the test set for each runner in the data set, for both modes of evaluation. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}. Table \ref{tableDurationHyperparams} shows the optimal values of hyper-parameters found using grid search.
 
