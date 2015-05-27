@@ -223,11 +223,11 @@ We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cit
 We alternately optimize $\Theta$ given $\beta$ and $\beta$ given $\Theta$ until $\beta$ does not change or a maximum number of iterations has been reached.
 
 \subsection{Inference}
-Once the model parameters and experience levels have been learned, we infer i.e. predict the duration or average heart rate for the next workout $w$ using equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr}. Note that we need to estimate the experience level for workout $w$ in order to be able to use equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr} to predict the duration or average heart-rate. We perform inference in different 2 modes, namely \emph{final} and \emph{random}. 
+Once the model parameters and experience levels have been learned, we infer i.e. predict the duration or average heart rate for the next workout $w$ using equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr}. Note that we need to estimate the experience level for workout $w$ in order to be able to use equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr} to predict the duration or average heart-rate. 
 
-In the \emph{final} mode of inference, we use the first $N-2$ workouts as the training set, the $N-1$'th workout as the validation set and the $N$'th workout as the test set, where $N$ is the total number of workouts for a user $u$ in the data set. We assume $e_{u(N)} = e_{u(N-1)} = e_{u(N-2)}$ and use these experience levels to predict the duration (using equation \ref{eqnModelDuration}) or average heart rate (using equation \ref{eqnModelAvgHr}) for the examples in the validation and test set.
+We perform inference in 2 modes, namely \emph{final} and \emph{random}, as is done in \cite{www13}. In the \emph{final} mode of inference, we use the first $N-2$ workouts as the training set, the $N-1$'th workout as the validation set and the $N$'th workout as the test set, where $N$ is the total number of workouts for a user $u$ in the data set. We assume $e_{u(N)} = e_{u(N-1)} = e_{u(N-2)}$ and use these experience levels to predict the duration (using equation \ref{eqnModelDuration}) or average heart rate (using equation \ref{eqnModelAvgHr}) for the examples in the validation and test set. The \emph{final} mode of inference is the setting that would be used in practice, since such a system would be used in predicting the duration or average heart-rate of the next workout instead of making predictions about past workouts \cite{www13}.
 
-In the \emph{random} mode of inference, we randomly select 1 workout as the validation set and 1 workout as the test set, for each runner. The experience levels for these workouts is assumed to be equal to those of the workouts closest in time in the training set for that runner. 
+However, this mode of selecting workouts makes our validation and test sets biased towards workouts of more experienced runners \cite{www13}. To avoid this, we evaluate our models in the \emph{random} mode as well. In the \emph{random} mode of inference, we randomly select 1 workout as the validation set and 1 workout as the test set, for each runner. The experience levels for these workouts is assumed to be equal to those of the workouts closest in time in the training set for that runner. 
 
 We present results for both modes of inference in section \ref{secEvaluation}.
 
@@ -287,9 +287,9 @@ $\Omega_1$ is a smoothness function which penalizes abrupt changes between succe
 The training algorithm is identical to the training algorithm described in section \ref{secTemporalModelUsers}.
 
 \subsection{Inference}
-Once the model parameters and tiredness levels have been learned, we infer i.e. predict the instantaneous heart rate at 1 instant in each workout $w$ using equation \ref{eqnModelInstHr}. As before, we need to estimate the tiredness level at that instant in order to be able to use equation \ref{eqnModelInstHr} to predict the instantaneous heart-rate. We perform inference in different 2 modes, namely \emph{final} and \emph{random}. 
+Once the model parameters and tiredness levels have been learned, we infer i.e. predict the instantaneous heart rate at 1 instant in each workout $w$ using equation \ref{eqnModelInstHr}. As before, we need to estimate the tiredness level at that instant in order to be able to use equation \ref{eqnModelInstHr} to predict the instantaneous heart-rate. 
 
-In the \emph{final} mode of inference, we use the first $N-2$ samples in each workout as the training set, the $N-1$'th sample from each workout as the validation set and the $N$'th sample as the test set, where $N$ is the total number of samples in a workout. We assume $e_{wN} = e_{w(N-1)} = e_{w(N-2)}$ and use these tiredness levels to predict the instantaneous heart-rate using equation \ref{eqnModelInstHr}.
+As in section \ref{secTemporalModelUsers}, we perform inference in  2 modes, namely \emph{final} and \emph{random}.  In the \emph{final} mode of inference, we use the first $N-2$ samples in each workout as the training set, the $N-1$'th sample from each workout as the validation set and the $N$'th sample as the test set, where $N$ is the total number of samples in a workout. We assume $e_{wN} = e_{w(N-1)} = e_{w(N-2)}$ and use these tiredness levels to predict the instantaneous heart-rate using equation \ref{eqnModelInstHr}.
 
 In the \emph{random} mode of inference, we randomly select 1 sample from each workout as the validation set and 1 sample from each workout as the test set. The tiredness levels for these samples is assumed to be equal to those of the samples closest in time in the training set. 
 
@@ -485,7 +485,9 @@ Figure \ref{figR2vsTirednessLevels} shows how the prediction accuracy on the tra
 \caption{\label{figR2vsTirednessLevels} $R^2$ score on training and validation sets with varying number of tiredness levels.}
 \end{figure}
 
+\needspace{2\baselineskip}
 \subsubsection{Prediction of last several heart-rate values}
+Runners often monitor their heart-rate while running and set goals of keeping the heart-rate below or above a certain value. Accordingly, a prediction of next several instantaneous heart-rate values would be more useful for the runner instead of a prediction of just the next 1 heart-rate value. This is one of the potential applications of this work. Hence, in this section, we evaluate how well our model predicts the heart-rate values in the remaining part of the workout.
 
 For this task, we consider only workouts with at least 200 samples of instantaneous heart-rate values and distance values. Given a workout of $N \geq 200$ samples of instantaneous heart-rate and distance values, we split $N$ (distance, heart-rate) samples into training, validation and test sets of sizes $0.4N$, $0.3N$, $0.3N$ respectively. Table \ref{tableInstManyHr} shows results for the task of predicting last several instantaneous heart-rate values in each workout. The results indicate that accounting for temporal evolution significantly improves results compared to the baseline. 
 
