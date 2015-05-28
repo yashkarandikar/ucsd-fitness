@@ -34,7 +34,7 @@ Yashodhan Hemant Karandikar\\
 
 \maketitle
 \begin{abstract}
-The goal of this project is to model temporal evolution of runners' capacities across workouts as well as within each workout. We study this temporal evolution over 2 predictive tasks - prediction of duration and average-heart rate of the next workout given data of previous workouts and prediction of the next instantaneous heart-rate values in each workout. We evaluate these models on the Endomondo fitness data set \cite{endomondo} and provide some insight into the results.
+The goal of this project is to model temporal evolution of runners' capacities across workouts as well as within each workout. We study this temporal evolution over 2 predictive tasks - prediction of duration and average-heart rate of the next workout given data of previous workouts and prediction of the next instantaneous heart-rate values given previous instantaneous heart-rate values within each workout. We evaluate our models on the Endomondo fitness data set \cite{endomondo}. Results indicate that accounting for temporal evolution within each workout significantly improves accuracy of predictions of instantaneous heart-rate values.
 \end{abstract}
 
 % A category with the (minimum) three required fields
@@ -47,29 +47,30 @@ The goal of this project is to model temporal evolution of runners' capacities a
 %\keywords{Temporal evolution, fitness data sets, user modeling, heart-rate prediction} % NOT required for Proceedings
 
 \section{Introduction}
-People work out with the goal of becoming fitter. Regularly working out enables a person to take on more challenging work outs. For example, a runner training for long distance running can gradually attempt runs of longer durations. Thus, the running capacity or the fitness level of a runner increases gradually with practice. Modeling this fitness level can be useful in predicting the duration of the next workout that the runner attempts.
+People work out with the goal of becoming fitter. Regularly working out enables a person to take on more challenging workouts. For example, a runner training for long distance running can gradually attempt runs of longer and longer durations. Thus, the running capacity or the fitness level of a runner increases gradually with practice. Modeling this fitness level can be useful in predicting the duration of the next workout that the runner attempts.
 
-Alternatively, runners often monitor their heart-rate while running and set goals of keeping the heart-rate below or above a certain value, either for improving their fitness level or for their safety. The heart-rate at future instants in the run depends on how tired the runner currently is, among other factors. Further, this relationship between the heart-rate and how tired the runner is, varies from one runner to another. For example, an experienced runner might experience only a slight increase in heart-rate as he or she feels more tired, while the heart-rate of an amateur runner might shoot up soon after the run starts.
+Alternatively, runners often monitor their heart-rate while running and set goals of keeping the heart-rate below or above a certain value, either for improving their fitness level or for their safety. The heart-rate at future instants in the run depends on how tired the runner currently is, among other factors. Further, this relationship between the heart-rate and how tired the runner is, varies from one runner to another. For example, an experienced runner might experience only a slight increase in heart-rate as he or she feels more tired, while the heart-rate of an amateur runner might increase significantly soon after the run starts.
 
-The examples above highlight the temporal evolution of a runner's capacity, both across workouts and within each workout. We attempt to model both these forms of temporal evolution in this work. Modeling such temporal evolution has several potential applications. Predictions of how long the next run will take, or the average and maximum heart-rates, will be useful both as a goal and as a guide to the runner while planning the run. Similarly, predicting how the heart-rate will change in the remaining part of a run will be useful for a runner who is monitoring heart-rate during the run. This can potentially be extended to suggest the runner a route for a run, given some desired parameters such as desired average heart-rate, desired total duration etc.
+The examples above highlight the temporal evolution of a runner's capacity, both across workouts and within each workout. We attempt to model both these forms of temporal evolution in this work. Modeling such temporal evolution has several potential applications. Predictions of how long the next run will take or the average and maximum heart-rates in the next run will be useful both as a goal and as a guide to the runner while planning the run. Similarly, predicting how the heart-rate will change in the remaining part of a run will be useful for a runner who is monitoring heart-rate during the run. This can potentially be extended to suggest the runner a route for a run, given some parameters such as the desired average or maximum heart-rate, desired total duration etc.
 
-The rest of the report is organized as follows. Section \ref{secPredictiveTasks} describes the predictive tasks we will use to evaluate our models. Section \ref{secRelatedWork} describes some of the work in the literature which is relevant to temporal evolution of individuals and to these tasks. Section \ref{secDataset} describes the Endomondo data set \cite{endomondo}. Sections \ref{secBaselineModel}, \ref{secTemporalModelUsers} and \ref{secTemporalModelWorkouts} describe our models and the training and inference algorithms. Section \ref{secImplementationDetails} provides some implementation details of verifying correctness and achieving reasonable performance with our implementation. Section \ref{secEvaluation} discusses results of our models on the predictive tasks described in section \ref{secPredictiveTasks}. 
+The rest of the report is organized as follows. Section \ref{secPredictiveTasks} describes the predictive tasks we use to evaluate our models. Section \ref{secRelatedWork} describes some of the work in the literature which is relevant to temporal evolution of user expertise and to these tasks. Section \ref{secDataset} describes the Endomondo data set \cite{endomondo}. Sections \ref{secBaselineModel}, \ref{secTemporalModelUsers} and \ref{secTemporalModelWorkouts} describe our models and algorithms for training and inference. Section \ref{secImplementationDetails} provides some implementation details of verifying correctness and achieving reasonable performance with our implementation. Section \ref{secEvaluation} discusses results of our models on the predictive tasks described in section \ref{secPredictiveTasks}. Finally, section \ref{secConclusion} concludes.
 
 \section{Predictive Tasks}
 \label{secPredictiveTasks}
-In order to study temporal evolution of a runner \emph{across} several workouts, we choose the following 2 predictive tasks as follows:
+In order to study temporal evolution of a runner \emph{across} several workouts, we choose the following 2 predictive tasks:
 \begin{enumerate}
 \item Given the distance $d_i$ and duration $T_i$ for each workout $i$ for the first $n$ workouts of a runner $u$ and given the distance $d_{n+1}$ for the $(n+1)$'th workout, predict the duration $T_{n+1}$ of the $(n+1)$'th workout.
 \item Given the distance $d_i$ and average heart-rate $H_i$ for each workout $i$ for the first $n$ workouts of a runner $u$ and given the distance $d_{n+1}$ for the $(n+1)$'th workout, predict the average heart-rate $H_{n+1}$ of the $(n+1)$'th workout.
 \end{enumerate}
 
-In order to study temporal evolution of a runner \emph{within} \emph{each} workout, we choose the following 2 predictive tasks as follows:
+In order to study temporal evolution of a runner \emph{within} \emph{each} workout, we choose the following 2 predictive tasks:
 
 \begin{enumerate}
-\item Given the first $n$ instantaneous heart-rate values of a runner in a workout, predict the $(n+1)$'th instantaneous heart-rate.
-\item Given the instantaneous heart-rate values of the first $f$ fraction of a workout, predict the heart-rates of the remaining $1-f$ fraction of the workout. This task is a generalization of the first.
+\item Given the first $n$ instantaneous heart-rate values of a runner in a workout, predict the $(n+1)$'th instantaneous heart-rate value within the same workout.
+\item Given the instantaneous heart-rate values for the first $f$ fraction of a workout, predict the instantaneous heart-rate values for the remaining $1-f$ fraction of the workout. This task is a generalization of the first.
 \end{enumerate}
 
+%\needspace{2\baselineskip}
 \section{Related Work}
 \label{secRelatedWork}
 \cite{www13} describes 4 different models accounting for temporal evolution of user expertise through online reviews on websites such as Amazon, BeerAdvocate, RateBeer, CellarTracker. \cite{www13} describes these models along 2 orthogonal directions: individual/community evolution and evolution at uniform / learned intervals, for a total of 4 models. Of these, the model for individual evolution at learned intervals is the most general. Runners improve their physical capacities for working out at very different rates and independently of other runners, unlike general evolving trends in entire communities of users. Hence, the model for individual evolution at learned intervals makes most sense in the context of temporal evolution of runners' physical capacities for working out. The work in this project is based on this model.
@@ -372,13 +373,16 @@ $E = 3$ (random) & $10^4$ & $0.0$ \\ \hline
 \label{tableAvgHrHyperparams}
 \end{table}
 
+\begin{comment}
 To get some insight into this result, we plot the average error for each workout number, averaged over all users, as shown in figure \ref{figAvgHrAvgErrorE1}. If the data set contains a significant evolution of the user's experience from the user's 1st workout to the last, we expect to see the average error higher for some workout numbers compared to others. However, figure \ref{figAvgHrAvgErrorE1} shows that the average error is roughly constant with respect to the workout number, indicating there is no significant evolution of user experience in the data set. This explains the lack of improvement in the $R^2$ score achieved with the models with $E = 2$ and $E = 3$.
+
 
 \begin{figure}[h]
 \centering
 \includegraphics[scale=0.35]{../src/plots/avghr_error_vs_workout_E1}
 \caption{\label{figAvgHrAvgErrorE1}  Average error in prediction of the average heart-rate for each workout number, averaged over all users, over the training set.}
 \end{figure}
+\end{comment}
 
 \subsubsection{Prediction of duration}
 
@@ -427,13 +431,16 @@ $E = 3$ (random) & $10$ & $0.01$ \\ \hline
 \label{tableDurationHyperparams}
 \end{table}
 
+\begin{comment}
 As in the case of the prediction of average heart-rate, we plot the average error for each workout number, averaged over all users, as shown in figure \ref{figDurationAvgErrorE1}. We observe that the average error is roughly constant with respect to the workout number, indicating there is no significant evolution of user experience in the data set. This explains the lack of improvement in the $R^2$ score achieved with the models with $E = 2$ and $E = 3$.
+
 
 \begin{figure}[h]
 \centering
 \includegraphics[scale=0.35]{../src/plots/duration_error_vs_workout_E1}
 \caption{\label{figDurationAvgErrorE1}  Average error in prediction of the duration for each workout number, averaged over all users, over the training set.}
 \end{figure}
+\end{comment}
 
 The lack of improvement in the prediction accuracy after accounting for temporal evolution across workouts seem to suggest that we need data for many more workouts per runner and over much longer periods of time in order to be able to notice a reasonably strong evolution of the runner across workouts.
 
@@ -516,6 +523,7 @@ We observe that the $R^2$ scores on the validation set are much higher than thos
 \end{figure}
 
 \section{Conclusion and Future Work}
+\label{secConclusion}
 We describe and evaluate 2 different ways of accounting for temporal evolution of runners' physical capacities for running workouts - one \emph{across} workouts and the other \emph{within} workouts. Results indicate that accounting for temporal evolution across workouts does not improve prediction accuracy, perhaps due to the relatively small number of workouts per runner in the data set. On the other hand, accounting for temporal evolution \emph{within} each workout significantly improves results over the baseline model.
 
 Future work includes evaluating these models for other types of workouts, such as cycling, walking etc. The results on these types of workouts might give some interesting insights about the nature of these activities and about how users evolve with time in each of these activities. It might be interesting to repeat this work for a much larger data set with many workouts per user, since temporal evolution across workouts might be more prominent in such a data set. Models for time series prediction such as auto-regression \cite{autoRegressiveModelWiki} can also be used to predict the instantaneous heart-rate in the remaining workout.
