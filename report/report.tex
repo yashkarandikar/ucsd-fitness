@@ -80,7 +80,7 @@ In order to study temporal evolution of a runner \emph{within} \emph{each} worko
 
 \section{Endomondo Fitness data set}
 \label{secDataset}
-In this section, we introduce the Endomondo fitness data set \cite{endomondo}. Endomondo \cite{endomondo} is a free app and website that allows users to keep track of their workouts. The data extracted from the Endomondo website \cite{endomondo} is available in the form of a SQL dump of size 200 GB approximately after compression. It contains data for around 10 million workouts. Data for each workout is in the form of a HTML document string. This HTML document contains information about the workout such as the sport (such as running, walking, cycling etc.), user id, total distance, duration, wind, weather, hydration, date \& time etc. The HTML document also contains embedded JSON data. This JSON data contains GPS co-ordinates (latitude, longitude and altitude), distance, duration, heart-rate, speed / pace sampled throughout the duration of the workout. The `duration' trace indicates the time instants at which the remaining attributes were sampled. We developed a parser in Python to extract the relevant data from each HTML document, details of which are discussed in section \ref{secImplementationDetails}.
+In this section, we introduce the Endomondo fitness data set \cite{endomondo}. Endomondo \cite{endomondo} is a free app and website that allows users to keep track of their workouts. The data extracted from the Endomondo website \cite{endomondo} is available in the form of a SQL dump of size 200 GB approximately after compression. It contains data for around 10 million workouts. Data for each workout is in the form of a HTML document string. This HTML document contains information about the workout such as the sport (such as running, walking, cycling etc.), workout id, user id, total distance, duration, wind, weather, hydration, date \& time etc. The HTML document also contains embedded JSON data. This JSON data contains GPS co-ordinates (latitude, longitude and altitude), distance, duration, heart-rate, speed / pace sampled throughout the duration of the workout. The `duration' trace indicates the time instants at which the remaining attributes were sampled. We developed a parser in Python to extract the relevant data from each HTML document, details of which are discussed in section \ref{secImplementationDetails}.
 
 \subsection{Data set statistics}
 
@@ -112,22 +112,22 @@ Although the average number of workouts per user is only 4.95, the distribution 
 \label{tableStatsUsers}
 \end{table}
 
-Table \ref{tableStatsByActivity} lists the number of workouts for some of the activities (such as running, walking, cycling etc). The number of workouts for running is the highest and it is significantly more than that for other activities. Hence, in this work we use data from workouts for running only.
+Table \ref{tableStatsByActivity} lists the number of workouts for some of the activities (such as running, walking, cycling etc). The number of workouts for the \emph{running} activity is the highest and it is significantly more than that for other activities. Hence, in this work we use data from workouts for running only.
 
 \begin{table}[h]
 \centering
-\begin{tabular}{|c|c|} \hline
-\bf{Activity} & \bf{Number of Workouts}  \\ \hline
-Running  &           4413262 \\ \hline
-Walking  &           2154563 \\ \hline
-Cycling, sport  &     938108 \\ \hline
-Cycling, transport & 816808 \\ \hline
-Mountain biking  &   429906 \\ \hline
-Step counter     &   265403 \\ \hline
-Fitness walking   &  172440 \\ \hline
-Hiking &   147061 \\ \hline
+\begin{tabular}{|p{3cm}|p{2cm}|p{2cm}|} \hline
+\bf{Activity} & \bf{Number of Workouts} & \bf{Number of Users} \\ \hline
+Running  &           4413262 & 1187925 \\ \hline
+Walking  &           2154563 & 558436 \\ \hline
+Cycling, sport  &     938108 & 260828 \\ \hline
+Cycling, transport & 816808 &  216750 \\ \hline
+Mountain biking  &   429906 & 130603 \\ \hline
+Step counter     &   265403 & 13353 \\ \hline
+Fitness walking   &  172440 & 47775 \\ \hline
+Hiking &   147061 & 57235 \\ \hline
 \end{tabular}
-\caption{Number of workouts by activity}
+\caption{Number of workouts and users by activity}
 \label{tableStatsByActivity}
 \end{table}
 
@@ -141,7 +141,7 @@ This section describes a baseline model to predict the duration of a workout giv
 T_{ui}' = (\alpha + \alpha_{u})(\theta_0 + \theta_1 d_{ui})
 \end{equation}
 
-We have one parameter $\alpha_u$ per runner $u$, which is learned during training using runner $u$'s workouts. The parameters $\alpha, \theta_0, \theta_1$ are global to all runner. Thus, we have a total of $U + 3$ parameters, where $U$ is the number of distinct runners in the data set. 
+We have one parameter $\alpha_u$ per runner $u$. The parameters $\alpha, \theta_0, \theta_1$ are global to all runners. Thus, we have a total of $U + 3$ parameters, where $U$ is the number of distinct runners in the data set. These parameters are learned during training.
 
 Let $\Theta = (\alpha, \alpha_1, ... , \alpha_U, \theta_0, \theta_1)$. We need to find $\Theta$ which satisfies the following objective:
 
@@ -159,7 +159,7 @@ $$H_{ui}' = (\alpha + \alpha_{u})(\theta_0 + \theta_1 d_{ui})$$
 This section generalizes the baseline model described in section \ref{secBaselineModel} and attempts to account for temporal evolution of runners across workouts. We describe the model, the training algorithm and finally the inference algorithm.
 
 \subsection{Model Specification}
-In order to account for evolution in the fitness level or capability of a runner over time,  we associate an \emph{experience level} or \emph{fitness level} $e_{uw}$ with each workout $w$ of runner $u$. This can be seen as a way of encoding how experienced the runner is at the time of the workout $w$. The value $e_{uw}$ is an integer in the interval $[0, E)$ where $E$ is the number of experience levels. 
+In order to account for evolution in the fitness level or capability of a runner over time,  we associate an \emph{experience level} or \emph{fitness level} $e_{uw}$ with each workout $w$ of runner $u$. This can be seen as a way of encoding how experienced the runner is at the time of the workout $w$. The value $e_{uw}$ is an integer such that $1 \leq e_{uw} \leq E$, where $E$ is the number of experience levels.
 
 Intuitively, we expect the experience level of a runner to either stay the same or increase with each workout. We encode this intuition in the form of a monotonicity constraint on the experience levels of workouts for each runner, as given below \cite{www13}:
 
@@ -207,7 +207,7 @@ Let $\beta$ denote the set of all experience parameters $e_{ui}$. Then, we need 
  & + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1)
 \end{align}
 
-$$s.t. \; \; \; t_{ui} \geq t_{uj} \implies e_{ui} \geq e_{uj} $$
+$$s.t. \; \; \forall u,i,j \; \; \; t_{ui} \geq t_{uj} \implies e_{ui} \geq e_{uj} $$
 
 where $D$ is the data set of all workouts for all runners. This objective is similar to the one described in \cite{www13}. $\Omega_1$ and $\Omega_2$ are regularizers defined as follows:
 
@@ -226,14 +226,14 @@ We optimize the parameters $\Theta$ and $\beta$ using a co-ordinate descent \cit
 
 We alternately optimize $\Theta$ given $\beta$ and $\beta$ given $\Theta$ until $\beta$ does not change or a maximum number of iterations has been reached.
 
-\subsection{Inference}
-Once the model parameters and experience levels have been learned, we infer i.e. predict the duration or average heart rate for the next workout $w$ using equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr}. Note that we need to estimate the experience level for workout $w$ in order to be able to use equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr} to predict the duration or average heart-rate. 
+\subsection{Making Predictions}
+Once the model parameters and experience levels have been learned, we predict the duration or average heart rate for the next workout $w$ for each runner $u$ using equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr}. Note that we need to estimate the experience level for workout $w$ in order to be able to use equation \ref{eqnModelDuration} or \ref{eqnModelAvgHr} to predict the duration or average heart-rate. We estimate this experience level for workout $w$ and make predictions in 2 modes, namely \emph{final} and \emph{random}, as is done in \cite{www13}. 
 
-We perform inference in 2 modes, namely \emph{final} and \emph{random}, as is done in \cite{www13}. In the \emph{final} mode of inference, we use the first $N-2$ workouts as the training set, the $N-1$'th workout as the validation set and the $N$'th workout as the test set, where $N$ is the total number of workouts for a user $u$ in the data set. We assume $e_{u(N)} = e_{u(N-1)} = e_{u(N-2)}$ and use these experience levels to predict the duration (using equation \ref{eqnModelDuration}) or average heart rate (using equation \ref{eqnModelAvgHr}) for the examples in the validation and test set. The \emph{final} mode of inference is the setting that would be used in practice, since such a system would be used in predicting the duration or average heart-rate of the next workout instead of making predictions about past workouts \cite{www13}.
+In the \emph{final} mode, we use the first $N-2$ workouts of each runner $u$ as the training set, the $N-1$'th workout as the validation set and the $N$'th workout as the test set, where $N$ is the total number of workouts for the runner $u$ in the data set. We assume $e_{u(N)} = e_{u(N-1)} = e_{u(N-2)}$ and use these experience levels to predict the duration (using equation \ref{eqnModelDuration}) or average heart rate (using equation \ref{eqnModelAvgHr}) for the examples in the validation and test sets. The \emph{final} mode is the setting that would be used in practice, since such a system would be used in predicting the duration or average heart-rate of the next workout of a runner, instead of making predictions about past workouts \cite{www13}.
 
-However, this mode of selecting workouts makes our validation and test sets biased towards workouts of more experienced runners \cite{www13}. To avoid this, we evaluate our models in the \emph{random} mode as well. In the \emph{random} mode of inference, we randomly select 1 workout as the validation set and 1 workout as the test set, for each runner. The experience levels for these workouts is assumed to be equal to those of the workouts closest in time in the training set for that runner. 
+However, this mode of selecting workouts makes our validation and test sets biased towards workouts of more experienced runners \cite{www13}. To avoid this, we evaluate our models in the \emph{random} mode as well. In the \emph{random} mode, we randomly select 1 workout as the validation set and 1 workout as the test set, for each runner. The experience levels for these workouts is assumed to be equal to those of the workouts closest in time in the training set for that runner. 
 
-We present results for both modes of inference in section \ref{secEvaluation}.
+We present results for both modes in section \ref{secEvaluation}.
 
 \section{Temporal Evolution Within \\ Workouts}
 \label{secTemporalModelWorkouts}
