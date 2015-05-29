@@ -237,17 +237,17 @@ We present results for both modes in section \ref{secEvaluation}.
 
 \section{Temporal Evolution Within \\ Workouts}
 \label{secTemporalModelWorkouts}
-We now consider temporal evolution of a runner's capacity \emph{during} a workout and use it to predict the runner's instantaneous heart rate in the future. 
+We now consider temporal evolution of a runner's capacity \emph{during} a run and use it to predict the runner's instantaneous heart rate in the remaining part of the run. 
 
 \subsection{Model Specification}
 
-Given the heart-rate at various instants in a workout, we associate a \emph{tiredness level} $e_{wi}$ with heart-rate sample $i$ in the workout $w$. As before, the value $e_{wi}$ is an integer in the interval $[0, E)$, where $E$ is the number of tiredness levels. We expect the tiredness level of the user to either stay the same or increase with each sample in the workout. We encode this in the form of a monotonicity constraint as before:
+Given the heart-rate at various instants in a workout, we associate a \emph{tiredness level} $e_{wi}$ with heart-rate sample $i$ in the workout $w$. As before, the value $e_{wi}$ is an integer such that $1 \leq e_{wi} \leq E$, where $E$ is the number of tiredness levels. We expect the tiredness level of the user to either stay the same or increase with each sample in the workout. We encode this in the form of a monotonicity constraint as before:
 
 $$\forall w,i,j \;\;\;\;\; t_{wi} \geq t_{wj} \implies e_{wi} \geq e_{wj}$$
 
 where $t_{wi}$ is the time at which sample $i$ in workout $w$ was sampled.
 
-Then, given the distance covered $d_{wt}$ at sample $t$ for the $w$'th workout, the predicted instantaneous heart-rate $h_{wt}'$ of the user is given by:
+Then, given the distance $d_{wt}$ covered up to sample $t$ in the workout $w$, the predicted instantaneous heart-rate $h_{wt}'$ at sample $t$ in workout $w$ is given by:
 
 \begin{equation}
 \label{eqnModelInstHr}
@@ -275,7 +275,7 @@ Let $\beta$ denote the set of all tiredness levels $e_{wt}$. Then, we need to ch
  & + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1)
 \end{align}
 
-$$s.t. \; \; \; t_{wi} \geq t_{wj} \implies e_{wi} \geq e_{wj} $$
+$$  s.t. \; \; \forall u,i,j \; \; \;  t_{wi} \geq t_{wj} \implies e_{wi} \geq e_{wj} $$
 
 where $D$ is the data set of all samples in all workouts. This objective is similar to the one described in \cite{www13}.
 
@@ -290,19 +290,19 @@ $\Omega_1$ is a smoothness function which penalizes abrupt changes between succe
 \subsection{Training the model}
 The training algorithm is identical to the training algorithm described in section \ref{secTemporalModelUsers}.
 
-\subsection{Inference}
-Once the model parameters and tiredness levels have been learned, we infer i.e. predict the instantaneous heart rate at 1 instant in each workout $w$ using equation \ref{eqnModelInstHr}. As before, we need to estimate the tiredness level at that instant in order to be able to use equation \ref{eqnModelInstHr} to predict the instantaneous heart-rate. 
+\subsection{Making Predictions}
+Once the model parameters and tiredness levels have been learned, we predict the instantaneous heart rate at 1 instant in each workout $w$ using equation \ref{eqnModelInstHr}. As before, we need to estimate the tiredness level at that instant in order to be able to use equation \ref{eqnModelInstHr} to predict the instantaneous heart-rate. 
 
-As in section \ref{secTemporalModelUsers}, we perform inference in  2 modes, namely \emph{final} and \emph{random}.  In the \emph{final} mode of inference, we use the first $N-2$ samples in each workout as the training set, the $N-1$'th sample from each workout as the validation set and the $N$'th sample as the test set, where $N$ is the total number of samples in a workout. We assume $e_{wN} = e_{w(N-1)} = e_{w(N-2)}$ and use these tiredness levels to predict the instantaneous heart-rate using equation \ref{eqnModelInstHr}.
+As in section \ref{secTemporalModelUsers}, we make predictions in  2 modes, namely \emph{final} and \emph{random}.  In the \emph{final} mode, we use the first $N-2$ samples in each workout as the training set, the $N-1$'th sample from each workout as the validation set and the $N$'th sample as the test set, where $N$ is the total number of samples in a workout $w$. We assume $e_{wN} = e_{w(N-1)} = e_{w(N-2)}$ and use these tiredness levels to predict the instantaneous heart-rate using equation \ref{eqnModelInstHr}.
 
-In the \emph{random} mode of inference, we randomly select 1 sample from each workout as the validation set and 1 sample from each workout as the test set. The tiredness levels for these samples is assumed to be equal to those of the samples closest in time in the training set. 
+In the \emph{random} mode, we randomly select 1 sample from each workout as the validation set and 1 sample from each workout as the test set. The tiredness levels for these samples is assumed to be equal to those of the samples closest in time in the training set. 
 
-We present results for both modes of inference in section \ref{secEvaluation}.
+We present results for both modes in section \ref{secEvaluation}.
 
 \subsection{Prediction of several instantaneous heart rate values}
 We now generalize the problem of predicting 1 instantaneous heart-rate value to the problem of predicting the heart-rate values for the last $f$ fraction of the workout. We use the same model as described earlier in this section. Let $e_{wn}$ be the tiredness level of the last sample in workout $w$ in the training set. In order to predict the instantaneous heart-rate values in the remaining part of the workout, we assume $e_{wn} = e_{w(n+1)} = e_{w(n+2)} = ... = e_{w(N)}$ where $N$ is the total number of samples in workout $w$. In other words, we assume that the last tiredness level of the workout fitted during training stays the same for the remaining part of the workout. In practice, this is not a valid assumption, but this provides us with a conservative estimate of how well the model performs on the remaining part of the workout i.e. on the validation and test sets.
 
-Note that the difficulty here is not only that of estimating the tiredness levels accurately, but also not having learned model parameters for tiredness levels beyond the last tiredness level fitted during training. Thus, even if the true tiredness levels for the remaining part of the workout are known, these cannot be used for prediction of heart-rate values.
+Note that the difficulty here is not only that of estimating the tiredness levels for the remaining part of the workout accurately, but also not having learned model parameters for tiredness levels beyond the last tiredness level fitted during training. Thus, even if the true tiredness levels for the remaining part of the workout are known, these cannot be used for prediction of heart-rate values.
 
 \section{Implementation Details}
 \label{secImplementationDetails}
