@@ -2,14 +2,16 @@
 Loading data from file.. ../../data/all_workouts_condensed.gzrandom.npz
 Training..
 Computing predictions and statistics
+[11.780486762713664, 12.28732558406381, 11.653344470976952, 11.918500934825479, 11.78838086816455, 11.844463765593511, 12.006846040273908, 11.620879935009103, 11.39635933332141]
+[2384.0, 2384.0, 2384.0, 2384.0, 2384.0, 2384.0, 2384.0, 2384.0, 2384.0]
 
-@Training Examples = 39545,MSE = 267.475884,Variance = 267.548911,FVU = 0.999727,R2 = 1 - FVU = 0.000273
+@Training Examples = 39545,MSE = 267.522638,Variance = 267.548911,FVU = 0.999902,R2 = 1 - FVU = 0.000098
 
-@Validation Examples = 2384,MSE = 249.604585,Variance = 249.316168,FVU = 1.001157,R2 = 1 - FVU = -0.001157
+@Validation Examples = 2384,MSE = 249.483846,Variance = 249.316168,FVU = 1.000673,R2 = 1 - FVU = -0.000673
 
-@Test Examples = 2384,MSE = 240.587814,Variance = 239.894395,FVU = 1.002891,R2 = 1 - FVU = -0.002891
+@Test Examples = 2384,MSE = 240.480554,Variance = 239.894395,FVU = 1.002443,R2 = 1 - FVU = -0.002443
 
-@Total time taken =  0.174753904343
+@Total time taken =  0.357633829117
 RUNNING THE L-BFGS-B CODE
 
            * * *
@@ -20,43 +22,45 @@ Machine precision = 2.220D-16
 
 At X0         0 variables are exactly at the bounds
 
-At iterate    0    f=  2.38585D+07    |proj g|=  1.99999D+04
+At iterate    0    f=  2.38685D+07    |proj g|=  1.99999D+04
 
-At iterate    1    f=  1.92260D+07    |proj g|=  1.79518D+04
+At iterate    1    f=  1.92353D+07    |proj g|=  1.79521D+04
 
-At iterate    2    f=  1.94949D+04    |proj g|=  2.27907D+03
+At iterate    2    f=  2.19368D+04    |proj g|=  5.10120D+02
 
-At iterate    3    f=  9.23706D+03    |proj g|=  1.04217D+03
+At iterate    3    f=  2.19168D+04    |proj g|=  4.89695D+02
 
-At iterate    4    f=  8.91831D+03    |proj g|=  7.13704D+02
+At iterate    4    f=  2.18070D+04    |proj g|=  1.25359D+03
 
-At iterate    5    f=  8.83511D+03    |proj g|=  4.53817D+02
+At iterate    5    f=  2.14886D+04    |proj g|=  3.71423D+03
 
-At iterate    6    f=  8.78235D+03    |proj g|=  4.46354D+02
+At iterate    6    f=  1.90971D+04    |proj g|=  1.78083D+04
 
-At iterate    7    f=  8.02787D+03    |proj g|=  1.12075D+03
+At iterate    7    f=  1.75847D+04    |proj g|=  2.85319D+04
 
-At iterate    8    f=  6.79766D+03    |proj g|=  2.04262D+03
+At iterate    8    f=  1.61212D+04    |proj g|=  3.69887D+04
 
-At iterate    9    f=  4.40893D+03    |proj g|=  2.88390D+03
+At iterate    9    f=  1.20664D+04    |proj g|=  3.34797D+04
 
-At iterate   10    f=  1.89274D+03    |proj g|=  2.36700D+03
+At iterate   10    f=  4.29545D+03    |proj g|=  1.74284D+04
 
-At iterate   11    f=  1.64607D+03    |proj g|=  1.93652D+03
+At iterate   11    f=  3.16685D+03    |proj g|=  1.03838D+03
 
-At iterate   12    f=  3.55622D+02    |proj g|=  4.89264D+02
+At iterate   12    f=  4.49236D+02    |proj g|=  2.90709D+03
 
-At iterate   13    f=  2.69399D+02    |proj g|=  5.86558D+01
+At iterate   13    f=  3.67647D+02    |proj g|=  8.56467D+02
 
-At iterate   14    f=  2.67679D+02    |proj g|=  1.90022D+01
+At iterate   14    f=  2.67980D+02    |proj g|=  5.91029D+01
 
-At iterate   15    f=  2.67493D+02    |proj g|=  9.34204D-01
+At iterate   15    f=  2.67539D+02    |proj g|=  5.37079D+00
 
-At iterate   16    f=  2.67493D+02    |proj g|=  2.94818D-01
+At iterate   16    f=  2.67533D+02    |proj g|=  7.22284D-01
 
-At iterate   17    f=  2.67493D+02    |proj g|=  8.21928D-03
+At iterate   17    f=  2.67533D+02    |proj g|=  2.50414D-01
 
-At iterate   18    f=  2.67493D+02    |proj g|=  4.40848D-03
+At iterate   18    f=  2.67533D+02    |proj g|=  1.29091D-03
+
+At iterate   19    f=  2.67533D+02    |proj g|=  7.38310D-04
 
            * * *
 
@@ -71,8 +75,8 @@ F     = final function value
            * * *
 
    N    Tit     Tnf  Tnint  Skip  Nact     Projg        F
- 2387     18     25      1     0     0   4.408D-03   2.675D+02
-  F =   267.49282836554340     
+ 2387     19     23      1     0     0   7.383D-04   2.675D+02
+  F =   267.53319604724538     
 
 CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH             
 

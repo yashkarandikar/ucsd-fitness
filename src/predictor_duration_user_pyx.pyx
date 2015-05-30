@@ -28,6 +28,8 @@ def E_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] data, n
     e = e / float(N)
     # add regularization norm
     e += lam * theta[:-3].dot(theta[:-3])
+    e += lam * theta_1 * theta_1;
+    e += lam * alpha_all * alpha_all
     #cdef double t2 = time.time()
     #print "E = %f, time taken = %f" % (e, t2 - t1)
     return e
@@ -88,6 +90,8 @@ def Eprime_pyx(np.ndarray[DTYPE_t, ndim=1] theta, np.ndarray[DTYPE_t, ndim=2] da
     #dE = dE + lam * np.multiply(dE, (2 * theta))
     for u in xrange(0, n_users):
         dE[u] += 2 * lam * theta[u]
+    dE[-1] += 2 * lam * theta_1;
+    dE[-3] += 2 * lam * alpha
 
     #cdef double t2 = time.time()
     #print "E prime : time taken = ", t2 - t1

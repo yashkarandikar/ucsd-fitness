@@ -532,6 +532,9 @@ At iterate  258    f=  1.37956D-01    |proj g|=  9.96312D-03
 At iterate  259    f=  1.37956D-01    |proj g|=  4.40164D-03
 
 Computing predictions and statistics
+ndarray
+[0.1297844008820056, 0.13075694504475083, 0.13049532231797614, 0.12804785524715859, 0.13074315600044459, 0.12960416273449885, 0.13157747927959357, 0.13061495036832257, 0.13384853344426281]
+[52109.0, 52109.0, 52109.0, 52109.0, 52109.0, 52109.0, 52109.0, 52109.0, 52109.0]
 
 @Training Examples = 743987,MSE = 0.137856,Variance = 0.485242,FVU = 0.284098,R2 = 1 - FVU = 0.715902
 
@@ -539,7 +542,7 @@ Computing predictions and statistics
 
 @Test Examples = 52109,MSE = 0.174872,Variance = 0.631191,FVU = 0.277051,R2 = 1 - FVU = 0.722949
 
-@Total time taken =  15.4292349815
+@Total time taken =  15.905465126
 At iterate  260    f=  1.37956D-01    |proj g|=  9.11064D-03
 
 At iterate  261    f=  1.37955D-01    |proj g|=  2.72188D-02

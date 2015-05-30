@@ -2,14 +2,16 @@
 Loading data from file.. ../../data/all_workouts_condensed.gzfinal.npz
 Training..
 Computing predictions and statistics
+[11.70316300588016, 12.301702569011447, 11.874521651135774, 11.801662451485434, 11.730001373737148, 11.701666103254556, 12.062165422370757, 11.907415396692206, 11.635768036787766]
+[2384.0, 2384.0, 2384.0, 2384.0, 2384.0, 2384.0, 2384.0, 2384.0, 2384.0]
 
-@Training Examples = 39545,MSE = 267.184678,Variance = 267.385653,FVU = 0.999248,R2 = 1 - FVU = 0.000752
+@Training Examples = 39545,MSE = 267.298125,Variance = 267.385653,FVU = 0.999673,R2 = 1 - FVU = 0.000327
 
-@Validation Examples = 2384,MSE = 244.084346,Variance = 243.646746,FVU = 1.001796,R2 = 1 - FVU = -0.001796
+@Validation Examples = 2384,MSE = 244.082934,Variance = 243.646746,FVU = 1.001790,R2 = 1 - FVU = -0.001790
 
-@Test Examples = 2384,MSE = 249.305276,Variance = 247.782062,FVU = 1.006147,R2 = 1 - FVU = -0.006147
+@Test Examples = 2384,MSE = 249.244169,Variance = 247.782062,FVU = 1.005901,R2 = 1 - FVU = -0.005901
 
-@Total time taken =  0.168148040771
+@Total time taken =  0.347261190414
 RUNNING THE L-BFGS-B CODE
 
            * * *
@@ -20,39 +22,37 @@ Machine precision = 2.220D-16
 
 At X0         0 variables are exactly at the bounds
 
-At iterate    0    f=  2.40253D+06    |proj g|=  3.01269D+03
+At iterate    0    f=  2.40353D+06    |proj g|=  1.99992D+03
 
-At iterate    1    f=  1.93910D+06    |proj g|=  2.92218D+03
+At iterate    1    f=  1.94033D+06    |proj g|=  1.84773D+03
 
-At iterate    2    f=  8.91269D+03    |proj g|=  4.73392D+02
+At iterate    2    f=  1.67010D+04    |proj g|=  1.95229D+03
 
-At iterate    3    f=  8.75977D+03    |proj g|=  4.29893D+02
+At iterate    3    f=  1.43614D+04    |proj g|=  1.72934D+03
 
-At iterate    4    f=  8.63996D+03    |proj g|=  4.31641D+02
+At iterate    4    f=  1.25387D+04    |proj g|=  3.25918D+03
 
-At iterate    5    f=  6.91357D+03    |proj g|=  8.38526D+02
+At iterate    5    f=  9.34008D+03    |proj g|=  3.01337D+03
 
-At iterate    6    f=  5.49378D+03    |proj g|=  1.45223D+03
+At iterate    6    f=  3.64431D+03    |proj g|=  1.47775D+03
 
-At iterate    7    f=  3.73387D+03    |proj g|=  1.61358D+03
+At iterate    7    f=  1.48968D+03    |proj g|=  3.61131D+03
 
-At iterate    8    f=  2.72664D+03    |proj g|=  4.49499D+03
+At iterate    8    f=  6.56175D+02    |proj g|=  4.02819D+03
 
-At iterate    9    f=  3.95615D+02    |proj g|=  4.22456D+02
+At iterate    9    f=  3.19805D+02    |proj g|=  1.40707D+03
 
-At iterate   10    f=  2.74309D+02    |proj g|=  1.28127D+02
+At iterate   10    f=  2.72056D+02    |proj g|=  1.48840D+02
 
-At iterate   11    f=  2.68200D+02    |proj g|=  2.01561D+01
+At iterate   11    f=  2.67653D+02    |proj g|=  2.53785D+01
 
-At iterate   12    f=  2.67259D+02    |proj g|=  2.06289D+00
+At iterate   12    f=  2.67322D+02    |proj g|=  1.64484D+00
 
-At iterate   13    f=  2.67257D+02    |proj g|=  1.20728D+00
+At iterate   13    f=  2.67320D+02    |proj g|=  1.04440D+00
 
-At iterate   14    f=  2.67255D+02    |proj g|=  1.00697D-01
+At iterate   14    f=  2.67320D+02    |proj g|=  1.39467D-01
 
-At iterate   15    f=  2.67255D+02    |proj g|=  1.44716D-02
-
-At iterate   16    f=  2.67255D+02    |proj g|=  1.30675D-02
+At iterate   15    f=  2.67320D+02    |proj g|=  2.14297D-03
 
            * * *
 
@@ -67,8 +67,8 @@ F     = final function value
            * * *
 
    N    Tit     Tnf  Tnint  Skip  Nact     Projg        F
- 2387     16     19      1     0     0   1.307D-02   2.673D+02
-  F =   267.25518786827689     
+ 2387     15     20      1     0     0   2.143D-03   2.673D+02
+  F =   267.32021105871638     
 
 CONVERGENCE: REL_REDUCTION_OF_F_<=_FACTR*EPSMCH             
 
