@@ -207,14 +207,14 @@ Thus, all the parameters in all of the $E$ models together can be written as:
 
 $$\Theta = (\Theta_1, \Theta_2,..., \Theta_E, \theta_0, \theta_1)$$
 
-Let $\beta$ denote the set of all experience levels for all workouts of all runners. Then, we need to choose the optimal parameters $(\hat{\Theta}, \hat{\beta})$ according to the objective
+Let $\beta$ denote the experience levels for all workouts of all runners. Then, we need to choose the optimal parameters $(\hat{\Theta}, \hat{\beta})$ according to the objective
 
 %$$(\hat{\Theta}, \hat{\beta})  =  \arg\min_{\Theta,\beta}\frac{1}{|D|} \sum_{T_{ui} \in D}(T_{ui}' - T_{ui})^2 + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1) $$
 
 \begin{align}
 \label{eqnObjective}
 (\hat{\Theta}, \hat{\beta})  &= \arg\min_{\Theta,\beta}\frac{1}{|D|} \sum_{T_{ui} \in D}(T_{ui}' - T_{ui})^2 \nonumber \\
- & + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1)
+ & + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta)
 \end{align}
 
 $$s.t. \; \; \forall u,i,j \; \; \; t_{ui} \geq t_{uj} \implies e_{ui} \geq e_{uj} $$
@@ -225,7 +225,7 @@ $$\Omega_1(\Theta) = \sum_{e=1}^{E-1}{\|\Theta_e - \Theta_{e+1}\|_2^2}$$
 
 and
 
-$$\Omega_2(\Theta, \theta_1) = \theta_1^2 + \sum_{e=1}^{E}{\|\Theta_e \|_2^2}$$
+$$\Omega_2(\Theta) = \theta_1^2 + \sum_{e=1}^{E}{\|\Theta_e \|_2^2}$$
 
 $\Omega_1$ is a smoothness function which penalizes abrupt changes between successive experience levels \cite{www13}, since in practice similar experience levels should have similar parameters \cite{www13}. $\Omega_2$ is another regularizer which penalizes complex models i.e. it penalizes models which have higher magnitudes of parameters. These regularizers are necessary to avoid overfitting, since we have a large number $(UE + E + 2)$ of parameters. $\lambda_1$ and $\lambda_2$ are regularization hyperparameters, which trade-off the importance of regularization versus prediction accuracy at training time \cite{www13}. We select $\lambda_1$ and $\lambda_2$ through a grid-search over values in the set $\{0.0, 10^{-3},..., 10^4, 10^5\}$ and select the values which yield the highest prediction accuracy on a validation set.
 
@@ -245,6 +245,7 @@ However, this mode of selecting workouts makes our validation and test sets bias
 
 We present results for both modes in section \ref{secEvaluation}.
 
+\needspace{3\baselineskip}
 \section{Temporal Evolution Within \\ Workouts}
 \label{secTemporalModelWorkouts}
 We now consider temporal evolution of a runner's capacity \emph{during} a run and use it to predict the runner's instantaneous heart rate values in the remaining part of the run. 
@@ -264,7 +265,7 @@ Then, given the distance $d_{wt}$ covered up to sample $t$ in the workout $w$, t
 h_{wt}' = (\alpha_{e_{wt}} + \alpha_{we_{wt}})(\theta_0 + \theta_1 d_{wt})
 \end{equation}
 
-where $e_{wt}$ is the tiredness level at the $t$'th sample in workout $w$. Thus, as before, we have one parameter $\alpha_{we}$ per workout $w$ per tiredness level $e$ and an intercept term $\alpha_e$ for every tiredness level $e$, common to all workouts. The terms $\theta_0$ and $\theta_1$ are global to all workouts and tiredness levels. Thus, given $W$ workouts and $E$ tiredness levels, we have a total of $WE + E + 2$ parameters.
+where $e_{wt}$ is the tiredness level at the $t$'th sample in workout $w$. Thus, we have one parameter $\alpha_{we}$ per workout $w$ per tiredness level $e$ and an intercept term $\alpha_e$ for every tiredness level $e$, common to all workouts. The terms $\theta_0$ and $\theta_1$ are global to all workouts and tiredness levels. Thus, given $W$ workouts and $E$ tiredness levels, we have a total of $WE + E + 2$ parameters.
 
 \subsection{Objective Function}
 As before, we have a different model for each of the $E$ tiredness levels. Each of the $E$ models has the following parameters:
@@ -277,12 +278,12 @@ Thus, all the parameters in all of the $E$ models together can be written as:
 
 $$\Theta = (\Theta_1, \Theta_2,..., \Theta_E, \theta_0, \theta_1)$$
 
-Let $\beta$ denote the set of tiredness levels for all samples in all workouts. Then, we need to choose the optimal parameters $(\hat{\Theta}, \hat{\beta})$ according to the objective
+Let $\beta$ denote the tiredness levels for all samples in all workouts. Then, we need to choose the optimal parameters $(\hat{\Theta}, \hat{\beta})$ according to the objective
 
 \begin{align}
 \label{eqnObjective2}
 (\hat{\Theta}, \hat{\beta})  &= \arg\min_{\Theta,\beta}\frac{1}{|D|} \sum_{h_{wt} \in D}(h_{wt}' - h_{wt})^2 \nonumber \\
- & + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta, \theta_1)
+ & + \lambda_1\Omega_1(\Theta) + \lambda_2\Omega_2(\Theta)
 \end{align}
 
 $$  s.t. \; \; \forall u,i,j \; \; \;  t_{wi} \geq t_{wj} \implies e_{wi} \geq e_{wj} $$
@@ -293,7 +294,7 @@ As before, $\Omega_1$ and $\Omega_2$ are regularizers defined as follows:
 
 $$\Omega_1(\Theta) = \sum_{e=1}^{E-1}{\|\Theta_e - \Theta_{e+1}\|_2^2}$$
 
-$$\Omega_2(\Theta, \theta_1) = \theta_1^2 + \sum_{e=1}^{E}{\|\Theta_e \|_2^2}$$
+$$\Omega_2(\Theta) = \theta_1^2 + \sum_{e=1}^{E}{\|\Theta_e \|_2^2}$$
 
 $\Omega_1$ is a smoothness function which penalizes abrupt changes between successive tiredness levels \cite{www13}, since in practice similar tiredness levels should have similar parameters \cite{www13}. $\Omega_2$ is another regularizer which penalizes complex models i.e. it penalizes models which have higher magnitudes of parameters. These regularizers are necessary to avoid overfitting, since we have a large number $(WE + E + 2)$ of parameters. $\lambda_1$ and $\lambda_2$ are regularization hyperparameters, which trade-off the importance of regularization versus prediction accuracy at training time \cite{www13}. We select $\lambda_1$ and $\lambda_2$ through a grid-search over values in the set $\{0.0, 10^{-3}, 10^{-2}, 10^{-1}, 10^0\}$ and select the values which yield the highest prediction accuracy on a validation set.
 
@@ -326,7 +327,7 @@ We use Python for most of the data processing tasks, with NumPy \cite{numpy} and
 
 \subsection{Verifying Correctness of Derivatives}
 
-We verify that our implementations of derivative functions are correct by comparing their outputs to those obtained by computing numerical derivatives. We use functions provided in SciPy\cite{scipy} and Dlib\cite{dlib} to compute numerical derivatives.
+We verify that our implementations of derivative functions are correct by comparing their outputs to numerical derivatives. We use functions provided in SciPy\cite{scipy} and Dlib\cite{dlib} to compute numerical derivatives for verification.
 
 %\needspace{2\baselineskip}
 \section{Evaluation}
@@ -349,7 +350,7 @@ As seen from the results, the model which accounts for temporal evolution of run
 \begin{tabular}{|c|c|c|c|} \hline
 & Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
 \# Examples & 39545 & 2384 & 2384  \\ \hline
-Baseline& 0.520913 & 0.422149 & 0.423354  \\ \hline
+Baseline($E = 1$)& 0.520913 & 0.422149 & 0.423354  \\ \hline
 $E = 2$ & 0.520928 & 0.422081 & 0.423318 \\ \hline
 $E = 3$ & 0.520927 & 0.422085 & 0.423312 \\ \hline
 \end{tabular}
@@ -362,7 +363,7 @@ $E = 3$ & 0.520927 & 0.422085 & 0.423312 \\ \hline
 \begin{tabular}{|c|c|c|c|} \hline
 & Training $R^2$ & Validation $R^2$ & Test $R^2$ \\ \hline
 \# Examples & 39545 & 2384  &  2384 \\ \hline
-Baseline  & 0.517636 & 0.480985 & 0.430890 \\ \hline
+Baseline($E = 1$) & 0.517636 & 0.480985 & 0.430890 \\ \hline
 $E = 2$  & 0.517645 & 0.480964 & 0.430880 \\ \hline
 $E = 3$  & 0.517692 & 0.480968 & 0.430886 \\ \hline
 \end{tabular}
@@ -400,7 +401,7 @@ For this task, we consider only workouts of runners having more than 10 workouts
 
 Tables \ref{tableDurationFinal} and \ref{tableDurationRandom} show results for the prediction of the duration of the workout, using the  \emph{final} and \emph{random} modes of evaluation, as discussed in section \ref{secTemporalModelUsers}. As discussed in section \ref{secTemporalModelUsers}, we have 1 workout in the validation set and 1 workout in the test set for each runner in the data set, for both modes of evaluation. The results are shown in terms of the coefficient of determination, $R^2$ \cite{r2Wiki}. Table \ref{tableDurationHyperparams} shows the optimal values of hyper-parameters found using grid search.
 
-The model which accounts for temporal evolution of runners does not perform better than the baseline model ($E = 1$). Further, as is seen from table \ref{tableDurationHyperparams}, grid search yields relatively high optimal values of $\lambda_1$, indicating that the experience levels are very similar to each other and this essentially reduces the models with $E = 2$ and $E = 3$ to the baseline model $E = 1$.
+The results indicate that the model which accounts for temporal evolution of runners does not perform better than the baseline model ($E = 1$). Further, as is seen from table \ref{tableDurationHyperparams}, grid search yields relatively high optimal values of $\lambda_1$, indicating that the experience levels are very similar to each other and this essentially reduces the models with $E = 2$ and $E = 3$ to the baseline model $E = 1$.
 
 \begin{table}[H]
 \centering
@@ -452,7 +453,7 @@ As in the case of the prediction of average heart-rate, we plot the average erro
 \end{figure}
 \end{comment}
 
-The lack of improvement in the prediction accuracy after accounting for temporal evolution across workouts seem to suggest that we need data for many more workouts per runner and over much longer periods of time in order to be able to notice a reasonably strong evolution of the runner's fitness level across workouts. Further, an increase in the runner's physical capacity might also be exhibited in the data through the fact that the runner was able to complete a workout of longer duration and not necessarily through a change in the relationship between the duration (or average heart-rate) and the distance. This kind of temporal evolution would not be visible as an increase in the $R^2$ score in the prediction of the duration of average heart-rate.
+The lack of improvement in the prediction accuracy after accounting for temporal evolution across workouts seems to suggest that we need data for many more workouts per runner and over much longer periods of time in order to be able to notice a reasonably strong evolution of the runner's fitness level across workouts. Further, an increase in the runner's physical capacity might also be exhibited in the data through the fact that the runner was able to complete a workout of longer duration and not necessarily through a change in the relationship between the duration (or average heart-rate) and the distance. This kind of temporal evolution would not be visible as an increase in the $R^2$ score in the prediction of the duration of average heart-rate.
 
 \subsection{Temporal evolution within workouts}
 
@@ -509,7 +510,7 @@ Figure \ref{figR2vsTirednessLevels} shows how the prediction accuracy on the tra
 \subsubsection{Prediction of last several heart-rate values}
 Runners often monitor their heart-rate while running and set goals of keeping the heart-rate below or above a certain value. Accordingly, a prediction of next several instantaneous heart-rate values would be more useful for the runner instead of a prediction of just the next 1 heart-rate value. This is one of the potential applications of this work. Hence, in this section, we evaluate how well our model predicts the heart-rate values in the remaining part of the workout, given samples of instantaneous heart-rate values and distance covered up to the current instant and given the samples of instantaneous distance values that will be covered in the remaining part of the workout.
 
-For this task, we consider only workouts with at least 200 samples of instantaneous heart-rate values and distance values. Given a workout of $N \geq 200$ samples of instantaneous heart-rate and distance values, we split $N$ (distance, heart-rate) samples into training, validation and test sets of sizes $0.4N$, $0.3N$, $0.3N$ respectively. Table \ref{tableInstManyHr} shows results for the task of predicting last several instantaneous heart-rate values in each workout. The results indicate that accounting for temporal evolution significantly improves results compared to the baseline. 
+For this task, we consider only workouts with at least 200 samples of instantaneous heart-rate values and distance values. Given a workout of $N \geq 200$ samples of instantaneous heart-rate and distance values, we split these samples into training, validation and test sets of sizes $0.4N$, $0.3N$, $0.3N$ respectively. Table \ref{tableInstManyHr} shows results for the task of predicting last several instantaneous heart-rate values in each workout. The results indicate that accounting for temporal evolution significantly improves results compared to the baseline. 
 
 \begin{table}[H]
 \centering
@@ -529,14 +530,14 @@ We observe that the $R^2$ scores on the training set are much higher than those 
 \begin{figure}[h]
 \centering
 \includegraphics[scale=0.4]{../src/plots/many_insthr_error_vs_sample_number}
-\caption{\label{figManyInstHrErrorVsSampleNumberValTest} Average absolute error versus the sample number in validation and test part of the workouts, averaged over all workouts, for $E = 20$}
+\caption{\label{figManyInstHrErrorVsSampleNumberValTest} Average absolute error versus the sample number in validation and test part of the workouts w.r.t the last sample in the training part of the workout, averaged over all workouts, for $E = 20$}
 \end{figure}
 
 \section{Conclusion and Future Work}
 \label{secConclusion}
 We describe and evaluate 2 different ways of accounting for temporal evolution of runners' physical capacities for running workouts - one \emph{across} workouts and the other \emph{within} workouts. Results indicate that accounting for temporal evolution across workouts does not improve prediction accuracy, perhaps due to the relatively small number of workouts per runner in the data set. On the other hand, accounting for temporal evolution \emph{within} each workout significantly improves results over the baseline model.
 
-Future work includes evaluating these models for other types of workouts, such as cycling, walking etc. The results on these types of workouts might give some interesting insights about the nature of these activities and about how users evolve with time in each of these activities. It might be interesting to repeat this work for a much larger data set with many workouts per user, since temporal evolution across workouts might be more prominent in such a data set. Models for time series prediction and analysis, as described in \cite{autoRegressiveModelWiki, timeSeriesStudy, timeSeriesSurvey} can also be used to predict the instantaneous heart-rate values in the remaining workout.
+Future work includes evaluating these models for other types of workouts, such as cycling, walking etc. The results for these types of workouts might give some interesting insights about the nature of these activities and about how users evolve with time in each of these activities. It might be interesting to repeat this work for a much larger data set with many workouts per user, since temporal evolution across workouts might be more prominent in such a data set. Models for time series prediction and analysis, as described in \cite{autoRegressiveModelWiki, timeSeriesStudy, timeSeriesSurvey} can also be used to predict the instantaneous heart-rate values in the remaining part of the workout.
 
 
 \bibliographystyle{abbrv}
