@@ -16,6 +16,7 @@
 \usepackage{url}
 \usepackage{float}
 \usepackage{needspace}
+\usepackage{paralist}
 
 \begin{document}\sloppy
 
@@ -34,7 +35,12 @@ Yashodhan Hemant Karandikar\\
 
 \maketitle
 \begin{abstract}
-The goal of this project is to model temporal evolution of runners' physical capacities across workouts as well as within each workout. We study this temporal evolution over 2 predictive tasks - prediction of duration and average-heart rate of the next workout given data of previous workouts and prediction of the next instantaneous heart-rate values given previous instantaneous heart-rate values within the workout. We evaluate our models on the Endomondo fitness data set \cite{endomondo}. Results indicate that accounting for temporal evolution within each workout significantly improves accuracy of predictions of instantaneous heart-rate values.
+The goal of this project is to model temporal evolution of runners' physical capacities \emph{across} workouts as well as \emph{within} each workout. We study this temporal evolution over 2 predictive tasks -
+\begin{inparaenum}[\itshape a\upshape)]
+\item prediction of duration and average-heart rate given the distance of the next workout and given data of previous workouts of the runner; and
+\item prediction of the next instantaneous heart-rate values given the next instantaneous distance values and given previous instantaneous heart-rate and distance values within the workout.
+\end{inparaenum} 
+We evaluate our models on the Endomondo fitness data set \cite{endomondo}. Results indicate that accounting for temporal evolution within each workout significantly improves accuracy of predictions of instantaneous heart-rate values.
 \end{abstract}
 
 % A category with the (minimum) three required fields
@@ -66,8 +72,8 @@ In order to study temporal evolution of a runner \emph{across} several workouts,
 In order to study temporal evolution of a runner \emph{within} \emph{each} workout, we choose the following 2 predictive tasks:
 
 \begin{enumerate}
-\item Given the first $n$ instantaneous distance and heart-rate values in a run and given the $(n+1)$'th distance value, predict the $(n+1)$'th instantaneous heart-rate value within the same run.
-\item Given the instantaneous distance and heart-rate values for the first $f$ fraction of a run and given the distance values for the remaining $1-f$ fraction of the run, predict the instantaneous heart-rate values for the remaining part of the run. This task is a generalization of the first.
+\item Given the first $n$ instantaneous distance and heart-rate values in a run and given the $(n+1)$'th instantaneous distance value, predict the $(n+1)$'th instantaneous heart-rate value within the same run.
+\item Given the instantaneous distance and heart-rate values for the first $f$ fraction of a run and given the instantaneous distance values for the remaining $1-f$ fraction of the run, predict the instantaneous heart-rate values for the remaining part of the run. This task is a generalization of the first.
 \end{enumerate}
 
 %\needspace{2\baselineskip}
@@ -145,9 +151,13 @@ We have one parameter $\alpha_u$ per runner $u$. The parameters $\alpha, \theta_
 
 Let $\Theta = (\alpha, \alpha_1, ... , \alpha_U, \theta_0, \theta_1)$. We need to find $\Theta$ which satisfies the following objective:
 
-$$\hat{\Theta} = \arg\min_{\Theta}\frac{1}{|D|} \sum_{T_{ui} \in D}(T_{ui}' - T_{ui})^2 + \lambda (\theta_1^2 + \sum_{u}{\alpha_u^2}) $$
+$$\hat{\Theta} = \arg\min_{\Theta}\frac{1}{|D|} \sum_{T_{ui} \in D}(T_{ui}' - T_{ui})^2 + \lambda \Omega(\Theta) $$
 
-where $D$ is the data set of all workouts for all runners, $T_{ui}$ is the true distance of workout $i$ of runner $u$. The term $\lambda \sum_{u}{\alpha_u^2} $ is a regularizer. $\lambda$ is the regularization hyper-parameter, which we select by performing a line search over values in the set $\{0, 10^{-5}, 10^{-4},...,10^3, 10^{4}\}$ and choosing the $\lambda$ which minimizes the error on a validation set. We find the $\Theta$ which satisfies the objective using the L-BFGS \cite{lbfgs} implementation available in SciPy \cite{scipy}.
+where $D$ is the data set of all workouts for all runners, $T_{ui}$ is the true distance of workout $i$ of runner $u$. The term $\lambda \Omega(\Theta)$ is a regularizer, where $\Omega(\Theta)$ is given by 
+
+$$\Omega(\Theta) = \alpha^2 + \theta_1^2 + \sum_{u}{\alpha_u^2}$$
+
+$\lambda$ is the regularization hyper-parameter, which we select by performing a line search over values in the set $\{0, 10^{-5}, 10^{-4},...,10^3, 10^{4}\}$ and choosing the $\lambda$ which minimizes the error on a validation set. We find the $\Theta$ which satisfies the objective using the L-BFGS \cite{lbfgs} implementation available in SciPy \cite{scipy}.
 
 If the task is to predict the average heart-rate instead of the duration, we use the same model specification as in equation \ref{eqnBaselineDuration} by replacing $T_{ui}'$ by $H_{ui}'$. Thus, the predicted average heart-rate is given by
 
