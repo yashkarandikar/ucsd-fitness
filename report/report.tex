@@ -157,7 +157,7 @@ where $D$ is the data set of all workouts for all runners, $T_{ui}$ is the true 
 
 $$\Omega(\Theta) = \alpha^2 + \theta_1^2 + \sum_{u}{\alpha_u^2}$$
 
-$\lambda$ is the regularization hyper-parameter, which we select by performing a line search over values in the set $\{0, 10^{-5}, 10^{-4},...,10^3, 10^{4}\}$ and choosing the $\lambda$ which minimizes the error on a validation set. We find the $\Theta$ which satisfies the objective using the L-BFGS \cite{lbfgs} implementation available in SciPy \cite{scipy}.
+$\lambda$ is the regularization hyper-parameter, which we select by performing a line search over values in the set $\{0, 10^{-4}, 10^{-3},...,10^3, 10^{4}, 10^5\}$ and choosing the $\lambda$ which minimizes the error on a validation set. We find the $\Theta$ which satisfies the objective using the L-BFGS \cite{lbfgs} implementation available in SciPy \cite{scipy}.
 
 If the task is to predict the average heart-rate instead of the duration, we use the same model specification as in equation \ref{eqnBaselineDuration} by replacing $T_{ui}'$ by $H_{ui}'$. Thus, the predicted average heart-rate is given by
 
@@ -453,7 +453,7 @@ As in the case of the prediction of average heart-rate, we plot the average erro
 \end{figure}
 \end{comment}
 
-The lack of improvement in the prediction accuracy after accounting for temporal evolution across workouts seems to suggest that we need data for many more workouts per runner and over much longer periods of time in order to be able to notice a reasonably strong evolution of the runner's fitness level across workouts. Further, an increase in the runner's physical capacity might also be exhibited in the data through the fact that the runner was able to complete a workout of longer duration and not necessarily through a change in the relationship between the duration (or average heart-rate) and the distance. This kind of temporal evolution would not be visible as an increase in the $R^2$ score in the prediction of the duration of average heart-rate.
+The lack of improvement in the prediction accuracy after accounting for temporal evolution across workouts seems to suggest that we need data for many more workouts per runner in order to be able to notice a reasonably strong evolution of the runner's fitness level across workouts. Further, an increase in the runner's physical capacity might also be exhibited through the fact that the runner was able to complete a workout of longer duration or larger distance and this may not necessarily reflect through a change in the relationship between the duration (or average heart-rate) and the distance. This kind of temporal evolution would not be visible as an increase in the $R^2$ score in the prediction of the duration or average heart-rate.
 
 \subsection{Temporal evolution within workouts}
 
