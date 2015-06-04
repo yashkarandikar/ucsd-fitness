@@ -221,7 +221,7 @@ $$s.t. \; \; \forall u,i,j \; \; \; t_{ui} \geq t_{uj} \implies e_{ui} \geq e_{u
 
 where $D$ is the data set of all workouts for all runners. This objective is similar to the one described in \cite{www13}. $\Omega_1$ and $\Omega_2$ are regularizers defined as follows:
 
-$$\Omega_1(\Theta) = \sum_{e=1}^{E-1}{\|\Theta_e - \Theta_{e+1}\|_2^2}$$
+$$|\Omega_1(\Theta) = \sum_{e=1}^{E-1}{\|\Theta_e - \Theta_{e+1}\|_2^2}$$
 
 and
 
@@ -539,6 +539,7 @@ We describe and evaluate 2 different ways of accounting for temporal evolution o
 
 Future work includes evaluating these models for other types of workouts, such as cycling, walking etc. The results for these types of workouts might give some interesting insights about the nature of these activities and about how users evolve with time in each of these activities. It might be interesting to repeat this work for a much larger data set with many workouts per user, since temporal evolution across workouts might be more prominent in such a data set. Models for time series prediction and analysis, as described in \cite{autoRegressiveModelWiki, timeSeriesStudy, timeSeriesSurvey} can also be used to predict the instantaneous heart-rate values in the remaining part of the workout.
 
+The code for this work can be found online on GitHub at:	  \url{https://github.com/yashkarandikar/ucsd-fitness}
 
 \bibliographystyle{abbrv}
 \bibliography{references.bib}
